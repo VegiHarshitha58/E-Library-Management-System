@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LibraStream — E-Library</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --surface2: #1e1e1e;
+    --surface3: #252525;
+    --accent: #e50914;
+    --accent2: #f5a623;
+    --text: #f0f0f0;
+    --text2: #aaaaaa;
+    --text3: #666666;
+    --sidebar-w: 240px;
+    --nav-h: 64px;
+    --border: rgba(255,255,255,0.07);
+    --card-r: 6px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── NAVBAR ─── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: var(--nav-h);
+    background: linear-gradient(180deg, rgba(13,13,13,0.98) 0%, rgba(13,13,13,0.7) 100%);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    padding: 0 1.5rem 0 calc(var(--sidebar-w) + 1.5rem);
+    z-index: 100;
+    border-bottom: 1px solid var(--border);
+    gap: 1.5rem;
+  }
+
+  .nav-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+    position: absolute;
+    left: 1.5rem;
+    top: 50%; transform: translateY(-50%);
+    white-space: nowrap;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 1.25rem;
+    list-style: none;
+    align-items: center;
+  }
+
+  .nav-links a {
+    text-decoration: none;
+    font-size: 0.875rem;
+    color: var(--text2);
+    transition: color 0.2s;
+    font-weight: 400;
+  }
+  .nav-links a:hover, .nav-links a.active { color: var(--text); }
+
+  .nav-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .search-bar {
+    display: flex;
+    align-items: center;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.35rem 0.75rem;
+    gap: 0.5rem;
+    transition: border-color 0.2s;
+  }
+  .search-bar:focus-within { border-color: rgba(255,255,255,0.3); }
+  .search-bar input {
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.875rem;
+    width: 180px;
+  }
+  .search-bar input::placeholder { color: var(--text3); }
+
+  .nav-icon-btn {
+    background: none;
+    border: none;
+    color: var(--text2);
+    cursor: pointer;
+    padding: 0.3rem;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    transition: color 0.2s;
+    font-size: 1.1rem;
+  }
+  .nav-icon-btn:hover { color: var(--text); }
+
+  .avatar {
+    width: 34px; height: 34px;
+    border-radius: 4px;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: #fff;
+    letter-spacing: 0.5px;
+  }
+
+  /* ─── SIDEBAR ─── */
+  aside {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: var(--sidebar-w);
+    background: #111111;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    z-index: 200;
+    padding-top: var(--nav-h);
+    overflow-y: auto;
+  }
+
+  .sidebar-section {
+    padding: 1rem 0 0.5rem;
+  }
+
+  .sidebar-section-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--text3);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 0 1.25rem 0.5rem;
+  }
+
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 1.25rem;
+    cursor: pointer;
+    color: var(--text2);
+    font-size: 0.875rem;
+    font-weight: 400;
+    transition: all 0.15s;
+    border-left: 2px solid transparent;
+    text-decoration: none;
+  }
+  .sidebar-item:hover {
+    color: var(--text);
+    background: rgba(255,255,255,0.04);
+  }
+  .sidebar-item.active {
+    color: var(--text);
+    border-left-color: var(--accent);
+    background: rgba(229,9,20,0.08);
+  }
+
+  .sidebar-item svg {
+    width: 17px; height: 17px;
+    flex-shrink: 0;
+    stroke-width: 1.7;
+    opacity: 0.8;
+  }
+  .sidebar-item.active svg { opacity: 1; }
+
+  .sidebar-badge {
+    margin-left: auto;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 10px;
+  }
+
+  .sidebar-bottom {
+    margin-top: auto;
+    border-top: 1px solid var(--border);
+    padding: 0.75rem 0;
+  }
+
+  .sidebar-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 0.5rem 1.25rem;
+  }
+
+  /* ─── MAIN CONTENT ─── */
+  main {
+    margin-left: var(--sidebar-w);
+    padding-top: var(--nav-h);
+    min-height: 100vh;
+  }
+
+  /* ─── HERO BANNER ─── */
+  .hero {
+    position: relative;
+    height: 480px;
+    overflow: hidden;
+    display: flex;
+    align-items: flex-end;
+    padding: 3rem 3rem;
+    background: linear-gradient(135deg, #1a0a2e 0%, #0d1a3a 40%, #0d0d0d 100%);
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 80% at 70% 30%, rgba(90,50,150,0.18) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 60% at 20% 60%, rgba(229,9,20,0.12) 0%, transparent 50%);
+  }
+
+  .hero-book-stack {
+    position: absolute;
+    right: 4rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-end;
+  }
+
+  .hero-book {
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+    transition: transform 0.3s;
+    cursor: pointer;
+  }
+  .hero-book:hover { transform: translateY(-8px) scale(1.03); }
+  .hero-book img {
+    display: block;
+    object-fit: cover;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 520px;
+  }
+
+  .hero-tag {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 2px;
+    margin-bottom: 0.75rem;
+  }
+
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.8rem;
+    font-weight: 700;
+    line-height: 1.15;
+    margin-bottom: 0.75rem;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+  }
+
+  .hero-meta {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    font-size: 0.8rem;
+    color: var(--text2);
+    margin-bottom: 1rem;
+  }
+  .hero-meta .rating { color: var(--accent2); font-weight: 600; }
+  .hero-meta .genre {
+    background: var(--surface3);
+    padding: 2px 8px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+  }
+
+  .hero p {
+    font-size: 0.95rem;
+    color: rgba(240,240,240,0.75);
+    line-height: 1.65;
+    margin-bottom: 1.5rem;
+    max-width: 420px;
+  }
+
+  .hero-btns {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .btn-primary {
+    background: #fff;
+    color: #000;
+    border: none;
+    padding: 0.7rem 1.6rem;
+    border-radius: 4px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: background 0.2s;
+  }
+  .btn-primary:hover { background: rgba(255,255,255,0.85); }
+
+  .btn-secondary {
+    background: rgba(109,109,110,0.5);
+    color: #fff;
+    border: none;
+    padding: 0.7rem 1.6rem;
+    border-radius: 4px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: background 0.2s;
+    backdrop-filter: blur(4px);
+  }
+  .btn-secondary:hover { background: rgba(109,109,110,0.7); }
+
+  /* ─── BOOK ROWS ─── */
+  .content-area {
+    padding: 0 2.5rem 4rem;
+  }
+
+  .row {
+    margin-top: 2.5rem;
+  }
+
+  .row-header {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .row-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.2px;
+  }
+
+  .row-explore {
+    font-size: 0.8rem;
+    color: #54b3d6;
+    cursor: pointer;
+    font-weight: 500;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .row:hover .row-explore { opacity: 1; }
+
+  .books-scroll {
+    display: flex;
+    gap: 0.6rem;
+    overflow-x: auto;
+    padding-bottom: 0.75rem;
+    scrollbar-width: none;
+    scroll-snap-type: x mandatory;
+  }
+  .books-scroll::-webkit-scrollbar { display: none; }
+
+  /* Book cards — 3 aspect ratio sizes */
+  .book-card {
+    flex-shrink: 0;
+    position: relative;
+    border-radius: var(--card-r);
+    overflow: hidden;
+    cursor: pointer;
+    scroll-snap-align: start;
+    transition: transform 0.25s, box-shadow 0.25s;
+    background: var(--surface2);
+  }
+  .book-card:hover {
+    transform: scale(1.06);
+    z-index: 10;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+  }
+
+  /* Wide landscape cards (trending) */
+  .card-wide { width: 220px; height: 128px; }
+  /* Portrait cards (new releases, picks) */
+  .card-portrait { width: 120px; height: 180px; }
+  /* Square cards (because you read…) */
+  .card-square { width: 160px; height: 100px; }
+
+  .book-card img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: filter 0.25s;
+  }
+  .book-card:hover img { filter: brightness(0.75); }
+
+  /* overlay info on hover */
+  .card-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(0deg, rgba(0,0,0,0.85) 0%, transparent 55%);
+    opacity: 0;
+    transition: opacity 0.25s;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 0.6rem 0.75rem;
+  }
+  .book-card:hover .card-overlay { opacity: 1; }
+
+  .card-overlay-title {
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1.3;
+    margin-bottom: 0.2rem;
+  }
+  .card-overlay-meta {
+    font-size: 0.63rem;
+    color: var(--text2);
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+  }
+
+  .card-badge {
+    position: absolute;
+    top: 6px; left: 6px;
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 2px;
+  }
+  .badge-netflix { background: var(--accent); color: #fff; }
+  .badge-new { background: #46d369; color: #000; }
+  .badge-hot { background: var(--accent2); color: #000; }
+
+  /* Color placeholder books (when no image) */
+  .book-placeholder {
+    width: 100%; height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0.5rem;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.3;
+    color: rgba(255,255,255,0.9);
+  }
+
+  /* ─── CONTINUE READING ─── */
+  .continue-row {
+    margin-top: 2.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+  }
+
+  .continue-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+    border-radius: 4px;
+    padding: 0.6rem 0.5rem;
+  }
+  .continue-item:hover { background: rgba(255,255,255,0.04); }
+  .continue-item:last-child { border-bottom: none; }
+
+  .continue-thumb {
+    width: 50px; height: 70px;
+    border-radius: 3px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .continue-thumb img { width:100%; height:100%; object-fit: cover; }
+
+  .continue-info { flex: 1; }
+  .continue-title { font-size: 0.9rem; font-weight: 500; margin-bottom: 0.2rem; }
+  .continue-author { font-size: 0.75rem; color: var(--text2); margin-bottom: 0.5rem; }
+
+  .progress-bar {
+    height: 3px;
+    background: var(--surface3);
+    border-radius: 2px;
+    overflow: hidden;
+    width: 100%;
+    max-width: 200px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+  .continue-pct { font-size: 0.7rem; color: var(--text3); margin-top: 0.25rem; }
+
+  /* ─── GENRE PILLS ─── */
+  .genre-row {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin: 2rem 0 0;
+  }
+  .genre-pill {
+    padding: 0.4rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 0.8rem;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.15s;
+    background: var(--surface2);
+    white-space: nowrap;
+  }
+  .genre-pill:hover { border-color: rgba(255,255,255,0.3); color: var(--text); }
+  .genre-pill.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* ─── SCROLL ARROWS ─── */
+  .row-wrapper { position: relative; }
+  .scroll-btn {
+    position: absolute;
+    top: 0; bottom: 0.75rem;
+    width: 50px;
+    background: linear-gradient(90deg, var(--bg) 0%, transparent 100%);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    opacity: 0;
+    transition: opacity 0.2s;
+    font-size: 1.5rem;
+    color: var(--text);
+  }
+  .scroll-btn.right {
+    right: 0;
+    background: linear-gradient(270deg, var(--bg) 0%, transparent 100%);
+  }
+  .scroll-btn.left { left: 0; }
+  .row-wrapper:hover .scroll-btn { opacity: 1; }
+
+  /* ─── TOAST ─── */
+  .toast {
+    position: fixed;
+    bottom: 2rem; right: 2rem;
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.85rem 1.25rem;
+    font-size: 0.875rem;
+    color: var(--text);
+    z-index: 999;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s;
+    pointer-events: none;
+    max-width: 280px;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .welcome-message{
+    margin: 20px 0;
+    padding-left: 10px;
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Library</div>
+    <a class="sidebar-item active" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Home
+    </a>
+    <a class="sidebar-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      Browse Books
+    </a>
+    <a class="sidebar-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      My Reading List
+      <span class="sidebar-badge">4</span>
+    </a>
+    <a class="sidebar-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      Favorites
+    </a>
+  </div>
+
+  <div class="sidebar-divider"></div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Discover</div>
+    <a class="sidebar-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+      Trending
+    </a>
+    <a class="sidebar-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      New Releases
+    </a>
+    <a class="sidebar-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5z"/><path d="M20.5 10H19V8.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/><path d="M9.5 14c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5S8 21.33 8 20.5v-5c0-.83.67-1.5 1.5-1.5z"/><path d="M3.5 14H5v1.5c0 .83-.67 1.5-1.5 1.5S2 16.33 2 15.5 2.67 14 3.5 14z"/><path d="M14 14.5c0-.83.67-1.5 1.5-1.5h5c.83 0 1.5.67 1.5 1.5S21.33 16 20.5 16h-5c-.83 0-1.5-.67-1.5-1.5z"/><path d="M15.5 19H14v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5-.67-1.5-1.5-1.5z"/><path d="M10 9.5C10 8.67 9.33 8 8.5 8h-5C2.67 8 2 8.67 2 9.5S2.67 11 3.5 11h5c.83 0 1.5-.67 1.5-1.5z"/><path d="M8.5 5H10V3.5C10 2.67 9.33 2 8.5 2S7 2.67 7 3.5 7.67 5 8.5 5z"/></svg>
+      Genres
+    </a>
+    <a class="sidebar-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Authors
+    </a>
+  </div>
+
+  <div class="sidebar-divider"></div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Account</div>
+    <a class="sidebar-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      My Profile
+    </a>
+    <a class="sidebar-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="12 20 12 10"/><polyline points="18 20 18 4"/><polyline points="6 20 6 16"/></svg>
+      Reading History
+    </a>
+    <a class="sidebar-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 0 1 21 12a10 10 0 0 1-1.93 5.07"/><path d="M4.93 19.07A10 10 0 0 1 3 12a10 10 0 0 1 1.93-5.07"/></svg>
+      Settings
+    </a>
+  </div>
+
+  <div class="sidebar-bottom">
+    <a class="sidebar-item"
+   href="#"
+   onclick="logout()"
+   style="color:#e57373;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Log Out
+    </a>
+  </div>
+
+</aside>
+
+<!-- NAVBAR -->
+<nav>
+  <span class="nav-logo">📚 E-Library</span>
+
+  <ul class="nav-links">
+    <li><a href="#" class="active">Home</a></li>
+    <li><a href="#">Fiction</a></li>
+    <li><a href="#">Non-Fiction</a></li>
+    <li><a href="#">Academic</a></li>
+    <li><a href="#">Audiobooks</a></li>
+  </ul>
+
+  <div class="nav-right">
+    <div class="search-bar">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" placeholder="Search titles, authors, ISBN…" id="searchInput"/>
+    </div>
+    <button class="nav-icon-btn" title="Notifications" onclick="showToast('You have 2 new notifications')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+    </button>
+    <div class="avatar" id="userAvatar"></div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-book-stack">
+      <div class="hero-book" style="margin-bottom: 0;">
+        <div style="width:90px;height:130px;background:linear-gradient(145deg,#1a1a2e,#16213e);display:flex;align-items:flex-end;padding:8px;font-size:0.6rem;font-weight:700;color:rgba(255,255,255,0.7);line-height:1.3;">THE MIDNIGHT LIBRARY</div>
+      </div>
+      <div class="hero-book" style="margin-bottom:16px;">
+        <div style="width:80px;height:115px;background:linear-gradient(145deg,#2d1b1b,#4a1c1c);display:flex;align-items:flex-end;padding:8px;font-size:0.58rem;font-weight:700;color:rgba(255,255,255,0.7);line-height:1.3;">ATOMIC HABITS</div>
+      </div>
+      <div class="hero-book" style="margin-bottom:0px;">
+        <div style="width:95px;height:140px;background:linear-gradient(145deg,#0d2137,#0a3d5c);display:flex;align-items:flex-end;padding:8px;font-size:0.58rem;font-weight:700;color:rgba(255,255,255,0.7);line-height:1.3;">DUNE: PART ONE</div>
+      </div>
+      <div class="hero-book" style="margin-bottom:24px; opacity:0.6;">
+        <div style="width:72px;height:105px;background:linear-gradient(145deg,#1e2d1b,#2d4a1c);display:flex;align-items:flex-end;padding:6px;font-size:0.55rem;font-weight:700;color:rgba(255,255,255,0.7);line-height:1.3;">SAPIENS</div>
+      </div>
+    </div>
+
+    <div class="hero-content">
+      <div class="hero-tag">⭐ Editor's Pick</div>
+      <h1>The Name of<br>the Wind</h1>
+      <div class="hero-meta">
+        <span class="rating">★ 4.9</span>
+        <span>Patrick Rothfuss</span>
+        <span class="genre">Fantasy</span>
+        <span>662 pages</span>
+      </div>
+      <p>Follow Kvothe, a legendary wizard, through his humble beginnings as an inn's keeper to his days at the University — a sweeping tale of adventure, love, and tragedy.</p>
+      <div class="hero-btns">
+        <button class="btn-primary" onclick="showToast('Opening The Name of the Wind…')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Read Now
+        </button>
+        <button class="btn-secondary" onclick="showToast('Added to your reading list!')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          My List
+        </button>
+      </div>
+    </div>
+  </div>
+  <div style="margin-bottom:15px;color:#cccccc;">
+    Welcome back! Access your study materials and PDF resources.
+</div>
+
+  <!-- CONTENT AREA -->
+  <div class="content-area">
+
+    <!-- Genre Filter Pills -->
+    <div class="genre-row">
+      <div class="genre-pill active" onclick="filterGenre(this)">All</div>
+      <div class="genre-pill" onclick="filterGenre(this)">Fiction</div>
+      <div class="genre-pill" onclick="filterGenre(this)">Mystery</div>
+      <div class="genre-pill" onclick="filterGenre(this)">Sci-Fi</div>
+      <div class="genre-pill" onclick="filterGenre(this)">Fantasy</div>
+      <div class="genre-pill" onclick="filterGenre(this)">Biography</div>
+      <div class="genre-pill" onclick="filterGenre(this)">Self-Help</div>
+      <div class="genre-pill" onclick="filterGenre(this)">History</div>
+      <div class="genre-pill" onclick="filterGenre(this)">Technology</div>
+      <div class="genre-pill" onclick="filterGenre(this)">Romance</div>
+      <div class="genre-pill" onclick="filterGenre(this)">Academic</div>
+    </div>
+
+    <!-- CONTINUE READING -->
+    <div class="row">
+      <div class="row-header">
+        <span class="row-title">Continue Reading</span>
+      </div>
+      <div class="continue-row">
+        <div class="continue-item" onclick="showToast('Resuming Dune…')">
+          <div class="continue-thumb"><div style="width:100%;height:100%;background:linear-gradient(145deg,#0d2137,#0a3d5c);"></div></div>
+          <div class="continue-info">
+            <div class="continue-title">Dune</div>
+            <div class="continue-author">Frank Herbert · Sci-Fi</div>
+            <div class="progress-bar"><div class="progress-fill" style="width:68%"></div></div>
+            <div class="continue-pct">68% · ~3h 20m left</div>
+          </div>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="color:var(--text2)"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </div>
+        <div class="continue-item" onclick="showToast('Resuming Atomic Habits…')">
+          <div class="continue-thumb"><div style="width:100%;height:100%;background:linear-gradient(145deg,#2d1b1b,#4a1c1c);"></div></div>
+          <div class="continue-info">
+            <div class="continue-title">Atomic Habits</div>
+            <div class="continue-author">James Clear · Self-Help</div>
+            <div class="progress-bar"><div class="progress-fill" style="width:32%"></div></div>
+            <div class="continue-pct">32% · ~5h 10m left</div>
+          </div>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="color:var(--text2)"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </div>
+        <div class="continue-item" onclick="showToast('Resuming Sapiens…')">
+          <div class="continue-thumb"><div style="width:100%;height:100%;background:linear-gradient(145deg,#1e2d1b,#2d4a1c);"></div></div>
+          <div class="continue-info">
+            <div class="continue-title">Sapiens: A Brief History</div>
+            <div class="continue-author">Yuval Noah Harari · History</div>
+            <div class="progress-bar"><div class="progress-fill" style="width:85%"></div></div>
+            <div class="continue-pct">85% · ~1h left</div>
+          </div>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="color:var(--text2)"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOP PICKS -->
+    <div class="row">
+      <div class="row-header">
+        <span class="row-title">Top Picks for You</span>
+        <span class="row-explore">Explore All →</span>
+      </div>
+      <div class="row-wrapper">
+        <button class="scroll-btn left" onclick="scroll_row('picks',-1)">‹</button>
+        <div class="books-scroll" id="picks">
+          <!-- book cards generated via JS -->
+        </div>
+        <button class="scroll-btn right" onclick="scroll_row('picks',1)">›</button>
+      </div>
+    </div>
+
+    <!-- TRENDING NOW -->
+    <div class="row">
+      <div class="row-header">
+        <span class="row-title">Trending Now</span>
+        <span class="row-explore">Explore All →</span>
+      </div>
+      <div class="row-wrapper">
+        <button class="scroll-btn left" onclick="scroll_row('trending',-1)">‹</button>
+        <div class="books-scroll" id="trending"></div>
+        <button class="scroll-btn right" onclick="scroll_row('trending',1)">›</button>
+      </div>
+    </div>
+
+    <!-- BECAUSE YOU READ -->
+    <div class="row">
+      <div class="row-header">
+        <span class="row-title">Because You Read <em style="font-style:italic;color:var(--text2);font-size:1rem;">Dune</em></span>
+        <span class="row-explore">Explore All →</span>
+      </div>
+      <div class="row-wrapper">
+        <button class="scroll-btn left" onclick="scroll_row('because',-1)">‹</button>
+        <div class="books-scroll" id="because"></div>
+        <button class="scroll-btn right" onclick="scroll_row('because',1)">›</button>
+      </div>
+    </div>
+
+    <!-- NEW RELEASES -->
+    <div class="row">
+      <div class="row-header">
+        <span class="row-title">New Releases</span>
+        <span class="row-explore">Explore All →</span>
+      </div>
+      <div class="row-wrapper">
+        <button class="scroll-btn left" onclick="scroll_row('new',-1)">‹</button>
+        <div class="books-scroll" id="new"></div>
+        <button class="scroll-btn right" onclick="scroll_row('new',1)">›</button>
+      </div>
+    </div>
+
+    <!-- ACADEMIC COLLECTION -->
+    <div class="row">
+      <div class="row-header">
+        <span class="row-title">Academic Collection</span>
+        <span class="row-explore">Explore All →</span>
+      </div>
+      <div class="row-wrapper">
+        <button class="scroll-btn left" onclick="scroll_row('academic',-1)">‹</button>
+        <div class="books-scroll" id="academic"></div>
+        <button class="scroll-btn right" onclick="scroll_row('academic',1)">›</button>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const bookData = {
+  picks: [
+    {title:"Project Hail Mary",author:"Andy Weir",genre:"Sci-Fi",color:["#0a1628","#1a3a6e"],badge:"hot"},
+    {title:"The Alchemist",author:"Paulo Coelho",genre:"Fiction",color:["#2d1a00","#6b3d00"],badge:null},
+    {title:"1984",author:"George Orwell",genre:"Dystopia",color:["#0d0d0d","#333"],badge:null},
+    {title:"Thinking Fast & Slow",author:"D. Kahneman",genre:"Psychology",color:["#001a2e","#003d5c"],badge:"hot"},
+    {title:"The Hobbit",author:"J.R.R. Tolkien",genre:"Fantasy",color:["#1a2e00","#3d6b00"],badge:null},
+    {title:"Educated",author:"Tara Westover",genre:"Memoir",color:["#2e1a00","#6b3d00"],badge:null},
+    {title:"The Road",author:"Cormac McCarthy",genre:"Post-Apocalyptic",color:["#1a1a1a","#333"],badge:null},
+    {title:"Becoming",author:"Michelle Obama",genre:"Biography",color:["#1a001a","#400040"],badge:"hot"},
+    {title:"The Subtle Art",author:"Mark Manson",genre:"Self-Help",color:["#2e0000","#700000"],badge:null},
+    {title:"Cosmos",author:"Carl Sagan",genre:"Science",color:["#001428","#002d5c"],badge:null},
+  ],
+  trending: [
+    {title:"Lessons in Chemistry",author:"Bonnie Garmus",genre:"Fiction",color:["#1a0a2e","#3d1a6e"],badge:"hot"},
+    {title:"Fourth Wing",author:"Rebecca Yarros",genre:"Fantasy",color:["#2e0a00","#6e1a00"],badge:"hot"},
+    {title:"Happy Place",author:"Emily Henry",genre:"Romance",color:["#2e001a","#6e003d"],badge:null},
+    {title:"Tomorrow & Tomorrow",author:"A. Kaufman",genre:"Sci-Fi",color:["#002e1a","#006e3d"],badge:null},
+    {title:"Iron Flame",author:"Rebecca Yarros",genre:"Fantasy",color:["#2e1a00","#6e3d00"],badge:"new"},
+    {title:"Holly",author:"Stephen King",genre:"Thriller",color:["#1a001a","#400040"],badge:null},
+    {title:"Yellow Face",author:"R.F. Kuang",genre:"Thriller",color:["#2e2e00","#6e6e00"],badge:"hot"},
+    {title:"Intermezzo",author:"Sally Rooney",genre:"Literary",color:["#001a2e","#003d6e"],badge:"new"},
+    {title:"The Women",author:"Kristin Hannah",genre:"Historical",color:["#2e0000","#700000"],badge:null},
+    {title:"James",author:"Percival Everett",genre:"Literary",color:["#1a1400","#3d3000"],badge:"hot"},
+  ],
+  because: [
+    {title:"Foundation",author:"Isaac Asimov",genre:"Sci-Fi",color:["#001428","#00305c"],badge:null},
+    {title:"Ender's Game",author:"Orson Scott Card",genre:"Sci-Fi",color:["#0a1a0a","#1a3d1a"],badge:null},
+    {title:"Hyperion",author:"Dan Simmons",genre:"Sci-Fi",color:["#1a0a00","#3d1a00"],badge:"hot"},
+    {title:"The Left Hand of Darkness",author:"Le Guin",genre:"Sci-Fi",color:["#1a1a2e","#3d3d6e"],badge:null},
+    {title:"Snow Crash",author:"Neal Stephenson",genre:"Cyberpunk",color:["#001a1a","#003d3d"],badge:null},
+    {title:"Neuromancer",author:"W. Gibson",genre:"Cyberpunk",color:["#0d0d0d","#252525"],badge:null},
+    {title:"The Dispossessed",author:"Le Guin",genre:"Sci-Fi",color:["#001400","#002e00"],badge:null},
+    {title:"Old Man's War",author:"J. Scalzi",genre:"Military Sci-Fi",color:["#2e0000","#5c0000"],badge:null},
+  ],
+  new: [
+    {title:"The God of the Woods",author:"Liz Moore",genre:"Mystery",color:["#001a00","#003d00"],badge:"new"},
+    {title:"All Fours",author:"Miranda July",genre:"Literary",color:["#1a001a","#3d003d"],badge:"new"},
+    {title:"Orbital",author:"Samantha Harvey",genre:"Fiction",color:["#001428","#002a5c"],badge:"new"},
+    {title:"Universal Harvester",author:"J. Darnielle",genre:"Horror",color:["#1a0000","#3d0000"],badge:"new"},
+    {title:"The Familiar",author:"Leigh Bardugo",genre:"Fantasy",color:["#2e1a00","#5c3600"],badge:"new"},
+    {title:"Long Island",author:"Colm Tóibín",genre:"Literary",color:["#001a1a","#003636"],badge:"new"},
+    {title:"Cher: The Memoir",author:"Cher",genre:"Biography",color:["#2e002e","#5c005c"],badge:"new"},
+    {title:"Eruption",author:"Michael Crichton",genre:"Thriller",color:["#2e0a00","#5c1400"],badge:"new"},
+    {title:"Wind & Truth",author:"Brandon Sanderson",genre:"Fantasy",color:["#001428","#00285c"],badge:"new"},
+  ],
+  academic: [
+    {title:"Introduction to Algorithms",author:"CLRS",genre:"Computer Science",color:["#001a2e","#00355c"],badge:null},
+    {title:"The Elements of Style",author:"Strunk & White",genre:"Writing",color:["#2e1a00","#5c3600"],badge:null},
+    {title:"A Brief History of Time",author:"S. Hawking",genre:"Physics",color:["#001428","#001f3d"],badge:null},
+    {title:"The Origin of Species",author:"C. Darwin",genre:"Biology",color:["#001a00","#003300"],badge:null},
+    {title:"Principles of Economics",author:"N. Mankiw",genre:"Economics",color:["#2e2e00","#5c5c00"],badge:null},
+    {title:"The Republic",author:"Plato",genre:"Philosophy",color:["#1a1a2e","#2e2e5c"],badge:null},
+    {title:"Gray's Anatomy",author:"H. Gray",genre:"Medicine",color:["#2e0000","#5c0000"],badge:null},
+    {title:"Calculus: Early Transcendentals",author:"Stewart",genre:"Mathematics",color:["#002e1a","#005c36"],badge:null},
+    {title:"The Art of War",author:"Sun Tzu",genre:"Strategy",color:["#1a1400","#33280a"],badge:null},
+  ]
+};
+
+function makeCard(book, type) {
+  const card = document.createElement('div');
+  card.className = 'book-card ' + (type === 'trending' ? 'card-wide' : type === 'because' ? 'card-square' : 'card-portrait');
+  const ph = document.createElement('div');
+  ph.className = 'book-placeholder';
+  ph.style.background = `linear-gradient(145deg, ${book.color[0]}, ${book.color[1]})`;
+  const isLandscape = type === 'trending' || type === 'because';
+  ph.innerHTML = isLandscape
+    ? `<div style="flex:1;display:flex;align-items:center;justify-content:center;padding:0.5rem;text-align:center;font-size:0.72rem;font-weight:700;line-height:1.3;">${book.title}</div><div style="font-size:0.58rem;color:rgba(255,255,255,0.5);padding:0 0.5rem 0.4rem;">${book.genre}</div>`
+    : `<div style="flex:1;display:flex;align-items:center;justify-content:center;padding:0.5rem;text-align:center;font-size:0.68rem;font-weight:700;line-height:1.3;">${book.title}</div><div style="font-size:0.55rem;color:rgba(255,255,255,0.5);padding:0 0.4rem 0.3rem;">${book.author.split(' ').pop()}</div>`;
+  card.appendChild(ph);
+  if (book.badge) {
+    const badge = document.createElement('div');
+    badge.className = 'card-badge ' + (book.badge === 'new' ? 'badge-new' : book.badge === 'hot' ? 'badge-hot' : 'badge-netflix');
+    badge.textContent = book.badge === 'new' ? 'NEW' : book.badge === 'hot' ? '🔥 HOT' : 'FEATURED';
+    card.appendChild(badge);
+  }
+  const overlay = document.createElement('div');
+  overlay.className = 'card-overlay';
+  overlay.innerHTML = `<div class="card-overlay-title">${book.title}</div><div class="card-overlay-meta"><span>★ ${(3.8 + Math.random()*1.2).toFixed(1)}</span><span>${book.genre}</span></div>`;
+  card.appendChild(overlay);
+  card.onclick = () => showToast(`Opening "${book.title}" by ${book.author}`);
+  return card;
+}
+
+Object.entries(bookData).forEach(([key, books]) => {
+  const container = document.getElementById(key);
+  if (!container) return;
+  books.forEach(b => container.appendChild(makeCard(b, key)));
+});
+
+function scroll_row(id, dir) {
+  const el = document.getElementById(id);
+  el.scrollBy({ left: dir * 480, behavior: 'smooth' });
+}
+
+function filterGenre(pill) {
+  document.querySelectorAll('.genre-pill').forEach(p => p.classList.remove('active'));
+  pill.classList.add('active');
+  showToast('Filtering by ' + pill.textContent);
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+document.getElementById('searchInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.value.trim()) {
+    showToast('Searching for "' + e.target.value.trim() + '"…');
+  }
+});
+</script>
+<script>
+const userName = localStorage.getItem("userName");
+
+if(userName){
+
+    const initials = userName
+    .split(" ")
+    .map(word => word[0])
+    .join("")
+    .toUpperCase();
+
+    document.getElementById("userAvatar").innerText = initials;
+    document.getElementById("userAvatar").title = userName;
+}
+</script>
+<script>
+function logout(){
+
+    localStorage.removeItem("userName");
+
+    alert("Logged Out Successfully");
+
+    window.location.href = "login.html";
+}
+</script>
+<footer style="
+text-align:center;
+padding:20px;
+color:#888;
+font-size:14px;">
+© 2026 E-Library Management System
+</footer>
+</body>
+</html>
