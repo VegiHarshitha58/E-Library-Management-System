@@ -34,9 +34,12 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
 
 <input
 type="text"
-placeholder="Search PDFs, authors, categories...">
+placeholder="Search PDFs, authors, categories..."
+id="pdfSearchInput"
+autocomplete="off">
 
 <i class="fas fa-search"></i>
+<ul class="search-suggestions" id="pdfSearchSuggestions"></ul>
 
 </div>
 
@@ -168,6 +171,103 @@ onclick="alert('PDF details page coming soon')">
 </div>
 
 </section>
+
+<script>
+const pdfSearchInput = document.getElementById("pdfSearchInput");
+const pdfSearchSuggestions = document.getElementById("pdfSearchSuggestions");
+const pdfCards = [...document.querySelectorAll(".pdf-card")];
+const pdfSuggestions = pdfCards.map(card => {
+    const title = card.querySelector("h3").textContent.trim();
+    const meta = card.querySelector("p").textContent.trim();
+    return { title, meta, card };
+});
+let activePdfSuggestionIndex = -1;
+
+function getPdfMatches(query) {
+    const searchTerm = query.trim().toLowerCase();
+    if (!searchTerm) return [];
+
+    return pdfSuggestions
+        .filter(pdf =>
+            pdf.title.toLowerCase().includes(searchTerm) ||
+            pdf.meta.toLowerCase().includes(searchTerm)
+        )
+        .slice(0, 6);
+}
+
+function renderPdfSuggestions(matches) {
+    pdfSearchSuggestions.innerHTML = "";
+    activePdfSuggestionIndex = -1;
+
+    if (!matches.length) {
+        pdfSearchSuggestions.classList.remove("show");
+        return;
+    }
+
+    matches.forEach(pdf => {
+        const item = document.createElement("li");
+        item.innerHTML = `<span class="suggestion-title">${pdf.title}</span><span class="suggestion-meta">${pdf.meta}</span>`;
+        item.addEventListener("mousedown", event => {
+            event.preventDefault();
+            choosePdfSuggestion(pdf);
+        });
+        pdfSearchSuggestions.appendChild(item);
+    });
+
+    pdfSearchSuggestions.classList.add("show");
+}
+
+function choosePdfSuggestion(pdf) {
+    pdfSearchInput.value = pdf.title;
+    pdfSearchSuggestions.classList.remove("show");
+
+    document.querySelectorAll(".pdf-card.search-highlight")
+        .forEach(card => card.classList.remove("search-highlight"));
+
+    pdf.card.classList.add("search-highlight");
+    pdf.card.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
+    setTimeout(() => pdf.card.classList.remove("search-highlight"), 2500);
+}
+
+function moveActivePdfSuggestion(direction) {
+    const items = [...pdfSearchSuggestions.querySelectorAll("li")];
+    if (!items.length) return;
+
+    activePdfSuggestionIndex = (activePdfSuggestionIndex + direction + items.length) % items.length;
+    items.forEach(item => item.classList.remove("active"));
+    items[activePdfSuggestionIndex].classList.add("active");
+}
+
+pdfSearchInput.addEventListener("input", () => {
+    renderPdfSuggestions(getPdfMatches(pdfSearchInput.value));
+});
+
+pdfSearchInput.addEventListener("keydown", event => {
+    const matches = getPdfMatches(pdfSearchInput.value);
+
+    if (event.key === "ArrowDown") {
+        event.preventDefault();
+        moveActivePdfSuggestion(1);
+    } else if (event.key === "ArrowUp") {
+        event.preventDefault();
+        moveActivePdfSuggestion(-1);
+    } else if (event.key === "Enter" && activePdfSuggestionIndex >= 0) {
+        event.preventDefault();
+        choosePdfSuggestion(matches[activePdfSuggestionIndex]);
+    } else if (event.key === "Enter" && matches.length) {
+        event.preventDefault();
+        choosePdfSuggestion(matches[0]);
+    } else if (event.key === "Escape") {
+        pdfSearchSuggestions.classList.remove("show");
+    }
+});
+
+document.addEventListener("click", event => {
+    if (!event.target.closest(".search-box")) {
+        pdfSearchSuggestions.classList.remove("show");
+    }
+});
+</script>
 
 </body>
 </html>
