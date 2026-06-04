@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>e-Library Profile</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+
+:root {
+    --ink: #1a1025;
+    --parchment: #fdf6ec;
+    --gold: #c9a84c;
+    --gold-light: #e8c96e;
+    --burgundy: #6b2737;
+    --accent: #9b4dca;
+    --paper: #fff9f0;
+    --muted: #7a6e62;
+    --border: #e0d5c5;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: var(--parchment);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'DM Sans', sans-serif;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Aged paper texture via repeating pattern */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+        radial-gradient(ellipse at 20% 20%, rgba(201,168,76,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(107,39,55,0.06) 0%, transparent 50%),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='4' height='4' fill='%23fdf6ec'/%3E%3Ccircle cx='1' cy='1' r='0.5' fill='%23d4c9b0' opacity='0.3'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Decorative corner flourishes */
+body::after {
+    content: '❧';
+    position: fixed;
+    bottom: 30px;
+    right: 40px;
+    font-size: 48px;
+    color: var(--gold);
+    opacity: 0.15;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.profile-container {
+    position: relative;
+    z-index: 1;
+    width: 90%;
+    max-width: 680px;
+    background: var(--paper);
+    padding: 44px 48px;
+    border-radius: 4px;
+    box-shadow:
+        0 2px 4px rgba(26,16,37,0.06),
+        0 8px 24px rgba(26,16,37,0.10),
+        0 32px 64px rgba(26,16,37,0.08),
+        inset 0 0 0 1px rgba(201,168,76,0.25);
+    animation: pageOpen 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes pageOpen {
+    from { opacity: 0; transform: translateY(20px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Top ornamental rule */
+.profile-container::before {
+    content: '— ✦ —';
+    display: block;
+    text-align: center;
+    font-size: 13px;
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    margin-bottom: 28px;
+    font-family: 'Playfair Display', serif;
+}
+
+/* Bottom ornamental rule */
+.profile-container::after {
+    content: '— ✦ —';
+    display: block;
+    text-align: center;
+    font-size: 13px;
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    margin-top: 32px;
+    font-family: 'Playfair Display', serif;
+}
+
+.profile-header {
+    text-align: center;
+    margin-bottom: 36px;
+}
+
+.avatar-container {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+}
+
+/* Gold ring around avatar */
+.avatar-container::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    background: conic-gradient(
+        var(--gold) 0deg,
+        var(--gold-light) 90deg,
+        var(--gold) 180deg,
+        var(--gold-light) 270deg,
+        var(--gold) 360deg
+    );
+    z-index: 0;
+    animation: spinSlow 12s linear infinite;
+}
+
+@keyframes spinSlow {
+    to { transform: rotate(360deg); }
+}
+
+.avatar-container::after {
+    content: '✎';
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    width: 28px;
+    height: 28px;
+    background: var(--burgundy);
+    color: var(--gold-light);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    z-index: 2;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    transition: background 0.2s;
+}
+
+.avatar-container:hover::after {
+    background: var(--accent);
+}
+
+.avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid var(--paper);
+    position: relative;
+    z-index: 1;
+    display: block;
+    transition: filter 0.3s;
+}
+
+.avatar-container:hover .avatar {
+    filter: brightness(0.9) sepia(0.1);
+}
+
+.profile-header h2 {
+    margin-top: 18px;
+    color: var(--ink);
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+.profile-header p {
+    color: var(--muted);
+    margin-top: 5px;
+    font-size: 14px;
+    font-weight: 300;
+    letter-spacing: 0.03em;
+}
+
+/* Divider between header and form */
+.divider {
+    width: 60px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: 20px auto 0;
+}
+
+.form-group {
+    margin-bottom: 22px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 13px 16px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-size: 15px;
+    font-family: 'DM Sans', sans-serif;
+    background: rgba(255,249,240,0.6);
+    color: var(--ink);
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    outline: none;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    border-color: var(--gold);
+    background: #fffef9;
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.12);
+}
+
+.form-group textarea {
+    resize: none;
+    line-height: 1.6;
+}
+
+.save-btn {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 3px;
+    background: linear-gradient(135deg, var(--burgundy) 0%, #8b1a2e 100%);
+    color: var(--gold-light);
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 16px rgba(107,39,55,0.3);
+}
+
+.save-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(201,168,76,0.15) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.save-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px rgba(107,39,55,0.4);
+}
+
+.save-btn:hover::before {
+    opacity: 1;
+}
+
+.save-btn:active {
+    transform: translateY(0);
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="profile-container">
+
+    <div class="profile-header">
+
+        <label for="avatarInput" class="avatar-container">
+            <img
+                src="https://via.placeholder.com/130"
+                id="avatarPreview"
+                class="avatar"
+                alt="Avatar">
+        </label>
+
+        <input
+            type="file"
+            id="avatarInput"
+            accept="image/*"
+            hidden>
+
+        <h2 id="displayName">Priscilla John</h2>
+        <p id="displayEmail">priscilla@example.com</p>
+        <div class="divider"></div>
+
+    </div>
+
+    <form id="profileForm">
+
+        <div class="form-group">
+            <label>Name</label>
+            <input
+                type="text"
+                id="name"
+                value="Priscilla John">
+        </div>
+
+        <div class="form-group">
+            <label>Email</label>
+            <input
+                type="email"
+                id="email"
+                value="priscilla@example.com">
+        </div>
+
+        <div class="form-group">
+            <label>Bio</label>
+            <textarea
+                id="bio"
+                rows="4">the war is jehovas.</textarea>
+        </div>
+
+        <button type="submit" class="save-btn">
+            Save Changes
+        </button>
+
+    </form>
+
+</div>
+
+<script>
+
+// Load profile from backend when page opens
+window.onload = loadProfile;
+
+function loadProfile() {
+
+    fetch("http://localhost:5000/api/profile")
+    .then(response => response.json())
+    .then(data => {
+
+        document.getElementById("name").value =
+            data.name || "";
+
+        document.getElementById("email").value =
+            data.email || "";
+
+        document.getElementById("bio").value =
+            data.bio || "";
+
+        document.getElementById("displayName").innerText =
+            data.name || "";
+
+        document.getElementById("displayEmail").innerText =
+            data.email || "";
+
+    })
+    .catch(error => {
+        console.error("Error loading profile:", error);
+    });
+
+}
+
+
+// Avatar preview
+const avatarInput =
+document.getElementById("avatarInput");
+
+const avatarPreview =
+document.getElementById("avatarPreview");
+
+avatarInput.addEventListener(
+"change",
+function(){
+
+    const file = this.files[0];
+
+    if(file){
+
+        avatarPreview.src =
+        URL.createObjectURL(file);
+
+    }
+
+});
+
+
+// Save profile to database
+document
+.getElementById("profileForm")
+.addEventListener(
+"submit",
+function(e){
+
+    e.preventDefault();
+
+    const profileData = {
+
+        name:
+        document.getElementById("name").value,
+
+        email:
+        document.getElementById("email").value,
+
+        bio:
+        document.getElementById("bio").value
+
+    };
+
+    fetch(
+        "http://localhost:5000/api/profile",
+        {
+            method: "PUT",
+
+            headers: {
+                "Content-Type":
+                "application/json"
+            },
+
+            body:
+            JSON.stringify(profileData)
+        }
+    )
+    .then(response => response.json())
+    .then(data => {
+
+        document.getElementById("displayName")
+        .innerText =
+        profileData.name;
+
+        document.getElementById("displayEmail")
+        .innerText =
+        profileData.email;
+
+        alert(data.message);
+
+    })
+    .catch(error => {
+
+        console.error(error);
+
+        alert(
+            "Error updating profile"
+        );
+
+    });
+
+});
+
+</script>
+
+
+
+</body>
+</html>

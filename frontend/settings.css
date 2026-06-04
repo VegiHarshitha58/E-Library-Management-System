@@ -1,0 +1,52 @@
+body{
+    margin:0;
+    font-family:Arial;
+    background:#141414;
+    color:white;
+}
+
+.container{
+    width:80%;
+    margin:auto;
+    padding:30px;
+}
+
+h1{
+    color:#E50914;
+    margin-bottom:20px;
+}
+
+.card{
+    background:#1f1f1f;
+    padding:20px;
+    margin-bottom:20px;
+    border-radius:10px;
+    border:1px solid #333;
+}
+
+.card h2{
+    color:#E50914;
+}
+
+label{
+    display:block;
+    margin:10px 0;
+}
+
+input[type="checkbox"]{
+    transform:scale(1.2);
+    accent-color:#E50914;
+}
+
+button{
+    background:#E50914;
+    color:white;
+    border:none;
+    padding:12px 20px;
+    cursor:pointer;
+    border-radius:6px;
+}
+
+button:hover{
+    background:#ff1f2d;
+}

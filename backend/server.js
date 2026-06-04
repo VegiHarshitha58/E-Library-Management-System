@@ -257,6 +257,185 @@ app.delete("/favorites/:id", (req, res) => {
 
 });
 
+// Get Reading List
+app.get("/readinglist", (req, res) => {
+    db.query(
+        "SELECT * FROM reading_list",
+        (err, result) => {
+            if (err) {
+                res.status(500).json(err);
+            } else {
+                res.json(result);
+            }
+        }
+    );
+});
+
+// Add to Reading List
+app.post("/readinglist", (req, res) => {
+
+    const { user_id, pdf_id } = req.body;
+
+    db.query(
+        "INSERT INTO reading_list(user_id, pdf_id) VALUES (?, ?)",
+        [user_id, pdf_id],
+        (err, result) => {
+            if (err) {
+                res.status(500).json(err);
+            } else {
+                res.json({ message: "Added to Reading List" });
+            }
+        }
+    );
+});
+
+// Remove from Reading List
+app.delete("/readinglist/:id", (req, res) => {
+
+    db.query(
+        "DELETE FROM reading_list WHERE id = ?",
+        [req.params.id],
+        (err, result) => {
+            if (err) {
+                res.status(500).json(err);
+            } else {
+                res.json({ message: "Removed Successfully" });
+            }
+        }
+    );
+});
+app.get("/api/profile", (req, res) => {
+
+    db.query(
+        "SELECT * FROM users LIMIT 1",
+        (err, result) => {
+
+            if(err){
+                return res.status(500).json(err);
+            }
+
+            res.json(result[0]);
+
+        }
+    );
+
+});
+app.put("/api/profile", (req, res) => {
+
+    const { name, email, bio } = req.body;
+
+    db.query(
+        "UPDATE users SET name=?, email=?, bio=? WHERE id=1",
+        [name, email, bio],
+        (err, result) => {
+
+            if(err){
+                return res.status(500).json(err);
+            }
+
+            res.json({
+                message:
+                "Profile Updated Successfully"
+            });
+
+        }
+    );
+
+});
+app.get("/get-settings/:id", (req, res) => {
+
+    db.query(
+        "SELECT * FROM settings WHERE user_id=?",
+        [req.params.id],
+        (err, result) => {
+
+            if(err){
+                return res.status(500).json(err);
+            }
+
+            res.json(result[0]);
+
+        }
+    );
+
+});
+app.post("/save-settings", (req, res) => {
+
+    const data = req.body;
+
+    db.query(
+        `UPDATE settings SET
+
+        dark_mode=?,
+        auto_save_progress=?,
+        remember_last_page=?,
+        continuous_scrolling=?,
+        fullscreen_reader=?,
+        reading_progress_bar=?,
+
+        recommended_pdfs=?,
+        recently_read_pdfs=?,
+        trending_pdfs=?,
+        new_releases=?,
+
+        new_pdf_alerts=?,
+        contributor_updates=?,
+        weekly_summary=?
+
+        WHERE user_id=?`,
+
+        [
+
+            data.dark_mode,
+            data.auto_save_progress,
+            data.remember_last_page,
+            data.continuous_scrolling,
+            data.fullscreen_reader,
+            data.reading_progress_bar,
+
+            data.recommended_pdfs,
+            data.recently_read_pdfs,
+            data.trending_pdfs,
+            data.new_releases,
+
+            data.new_pdf_alerts,
+            data.contributor_updates,
+            data.weekly_summary,
+
+            data.user_id
+
+        ],
+
+        (err, result) => {
+
+            if(err){
+                return res.status(500).send("Error");
+            }
+
+            res.send("Settings Saved Successfully");
+
+        }
+
+    );
+
+});
+app.get("/notifications", (req, res) => {
+
+    db.query(
+        "SELECT * FROM notifications ORDER BY created_at DESC",
+        (err, result) => {
+
+            if(err){
+                return res.status(500).json(err);
+            }
+
+            res.json(result);
+
+        }
+    );
+
+});
+
 // HOME ROUTE
 
 app.get("/",(req,res)=>{

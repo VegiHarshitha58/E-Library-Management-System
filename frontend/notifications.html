@@ -44,33 +44,49 @@ research papers, and library announcements.
 
 </section>
 
-<section class="notifications">
-
-<div class="notification-card">
-<h3>📚 New PDF Uploaded</h3>
-<p>DBMS Complete Notes added by Computer Science Department.</p>
-<span>2 hours ago</span>
-</div>
-
-<div class="notification-card">
-<h3>👨‍🏫 New Contributor Added</h3>
-<p>Physics Department joined as a contributor.</p>
-<span>Today</span>
-</div>
-
-<div class="notification-card">
-<h3>📄 New Research Paper</h3>
-<p>Artificial Intelligence Research Paper uploaded.</p>
-<span>Yesterday</span>
-</div>
-
-<div class="notification-card">
-<h3>📂 New Category Added</h3>
-<p>Machine Learning category is now available.</p>
-<span>Yesterday</span>
-</div>
+<section class="notifications" id="notificationsContainer">
 
 </section>
+<script>
+
+fetch("http://localhost:5000/notifications")
+
+.then(response => response.json())
+
+.then(data => {
+
+    const container =
+    document.getElementById("notificationsContainer");
+
+    container.innerHTML = "";
+
+    data.forEach(item => {
+
+        container.innerHTML += `
+
+        <div class="notification-card">
+
+            <h3>🔔 Notification</h3>
+
+            <p>${item.message}</p>
+
+            <span>${item.created_at}</span>
+
+        </div>
+
+        `;
+
+    });
+
+})
+
+.catch(error => {
+
+    console.error(error);
+
+});
+
+</script>
 
 </body>
 </html>

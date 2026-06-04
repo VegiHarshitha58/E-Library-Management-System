@@ -1,0 +1,252 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings</title>
+
+<link rel="stylesheet" href="settings.css">
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Settings</h1>
+
+    <div class="settings-grid">
+
+        <div class="card">
+            <h2>Reading Experience</h2>
+
+            <div class="option">
+                <input type="checkbox" id="darkMode">
+                Dark Mode
+            </div>
+
+            <div class="option">
+                <input type="checkbox" id="rememberPage">
+                Remember Last Page
+            </div>
+
+            <div class="option">
+                <input type="checkbox" id="autoSave">
+                Auto Save Progress
+            </div>
+
+            <div class="option">
+                <input type="checkbox" id="continuousScroll">
+                Continuous Scrolling
+            </div>
+
+            <div class="option">
+                <input type="checkbox" id="fullscreenReader">
+                Fullscreen Reader
+            </div>
+
+            <div class="option">
+                <input type="checkbox" id="progressBar">
+                Reading Progress Bar
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Library Preferences</h2>
+
+            <div class="option">
+                <input type="checkbox" id="recommendedPDFs">
+                Recommended PDFs
+            </div>
+
+            <div class="option">
+                <input type="checkbox" id="recentlyRead">
+                Recently Read PDFs
+            </div>
+
+            <div class="option">
+                <input type="checkbox" id="trendingPDFs">
+                Trending PDFs
+            </div>
+
+            <div class="option">
+                <input type="checkbox" id="newReleases">
+                New Releases
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Notifications</h2>
+
+            <div class="option">
+                <input type="checkbox" id="newAlerts">
+                New PDF Alerts
+            </div>
+
+            <div class="option">
+                <input type="checkbox" id="contributorUpdates">
+                Contributor Updates
+            </div>
+
+            <div class="option">
+                <input type="checkbox" id="weeklySummary">
+                Weekly Summary
+            </div>
+        </div>
+
+    </div>
+
+    <button class="save-btn" onclick="saveSettings()">
+        Save Changes
+    </button>
+
+</div>
+
+<script>
+
+
+
+function saveSettings() {
+
+    const data = {
+
+        user_id: 1,
+
+        dark_mode:
+            document.getElementById("darkMode").checked,
+
+        auto_save_progress:
+            document.getElementById("autoSave").checked,
+
+        remember_last_page:
+            document.getElementById("rememberPage").checked,
+
+        continuous_scrolling:
+            document.getElementById("continuousScroll").checked,
+
+        fullscreen_reader:
+            document.getElementById("fullscreenReader").checked,
+
+        reading_progress_bar:
+            document.getElementById("progressBar").checked,
+
+        recommended_pdfs:
+            document.getElementById("recommendedPDFs").checked,
+
+        recently_read_pdfs:
+            document.getElementById("recentlyRead").checked,
+
+        trending_pdfs:
+            document.getElementById("trendingPDFs").checked,
+
+        new_releases:
+            document.getElementById("newReleases").checked,
+
+        new_pdf_alerts:
+            document.getElementById("newAlerts").checked,
+
+        contributor_updates:
+            document.getElementById("contributorUpdates").checked,
+
+        weekly_summary:
+            document.getElementById("weeklySummary").checked
+
+    };
+
+    fetch("http://localhost:5000/save-settings", {
+
+        method: "POST",
+
+        headers: {
+            "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify(data)
+
+    })
+
+    .then(response => response.text())
+
+    .then(message => {
+
+        alert(message);
+
+        console.log(message);
+
+    })
+
+    .catch(error => {
+
+        console.error(error);
+
+        alert("Error connecting to server");
+
+    });
+
+}
+
+
+window.onload = function() {
+
+    fetch("http://localhost:5000/get-settings/1")
+
+    .then(response => response.json())
+
+    .then(data => {
+
+        document.getElementById("darkMode").checked =
+            data.dark_mode == 1;
+
+        document.getElementById("rememberPage").checked =
+            data.remember_last_page == 1;
+
+        document.getElementById("autoSave").checked =
+            data.auto_save_progress == 1;
+
+        document.getElementById("continuousScroll").checked =
+            data.continuous_scrolling == 1;
+
+        document.getElementById("fullscreenReader").checked =
+            data.fullscreen_reader == 1;
+
+        document.getElementById("progressBar").checked =
+            data.reading_progress_bar == 1;
+
+        document.getElementById("recommendedPDFs").checked =
+            data.recommended_pdfs == 1;
+
+        document.getElementById("recentlyRead").checked =
+            data.recently_read_pdfs == 1;
+
+        document.getElementById("trendingPDFs").checked =
+            data.trending_pdfs == 1;
+
+        document.getElementById("newReleases").checked =
+            data.new_releases == 1;
+
+        document.getElementById("newAlerts").checked =
+            data.new_pdf_alerts == 1;
+
+        document.getElementById("contributorUpdates").checked =
+            data.contributor_updates == 1;
+
+        document.getElementById("weeklySummary").checked =
+            data.weekly_summary == 1;
+
+    })
+
+    .catch(error => {
+
+        console.error(error);
+
+    });
+
+};
+
+
+
+</script>
+
+</body>
+</html>
+
