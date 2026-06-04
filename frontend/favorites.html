@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Favorites</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #0d0d0d;
+      color: white;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #e50914;
+    }
+
+    .grid {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .card {
+      width: 150px;
+      background: #1e1e1e;
+      padding: 10px;
+      border-radius: 8px;
+    }
+
+    .card img {
+      width: 100%;
+      border-radius: 6px;
+    }
+
+    .remove {
+      margin-top: 5px;
+      background: red;
+      color: white;
+      border: none;
+      padding: 5px;
+      width: 100%;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>❤️ My Favorites</h1>
+
+  <div class="grid" id="favGrid"></div>
+
+<script>
+let favorites = JSON.parse(localStorage.getItem("favorites")) || [];
+
+const grid = document.getElementById("favGrid");
+
+function renderFavorites() {
+  grid.innerHTML = "";
+
+  if (favorites.length === 0) {
+    grid.innerHTML = "<p>No favorites yet 💔</p>";
+    return;
+  }
+
+  favorites.forEach((book, index) => {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    card.innerHTML = `
+      <img src="${book.cover}">
+      <h4>${book.title}</h4>
+      <p>${book.author}</p>
+      <button class="remove" onclick="removeFav(${index})">Remove</button>
+    `;
+
+    grid.appendChild(card);
+  });
+}
+
+function removeFav(index) {
+  favorites.splice(index, 1);
+  localStorage.setItem("favorites", JSON.stringify(favorites));
+  renderFavorites();
+}
+
+renderFavorites();
+</script>
+
+</body>
+</html>

@@ -10,7 +10,7 @@ app.use(express.json());
 const db = mysql.createConnection({
     host: "localhost",
     user: "root",
-    password: "Your MySQL password",
+    password: "Harshitha@1435",
     database: "elibrary"
 });
 
@@ -125,6 +125,137 @@ app.post("/login",(req,res)=>{
 
 });
 
+app.get("/categories", (req, res) => {
+
+    db.query(
+        "SELECT * FROM categories",
+        (err, result) => {
+
+            if(err){
+                console.log(err);
+                return res.status(500).send("Database Error");
+            }
+
+            res.json(result);
+
+        }
+    );
+
+});
+
+app.get("/contributors", (req, res) => {
+
+    db.query(
+        "SELECT DISTINCT contributor FROM pdfs",
+        (err, result) => {
+
+            if(err){
+                console.log(err);
+                return res.status(500).send("Database Error");
+            }
+
+            res.json(result);
+
+        }
+    );
+
+});
+app.get("/trending", (req, res) => {
+
+    db.query(
+        "SELECT * FROM pdfs",
+        (err, result) => {
+
+            if(err){
+                return res.status(500).send("Database Error");
+            }
+
+            res.json(result);
+        }
+    );
+
+});
+app.get("/newreleases", (req, res) => {
+
+    db.query(
+        "SELECT * FROM pdfs",
+        (err, result) => {
+
+            if(err){
+
+                console.log(err);
+
+                return res.status(500)
+                .send("Database Error");
+            }
+
+            res.json(result);
+
+        }
+    );
+
+});
+app.get("/favorites", (req, res) => {
+
+    db.query(
+        `SELECT favorites.id,
+                pdfs.title,
+                pdfs.contributor
+         FROM favorites
+         JOIN pdfs
+         ON favorites.pdf_id = pdfs.id`,
+        (err, result) => {
+
+            if(err){
+                console.log(err);
+                return res.status(500).send("Database Error");
+            }
+
+            res.json(result);
+        }
+    );
+
+});
+
+app.post("/favorites", (req, res) => {
+
+    const { user_id, pdf_id } = req.body;
+
+    db.query(
+        "INSERT INTO favorites (user_id, pdf_id) VALUES (?, ?)",
+        [user_id, pdf_id],
+        (err, result) => {
+
+            if(err){
+                console.log(err);
+                return res.status(500).send("Database Error");
+            }
+
+            res.send("Favorite Added Successfully");
+        }
+    );
+
+});
+
+app.delete("/favorites/:id", (req, res) => {
+
+    const id = req.params.id;
+
+    db.query(
+        "DELETE FROM favorites WHERE id = ?",
+        [id],
+        (err, result) => {
+
+            if(err){
+                console.log(err);
+                return res.status(500).send("Database Error");
+            }
+
+            res.send("Favorite Removed");
+        }
+    );
+
+});
 
 // HOME ROUTE
 

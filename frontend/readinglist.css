@@ -1,0 +1,117 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    background:#0d0d0d;
+    color:white;
+    font-family:Arial, sans-serif;
+}
+
+.container{
+    padding:30px;
+}
+
+.header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:30px;
+}
+
+.header input{
+    width:300px;
+    padding:12px;
+    border:none;
+    border-radius:8px;
+}
+
+.books-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+    gap:20px;
+}
+
+.book-card{
+    background:#181818;
+    padding:15px;
+    border-radius:12px;
+    text-align:center;
+}
+
+.book-card:hover{
+    transform:translateY(-5px);
+    transition:0.3s;
+}
+.pdf-icon{
+    width:70px;
+    height:70px;
+    background:#e53935;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    border-radius:10px;
+    font-weight:bold;
+    font-size:20px;
+    margin:0 auto 15px;
+}
+
+
+
+.book-card h3{
+    margin-bottom:10px;
+}
+
+.book-card p{
+    color:gray;
+    margin-bottom:15px;
+}
+
+button{
+    background:red;
+    color:white;
+    border:none;
+    padding:10px 20px;
+    border-radius:6px;
+    cursor:pointer;
+}
+button:hover{
+    transform:scale(1.05);
+    transition:0.3s;
+}
+header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:20px 40px;
+background:black;
+}
+
+.logo{
+font-size:28px;
+font-weight:bold;
+color:#00c8ff;
+}
+
+nav a{
+text-decoration:none;
+color:white;
+margin:0 15px;
+}
+
+nav a:hover{
+color:#00c8ff;
+}
+
+body{
+    background:#0d0d0d;
+    color:white;
+    font-family:Arial, sans-serif;
+    overflow-x:hidden;
+}
+.container{
+    padding:30px;
+    max-width:100%;
+}

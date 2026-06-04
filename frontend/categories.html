@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Categories - E-Library</title>
+
+<link rel="stylesheet" href="categories.css">
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body>
+
+<header>
+
+<div class="logo">
+📚 E-Library
+</div>
+
+<nav>
+<a href="home.html">Home</a>
+<a href="trending_pdfs.html">Trending PDFs</a>
+<a href="new_releases.html">New Releases</a>
+<a href="categories.html">Categories</a>
+<a href="contributors.html">Contributors</a>
+</nav>
+
+</header>
+
+<section class="hero">
+
+<div class="hero-content">
+
+<span class="tag">
+📂 PDF COLLECTIONS
+</span>
+
+<h1>Explore Categories</h1>
+
+<p>
+Browse thousands of PDFs organized by subject,
+department, and academic discipline.
+</p>
+
+</div>
+
+</section>
+
+
+
+<section class="categories" id="categoriesContainer">
+
+</section>
+
+
+<section class="popular-section">
+
+<h2>🔥 Popular Categories</h2>
+
+<div class="popular-row">
+
+<div class="popular-card">
+Programming PDFs
+</div>
+
+<div class="popular-card">
+DBMS Notes
+</div>
+
+<div class="popular-card">
+Question Papers
+</div>
+
+<div class="popular-card">
+AI Study Material
+</div>
+
+</div>
+
+</section>
+
+<script>
+
+// Future backend integration
+
+document.querySelectorAll(".category-card").forEach(card => {
+
+card.addEventListener("click", () => {
+
+const category = card.dataset.category;
+
+console.log("Selected Category:", category);
+
+// Future API call
+// fetch(`http://localhost:5000/categories/${category}`)
+
+});
+
+});
+
+</script>
+<script>
+
+fetch("http://localhost:5000/categories")
+.then(response => response.json())
+.then(data => {
+
+    const container =
+    document.getElementById("categoriesContainer");
+
+    data.forEach(category => {
+
+        container.innerHTML += `
+            <div class="category-card">
+                ${category.category_name}
+            </div>
+        `;
+
+    });
+
+})
+.catch(error => {
+
+    console.log(error);
+
+});
+
+</script>
+
+</body>
+</html>
