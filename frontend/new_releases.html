@@ -77,35 +77,7 @@ Download
 
 <h2>🆕 Added This Week</h2>
 
-<div class="pdf-row">
-
-<div class="pdf-card"
-onclick="alert('PDF details page coming soon')">
-<div class="pdf-icon">PDF</div>
-<h3>Cloud Computing Notes</h3>
-<p>Uploaded 2 Days Ago</p>
-</div>
-
-<div class="pdf-card"
-onclick="alert('PDF details page coming soon')">
-<div class="pdf-icon">PDF</div>
-<h3>Machine Learning Guide</h3>
-<p>Uploaded Today</p>
-</div>
-
-<div class="pdf-card"
-onclick="alert('PDF details page coming soon')">
-<div class="pdf-icon">PDF</div>
-<h3>DBMS Lab Manual</h3>
-<p>Uploaded Yesterday</p>
-</div>
-
-<div class="pdf-card"
-onclick="alert('PDF details page coming soon')">
-<div class="pdf-icon">PDF</div>
-<h3>Python Interview Notes</h3>
-<p>Uploaded 3 Days Ago</p>
-</div>
+<div class="pdf-row" id="newReleasesContainer">
 
 </div>
 
@@ -148,6 +120,104 @@ onclick="alert('PDF details page coming soon')">
 </div>
 
 </section>
+<script>
 
+async function loadNewReleasesPage() {
+
+    const response =
+    await fetch(
+        "http://localhost:5000/new-releases"
+    );
+
+    const data =
+    await response.json();
+
+    const container =
+    document.getElementById(
+        "newReleasesContainer"
+    );
+
+    container.innerHTML = "";
+
+    data.forEach(pdf => {
+        const uploadDate =
+new Date(pdf.upload_date);
+
+const formattedDate =
+uploadDate.toLocaleDateString(
+    "en-IN",
+    {
+        day: "numeric",
+        month: "short",
+        year: "numeric"
+    }
+);
+
+        const card =
+        document.createElement("div");
+
+        card.className =
+        "pdf-card";
+
+        card.innerHTML = `
+
+            <div class="pdf-icon">
+                PDF
+            </div>
+
+            <h3>
+                ${pdf.title}
+            </h3>
+
+            <p>
+               Uploaded: ${formattedDate}
+            </p>
+
+        `;
+
+        card.onclick = async () => {
+
+            const userId =
+            localStorage.getItem("userId");
+
+            await fetch(
+
+                `http://localhost:5000/pdfs/${pdf.id}/view`,
+
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                        "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        userId
+                    })
+                }
+
+            );
+
+            window.open(
+
+                "http://localhost:5000/pdf_library/" +
+                pdf.pdf_link,
+
+                "_blank"
+
+            );
+
+        };
+
+        container.appendChild(card);
+
+    });
+
+}
+
+loadNewReleasesPage();
+
+</script>
 </body>
 </html>

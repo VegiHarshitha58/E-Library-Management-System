@@ -88,45 +88,8 @@ Download
 
 <section class="pdf-section">
 
-<h2>🔥 Most Downloaded PDFs</h2>
-
-<div class="pdf-row">
-
-<div class="pdf-card"
-onclick="alert('PDF details page coming soon')">  
-<div class="pdf-icon">PDF</div>
-<h3>Operating Systems Notes</h3>
-<p>3200 Downloads</p>
-</div>
-
-<div class="pdf-card"
-onclick="alert('PDF details page coming soon')">
-<div class="pdf-icon">PDF</div>
-<h3>DBMS Complete Guide</h3>
-<p>2900 Downloads</p>
-</div>
-
-<div class="pdf-card"
-onclick="alert('PDF details page coming soon')">
-<div class="pdf-icon">PDF</div>
-<h3>Computer Networks</h3>
-<p>2700 Downloads</p>
-</div>
-
-<div class="pdf-card"
-onclick="alert('PDF details page coming soon')">
-<div class="pdf-icon">PDF</div>
-<h3>C Programming Manual</h3>
-<p>2500 Downloads</p>
-</div>
-
-<div class="pdf-card"
-onclick="alert('PDF details page coming soon')">
-<div class="pdf-icon">PDF</div>
-<h3>Python Notes</h3>
-<p>2400 Downloads</p>
-</div>
-
+<h2>🔥Trending PDFs</h2>
+<div class="pdf-row" id="trendingContainer">
 </div>
 
 </section>
@@ -168,6 +131,71 @@ onclick="alert('PDF details page coming soon')">
 </div>
 
 </section>
+<script>
+
+async function loadTrendingPage() {
+
+    const response =
+    await fetch(
+        "http://localhost:5000/trending"
+    );
+
+    const data =
+    await response.json();
+
+    const container =
+    document.getElementById(
+        "trendingContainer"
+    );
+
+    container.innerHTML = "";
+
+    data.forEach(pdf => {
+
+       const card =
+document.createElement("div");
+
+card.className =
+"pdf-card";
+
+card.innerHTML = `
+
+<div class="pdf-icon">
+PDF
+</div>
+
+<h3>
+${pdf.title}
+</h3>
+
+<p>
+${pdf.views} Views
+</p>
+
+`;
+
+card.onclick = () => {
+
+    window.open(
+
+        "http://localhost:5000/pdf_library/" +
+        pdf.pdf_link,
+
+        "_blank"
+
+    );
+
+};
+
+container.appendChild(card); 
+
+    });
+
+}
+
+loadTrendingPage();
+
+</script>
 
 </body>
-</html>
+</html> 

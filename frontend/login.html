@@ -284,20 +284,34 @@ document.getElementById("loginForm")
         );
 
         const data =
-        await response.text();
-        if(data === "Login Successful"){
-        localStorage.setItem("userName", username);
+await response.json();
 
-        window.location.href = "home.html";
+if(data.message === "Login Successful"){
+
+    localStorage.setItem(
+        "userId",
+        data.userId
+    );
+
+    localStorage.setItem(
+        "userName",
+        data.userName
+    );
+
+    localStorage.setItem(
+        "email",
+        data.email
+    );
+
+    window.location.href = "home.html";
+}
+else{
+
+    alert(data.message);
 
 }
 
-        else{
-
-            alert(data);
-        }
-
-    }
+}
     catch(error){
 
         alert("Server Connection Failed");

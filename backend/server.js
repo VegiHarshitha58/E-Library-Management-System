@@ -6,11 +6,15 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(
+    "/pdf_library",
+    express.static("pdf_library")
+);
 
 const db = mysql.createConnection({
     host: "localhost",
     user: "root",
-    password: "Harshitha@1435",
+    password: "***********",
     database: "elibrary"
 });
 
@@ -84,43 +88,60 @@ app.post("/register",(req,res)=>{
 
 // LOGIN API
 
-app.post("/login",(req,res)=>{
+app.post("/login", (req, res) => {
 
-    const {username,password} = req.body;
+    const { username, password } = req.body;
 
     db.query(
-        "SELECT * FROM users WHERE email=?",
-        [username],
-        (err,result)=>{
 
-            if(err){
+        "SELECT * FROM users WHERE email = ?",
+
+        [username],
+
+        (err, result) => {
+
+            if (err) {
 
                 console.log(err);
 
-                return res.send(
-                    "Login Failed"
-                );
+                return res.status(500).json({
+                    message: "Login Failed"
+                });
+
             }
 
-            if(result.length === 0){
+            if (result.length === 0) {
 
-                return res.send(
-                    "User Not Found"
-                );
+                return res.json({
+                    message: "User Not Found"
+                });
+
             }
 
-            if(result[0].password === password){
+            const user = result[0];
 
-                return res.send(
-                    "Login Successful"
-                );
+            if (user.password === password) {
+
+                return res.json({
+
+                    message: "Login Successful",
+
+                    userId: user.id,
+
+                    userName: user.name,
+
+                    email: user.email
+
+                });
+
             }
 
-            return res.send(
-                "Incorrect Password"
-            );
+            return res.json({
+                message: "Incorrect Password"
+            });
 
         }
+
     );
 
 });
@@ -139,6 +160,38 @@ app.get("/categories", (req, res) => {
             res.json(result);
 
         }
+    );
+
+});
+
+app.get("/categories/:id/pdfs", (req, res) => {
+
+    const categoryId = req.params.id;
+
+    db.query(
+
+        `SELECT *
+         FROM pdfs
+         WHERE category_id = ?`,
+
+        [categoryId],
+
+        (err, result) => {
+
+            if(err){
+
+                console.log(err);
+
+                return res.status(500).send(
+                    "Database Error"
+                );
+
+            }
+
+            res.json(result);
+
+        }
+
     );
 
 });
@@ -163,7 +216,11 @@ app.get("/contributors", (req, res) => {
 app.get("/trending", (req, res) => {
 
     db.query(
-        "SELECT * FROM pdfs",
+
+        `SELECT *
+         FROM pdfs
+         ORDER BY views DESC`,
+
         (err, result) => {
 
             if(err){
@@ -171,30 +228,38 @@ app.get("/trending", (req, res) => {
             }
 
             res.json(result);
+
         }
+
     );
 
 });
-app.get("/newreleases", (req, res) => {
+app.get("/new-releases", (req, res) => {
 
     db.query(
-        "SELECT * FROM pdfs",
+
+        `SELECT *
+         FROM pdfs
+         ORDER BY upload_date DESC`,
+
         (err, result) => {
 
             if(err){
 
-                console.log(err);
+                return res.status(500).send(
+                    "Database Error"
+                );
 
-                return res.status(500)
-                .send("Database Error");
             }
 
             res.json(result);
 
         }
+
     );
 
 });
+
 app.get("/favorites", (req, res) => {
 
     db.query(
@@ -446,7 +511,178 @@ app.get("/",(req,res)=>{
 
 });
 
+app.get("/pdfs", (req, res) => {
 
+    db.query(
+        "SELECT * FROM pdfs",
+        (err, result) => {
+
+            if(err){
+                console.log(err);
+
+                return res.status(500).json({
+                    message: "Database Error"
+                });
+            }
+
+            res.json(result);
+
+        }
+    );
+
+});
+
+
+ app.post("/pdfs/:id/view", (req, res) => {
+
+    const pdfId = req.params.id;
+
+    const { userId } = req.body;
+
+    db.query(
+
+        `SELECT * FROM pdf_views
+         WHERE pdf_id = ?
+         AND user_id = ?`,
+
+        [pdfId, userId],
+
+        (err, result) => {
+
+            if(err){
+
+                console.log(err);
+
+                return res.status(500).json({
+                    message: "Database Error"
+                });
+
+            }
+
+            if(result.length > 0){
+
+                return res.json({
+                    message: "Already Viewed"
+                });
+
+            }
+
+            db.query(
+
+                `INSERT INTO pdf_views
+                (pdf_id, user_id)
+                VALUES (?, ?)`,
+
+                [pdfId, userId],
+
+                (err) => {
+
+                    if(err){
+
+                        console.log(err);
+
+                        return res.status(500).json({
+                            message: "Database Error"
+                        });
+
+                    }
+
+                    db.query(
+
+                        `UPDATE pdfs
+                         SET views = views + 1
+                         WHERE id = ?`,
+
+                        [pdfId],
+
+                        (err) => {
+
+                            if(err){
+
+                                console.log(err);
+
+                                return res.status(500).json({
+                                    message: "Database Error"
+                                });
+
+                            }
+
+                            res.json({
+                                message: "View Count Updated"
+                            });
+
+                        }
+
+                    );
+
+                }
+
+            );
+
+        }
+
+    );
+
+});
+
+app.get("/search", (req, res) => {
+
+    const keyword = req.query.keyword;
+
+    db.query(
+
+        `SELECT *
+         FROM pdfs
+         WHERE title LIKE ?`,
+
+        [`%${keyword}%`],
+
+        (err, result) => {
+
+            if(err){
+                return res.status(500).send("Database Error");
+            }
+
+            res.json(result);
+
+        }
+
+    );
+
+});
+app.post("/pdfs/:id/download", (req, res) => {
+
+    const pdfId = req.params.id;
+
+    db.query(
+
+        `UPDATE pdfs
+         SET downloads = downloads + 1
+         WHERE id = ?`,
+
+        [pdfId],
+
+        (err) => {
+
+            if(err){
+
+                console.log(err);
+
+                return res.status(500).send(
+                    "Database Error"
+                );
+
+            }
+
+            res.send(
+                "Download Count Updated"
+            );
+
+        }
+
+    );
+
+});
 // SERVER
 
 app.listen(5000,()=>{

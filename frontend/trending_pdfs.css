@@ -134,6 +134,7 @@ margin-bottom:20px;
 .pdf-row{
 display:flex;
 gap:20px;
+flex-wrap:wrap;
 overflow-x:auto;
 }
 

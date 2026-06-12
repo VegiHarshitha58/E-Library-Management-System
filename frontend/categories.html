@@ -51,12 +51,20 @@ department, and academic discipline.
 
 
 
-<section class="categories" id="categoriesContainer">
-
+<section class="categories"
+id="categoriesContainer">
 </section>
 
+<section class="pdf-results">
 
-<section class="popular-section">
+<h2 id="selectedCategory">
+Select a Category
+</h2>
+
+<div id="pdfContainer">
+</div>
+
+</section>
 
 <h2>🔥 Popular Categories</h2>
 
@@ -112,13 +120,67 @@ fetch("http://localhost:5000/categories")
     document.getElementById("categoriesContainer");
 
     data.forEach(category => {
+        const card =
+document.createElement("div");
 
-        container.innerHTML += `
-            <div class="category-card">
-                ${category.category_name}
-            </div>
-        `;
+card.className =
+"category-card";
 
+card.innerText =
+category.category_name;
+
+card.onclick = async () => {
+    document.getElementById(
+    "selectedCategory"
+).innerText =
+`PDFs in ${category.category_name}`;
+
+    const response =
+    await fetch(
+
+        `http://localhost:5000/categories/${category.id}/pdfs`
+
+    );
+
+    const pdfs =
+    await response.json();
+const pdfContainer =
+document.getElementById(
+    "pdfContainer"
+);
+
+pdfContainer.innerHTML = "";
+
+pdfs.forEach(pdf => {
+
+    pdfContainer.innerHTML += `
+
+        <div class="pdf-card">
+
+            <h3>
+                ${pdf.title}
+            </h3>
+
+            <button
+            onclick="window.open(
+            'http://localhost:5000/pdf_library/${pdf.pdf_link}',
+            '_blank')">
+
+                Open PDF
+
+            </button>
+
+        </div>
+
+    `;
+
+});
+
+};
+
+container.appendChild(card);
+
+        
     });
 
 })

@@ -900,18 +900,7 @@ const bookData = {
     {title:"The Subtle Art",author:"Mark Manson",genre:"Self-Help",color:["#2e0000","#700000"],badge:null},
     {title:"Cosmos",author:"Carl Sagan",genre:"Science",color:["#001428","#002d5c"],badge:null},
   ],
-  trending: [
-    {title:"Lessons in Chemistry",author:"Bonnie Garmus",genre:"Fiction",color:["#1a0a2e","#3d1a6e"],badge:"hot"},
-    {title:"Fourth Wing",author:"Rebecca Yarros",genre:"Fantasy",color:["#2e0a00","#6e1a00"],badge:"hot"},
-    {title:"Happy Place",author:"Emily Henry",genre:"Romance",color:["#2e001a","#6e003d"],badge:null},
-    {title:"Tomorrow & Tomorrow",author:"A. Kaufman",genre:"Sci-Fi",color:["#002e1a","#006e3d"],badge:null},
-    {title:"Iron Flame",author:"Rebecca Yarros",genre:"Fantasy",color:["#2e1a00","#6e3d00"],badge:"new"},
-    {title:"Holly",author:"Stephen King",genre:"Thriller",color:["#1a001a","#400040"],badge:null},
-    {title:"Yellow Face",author:"R.F. Kuang",genre:"Thriller",color:["#2e2e00","#6e6e00"],badge:"hot"},
-    {title:"Intermezzo",author:"Sally Rooney",genre:"Literary",color:["#001a2e","#003d6e"],badge:"new"},
-    {title:"The Women",author:"Kristin Hannah",genre:"Historical",color:["#2e0000","#700000"],badge:null},
-    {title:"James",author:"Percival Everett",genre:"Literary",color:["#1a1400","#3d3000"],badge:"hot"},
-  ],
+  trending: [],
   because: [
     {title:"Foundation",author:"Isaac Asimov",genre:"Sci-Fi",color:["#001428","#00305c"],badge:null},
     {title:"Ender's Game",author:"Orson Scott Card",genre:"Sci-Fi",color:["#0a1a0a","#1a3d1a"],badge:null},
@@ -922,28 +911,8 @@ const bookData = {
     {title:"The Dispossessed",author:"Le Guin",genre:"Sci-Fi",color:["#001400","#002e00"],badge:null},
     {title:"Old Man's War",author:"J. Scalzi",genre:"Military Sci-Fi",color:["#2e0000","#5c0000"],badge:null},
   ],
-  new: [
-    {title:"The God of the Woods",author:"Liz Moore",genre:"Mystery",color:["#001a00","#003d00"],badge:"new"},
-    {title:"All Fours",author:"Miranda July",genre:"Literary",color:["#1a001a","#3d003d"],badge:"new"},
-    {title:"Orbital",author:"Samantha Harvey",genre:"Fiction",color:["#001428","#002a5c"],badge:"new"},
-    {title:"Universal Harvester",author:"J. Darnielle",genre:"Horror",color:["#1a0000","#3d0000"],badge:"new"},
-    {title:"The Familiar",author:"Leigh Bardugo",genre:"Fantasy",color:["#2e1a00","#5c3600"],badge:"new"},
-    {title:"Long Island",author:"Colm Tóibín",genre:"Literary",color:["#001a1a","#003636"],badge:"new"},
-    {title:"Cher: The Memoir",author:"Cher",genre:"Biography",color:["#2e002e","#5c005c"],badge:"new"},
-    {title:"Eruption",author:"Michael Crichton",genre:"Thriller",color:["#2e0a00","#5c1400"],badge:"new"},
-    {title:"Wind & Truth",author:"Brandon Sanderson",genre:"Fantasy",color:["#001428","#00285c"],badge:"new"},
-  ],
-  academic: [
-    {title:"Introduction to Algorithms",author:"CLRS",genre:"Computer Science",color:["#001a2e","#00355c"],badge:null},
-    {title:"The Elements of Style",author:"Strunk & White",genre:"Writing",color:["#2e1a00","#5c3600"],badge:null},
-    {title:"A Brief History of Time",author:"S. Hawking",genre:"Physics",color:["#001428","#001f3d"],badge:null},
-    {title:"The Origin of Species",author:"C. Darwin",genre:"Biology",color:["#001a00","#003300"],badge:null},
-    {title:"Principles of Economics",author:"N. Mankiw",genre:"Economics",color:["#2e2e00","#5c5c00"],badge:null},
-    {title:"The Republic",author:"Plato",genre:"Philosophy",color:["#1a1a2e","#2e2e5c"],badge:null},
-    {title:"Gray's Anatomy",author:"H. Gray",genre:"Medicine",color:["#2e0000","#5c0000"],badge:null},
-    {title:"Calculus: Early Transcendentals",author:"Stewart",genre:"Mathematics",color:["#002e1a","#005c36"],badge:null},
-    {title:"The Art of War",author:"Sun Tzu",genre:"Strategy",color:["#1a1400","#33280a"],badge:null},
-  ]
+  new: [],
+  academic: []
 };
 
 function makeCard(book, type) {
@@ -999,6 +968,278 @@ Object.entries(bookData).forEach(([key, books]) => {
   books.forEach(b => container.appendChild(makeCard(b, key)));
 });
 
+async function loadAcademicPDFs() {
+
+    const response =
+    await fetch("http://localhost:5000/pdfs");
+
+    const data =
+    await response.json();
+
+    const container =
+    document.getElementById("academic");
+
+    container.innerHTML = "";
+
+    data.forEach(pdf => {
+
+        const card =
+        makeCard({
+            title: pdf.title,
+            author: "Admin",
+            genre: "PDF",
+            color: ["#001a2e", "#00355c"]
+        }, "academic");
+
+        card.onclick = async () => {
+          const userId =
+localStorage.getItem("userId");
+
+    await fetch(
+
+    `http://localhost:5000/pdfs/${pdf.id}/view`,
+
+    {
+        method: "POST",
+
+        headers: {
+            "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+            userId: userId
+        })
+    }
+
+);
+
+    window.open(
+        "http://localhost:5000/pdf_library/" +
+        pdf.pdf_link,
+        "_blank"
+    );
+
+};
+
+        container.appendChild(card);
+
+    });
+
+}
+
+
+async function loadTrendingPDFs() {
+
+    const response =
+    await fetch("http://localhost:5000/trending");
+
+    const data =
+    await response.json();
+
+    const container =
+    document.getElementById("trending");
+
+    container.innerHTML = "";
+
+    data.forEach(pdf => {
+
+        const card = makeCard({
+
+            title: pdf.title,
+
+            author: pdf.contributor,
+
+            genre: "Trending",
+
+            color: [
+                "#1a0a2e",
+                "#3d1a6e"
+            ],
+
+            badge: "hot"
+
+        }, "trending");
+
+        card.onclick = () => {
+
+            window.open(
+                "http://localhost:5000/pdf_library/" +
+                pdf.pdf_link,
+                "_blank"
+            );
+
+        };
+
+        container.appendChild(card);
+
+    });
+
+}
+loadTrendingPDFs();
+
+async function loadNewReleases() {
+
+    const response =
+    await fetch(
+        "http://localhost:5000/new-releases"
+    );
+
+    const data =
+    await response.json();
+
+    const container =
+    document.getElementById("new");
+
+    container.innerHTML = "";
+
+    data.forEach(pdf => {
+
+        const card =
+        makeCard({
+
+            title: pdf.title,
+
+            author: pdf.contributor,
+
+            genre: "New",
+
+            color: [
+                "#0a2e1a",
+                "#1f7a4d"
+            ],
+
+            badge: "new"
+
+        }, "new");
+
+        card.onclick = async () => {
+
+            const userId =
+            localStorage.getItem("userId");
+
+            await fetch(
+
+                `http://localhost:5000/pdfs/${pdf.id}/view`,
+
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                        "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        userId
+                    })
+                }
+
+            );
+
+            window.open(
+
+                "http://localhost:5000/pdf_library/" +
+                pdf.pdf_link,
+
+                "_blank"
+
+            );
+
+        };
+
+        container.appendChild(card);
+
+    });
+
+}
+async function searchPDFs() {
+
+    const keyword =
+    document.getElementById(
+        "searchInput"
+    ).value;
+
+    if(!keyword.trim()){
+
+        loadAcademicPDFs();
+        return;
+
+    }
+
+    const response =
+    await fetch(
+
+        `http://localhost:5000/search?keyword=${keyword}`
+
+    );
+
+    const data =
+    await response.json();
+
+    const container =
+    document.getElementById(
+        "academic"
+    );
+
+    container.innerHTML = "";
+
+    data.forEach(pdf => {
+
+        const card =
+        makeCard({
+
+            title: pdf.title,
+
+            author: pdf.contributor,
+
+            genre: "PDF",
+
+            color: [
+                "#001a2e",
+                "#00355c"
+            ]
+
+        }, "academic");
+
+        card.onclick = () => {
+
+            window.open(
+
+                "http://localhost:5000/pdf_library/" +
+                pdf.pdf_link,
+
+                "_blank"
+
+            );
+
+        };
+
+        container.appendChild(card);
+
+    });
+
+}
+document
+.getElementById("searchInput")
+.addEventListener(
+
+    "keyup",
+
+    function(event){
+
+        if(event.key === "Enter"){
+
+            searchPDFs();
+
+        }
+
+    }
+
+);
+
+loadAcademicPDFs();
+loadTrendingPDFs();
+loadNewReleases();
 function scroll_row(id, dir) {
   const el = document.getElementById(id);
   el.scrollBy({ left: dir * 480, behavior: 'smooth' });
@@ -1066,6 +1307,7 @@ function logout(){
     window.location.href = "login.html";
 }
 </script>
+
 <footer style="
 text-align:center;
 padding:20px;
