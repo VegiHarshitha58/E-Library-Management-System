@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Redirecting...</title>
+</head>
+
+<body>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const pdfId = params.get("pdfId");
+
+if(pdfId){
+    // forward to professional reader
+window.location.href = "reader.html?pdf_id=" + pdfId + "&page=1";
+} else {
+    document.body.innerHTML =
+        "<h2 style='color:red'>Invalid PDF ID</h2>";
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Recommended For You - E-Library</title>
+
+<link rel="stylesheet" href="trending_pdfs.css">
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+</head>
+
+<body>
+
+<header>
+
+<div class="logo">
+📚 E-Library
+</div>
+
+<nav>
+<a href="home.html">Home</a>
+<a href="because_you_read.html">Recommended</a>
+<a href="new_releases.html">New Releases</a>
+<a href="categories.html">Categories</a>
+<a href="contributors.html">Contributors</a>
+</nav>
+
+<div class="search-box">
+<input
+type="text"
+placeholder="Search PDFs...">
+<i class="fas fa-search"></i>
+</div>
+
+</header>
+
+<section class="hero">
+
+<div class="hero-content">
+
+<span class="tag">
+📚 RECOMMENDED FOR YOU
+</span>
+
+<h1>Recently Added PDFs</h1>
+
+<p>
+Discover the latest PDFs added to the library.
+Perfect for exploring new resources and study materials.
+</p>
+
+<div class="stats">
+<span>🆕 Latest PDFs</span>
+<span>📚 Fresh Content</span>
+<span>🎓 Study Resources</span>
+</div>
+
+</div>
+
+</section>
+
+<section class="pdf-section">
+
+<h2>📚 Recommended For You</h2>
+
+<div class="pdf-row" id="recommendedContainer">
+</div>
+
+</section>
+
+<script>
+
+async function loadRecommended() {
+
+    const response =
+    await fetch(
+        "http://localhost:5000/recommended"
+    );
+
+    const data =
+    await response.json();
+
+    const container =
+    document.getElementById(
+        "recommendedContainer"
+    );
+
+    container.innerHTML = "";
+
+    data.forEach(pdf => {
+
+        const card =
+        document.createElement("div");
+
+        card.className = "pdf-card";
+
+        card.innerHTML = `
+            <div class="pdf-icon">PDF</div>
+            <h3>${pdf.title}</h3>
+            <p>Recently Added</p>
+        `;
+
+        card.onclick = () => {
+
+            window.location.href =
+            "reader.html?file=" +
+            pdf.pdf_link +
+            "&pdf_id=" +
+            pdf.id;
+
+        };
+
+        container.appendChild(card);
+
+    });
+
+}
+
+loadRecommended();
+
+</script>
+
+
+
+</body>
+</html>

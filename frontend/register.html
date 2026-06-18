@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 
 <head>
@@ -7,13 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>E-Library Registration</title>
 
+    <link rel="stylesheet" href="register_style.css">
 
-<link rel="stylesheet" href="register_style.css">
-
-<link rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
-
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 
 <body>
@@ -56,6 +52,10 @@
 
             <h2>Create Account</h2>
 
+            <p class="form-subtitle">
+                Create your account to access thousands of digital books
+            </p>
+
             <form id="registerForm">
 
                 <input type="text"
@@ -65,8 +65,12 @@
 
                 <input type="email"
                        id="email"
-                       placeholder="Email Address"
+                       placeholder="Organization Email Address"
                        required>
+
+                <p id="emailStatus"></p>
+
+            
 
                 <div class="password-box">
 
@@ -92,8 +96,6 @@
 
                 </div>
 
-                
-
                 <div class="terms">
 
                     <input type="checkbox"
@@ -101,34 +103,21 @@
                            required>
 
                     <label for="terms">
-                        I agree to the Terms & Conditions
+                        I agree to the
+                        <a href="terms.html" target="_blank">
+Terms & Conditions
+</a>
                     </label>
 
                 </div>
 
-                <button type="submit">
+                <button type="submit" id="registerBtn">
                     Create Account
                 </button>
 
             </form>
 
             <p id="message"></p>
-
-            <div class="social-login">
-
-                <p>or sign up with</p>
-
-                <div class="icons">
-
-                    <i class="fab fa-google"></i>
-
-                    <i class="fab fa-facebook"></i>
-
-                    <i class="fab fa-twitter"></i>
-
-                </div>
-
-            </div>
 
         </div>
 
@@ -138,8 +127,5 @@
 
 <script src="register.js"></script>
 
-
 </body>
-
 </html>
-

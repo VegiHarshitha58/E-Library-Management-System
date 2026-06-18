@@ -4,198 +4,277 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Trending PDFs - E-Library</title>
-
 <link rel="stylesheet" href="trending_pdfs.css">
-
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  .hero-content h1 { font-size: 42px; }
+  .hero-content p { margin-top: 10px; line-height: 1.7; }
+  .stats span { font-size: 0.9rem; }
+  .pdf-card { display: flex; flex-direction: column; justify-content: space-between; height: auto; min-height: 200px; }
+  .pdf-card-btns { display: flex; gap: 8px; margin-top: 10px; }
+  .pdf-card-btns button {
+    flex: 1; padding: 7px; border: none; border-radius: 6px;
+    cursor: pointer; font-size: 0.78rem; font-weight: 600;
+  }
+  .btn-read { background: #00c8ff; color: black; }
+  .btn-download { background: white; color: black; }
+  .btn-read:hover, .btn-download:hover { opacity: 0.85; }
+  .views-badge {
+    display: inline-block; background: #e53935;
+    color: white; font-size: 0.7rem; font-weight: 700;
+    padding: 2px 8px; border-radius: 10px; margin-bottom: 6px;
+  }
+  .rank-badge {
+    position: absolute; top: 10px; left: 10px;
+    background: #00c8ff; color: black;
+    font-size: 0.75rem; font-weight: 700;
+    padding: 3px 10px; border-radius: 10px;
+  }
+  .pdf-card { position: relative; }
+  .loading { color: #aaa; padding: 20px; font-size: 0.95rem; }
+  .hero-skeleton { opacity: 0.5; }
+</style>
 </head>
-
 <body>
 
 <header>
-
-<div class="logo">
-📚 E-Library
-</div>
-
-<nav>
-
-<a href="home.html">Home</a>
-<a href="trending_pdfs.html">Trending PDFs</a>
-<a href="new_releases.html">New Releases</a>
-<a href="categories.html">Categories</a>
-<a href="contributors.html">Contributors</a>
-
-</nav>
-
-<div class="search-box">
-
-<input
-type="text"
-placeholder="Search PDFs, authors, categories...">
-
-<i class="fas fa-search"></i>
-
-</div>
-
+  <div class="logo">📚 E-Library</div>
+  <nav>
+    <a href="home.html">Home</a>
+    <a href="trending_pdfs.html">Trending PDFs</a>
+    <a href="new_releases.html">New Releases</a>
+    <a href="categories.html">Categories</a>
+    <a href="contributors.html">Contributors</a>
+  </nav>
+  
 </header>
 
-<section class="hero">
-
-<div class="hero-content">
-
-<span class="tag">
-🔥 TRENDING PDF OF THE WEEK
-</span>
-
-<h1>Data Structures Complete Notes</h1>
-
-<p>
-Comprehensive notes covering arrays,
-linked lists, stacks, queues, trees,
-graphs, sorting and searching algorithms.
-</p>
-
-<div class="stats">
-
-<span>⭐ 4.9 Rating</span>
-
-<span>📄 250 Pages</span>
-
-<span>⬇ 3500 Downloads</span>
-
-</div>
-
-<div class="buttons">
-
-<button class="read-btn"
-onclick="alert('PDF Reader will be connected soon')">
-Read PDF
-</button>
-
-<button class="download-btn"
-onclick="alert('Download feature coming soon')">
-Download
-</button>
-
-</div>
-
-</div>
-
+<!-- HERO — shows #1 trending PDF -->
+<section class="hero" id="heroSection">
+  <div class="hero-content" id="heroContent">
+    <span class="tag">🔥 TRENDING PDF OF THE WEEK</span>
+    <h1 id="heroTitle">Loading...</h1>
+    <p id="heroDesc">Fetching the most viewed PDF...</p>
+    <div class="stats" id="heroStats"></div>
+    <div class="buttons" id="heroButtons"></div>
+  </div>
 </section>
 
+<!-- MOST VIEWED -->
 <section class="pdf-section">
+  <h2>🔥 Most Viewed PDFs</h2>
 
-<h2>🔥Trending PDFs</h2>
-<div class="pdf-row" id="trendingContainer">
-</div>
+  <div class="row-wrapper">
+
+    <button class="arrow left"
+      onclick="scrollRow('mostViewedRow',-800)">
+      ❮
+    </button>
+
+    <div class="pdf-row" id="mostViewedRow">
+      <p class="loading">Loading...</p>
+    </div>
+
+    <button class="arrow right"
+      onclick="scrollRow('mostViewedRow',800)">
+      ❯
+    </button>
+
+  </div>
 
 </section>
-
+<!-- TOP 10 TRENDING -->
 <section class="pdf-section">
+  <h2>📈 Top 10 Trending This Week</h2>
 
-<h2>⭐ Highest Rated PDFs</h2>
+  <div class="row-wrapper">
 
-<div class="pdf-row">
+    <button class="arrow left"
+      onclick="scrollRow('top10Row',-800)">
+      ❮
+    </button>
 
-<div class="pdf-card"
-onclick="alert('PDF details page coming soon')">
-<div class="pdf-icon">PDF</div>
-<h3>Artificial Intelligence</h3>
-<p>⭐ 4.9</p>
-</div>
+    <div class="pdf-row" id="top10Row">
+      <p class="loading">Loading...</p>
+    </div>
 
-<div class="pdf-card"
-onclick="alert('PDF details page coming soon')">
-<div class="pdf-icon">PDF</div>
-<h3>Machine Learning</h3>
-<p>⭐ 4.8</p>
-</div>
+    <button class="arrow right"
+      onclick="scrollRow('top10Row',800)">
+      ❯
+    </button>
 
-<div class="pdf-card"
-onclick="alert('PDF details page coming soon')">
-<div class="pdf-icon">PDF</div>
-<h3>Cloud Computing</h3>
-<p>⭐ 4.8</p>
-</div>
-
-<div class="pdf-card"
-onclick="alert('PDF details page coming soon')">
-
-<div class="pdf-icon">PDF</div>
-<h3>Software Engineering</h3>
-<p>⭐ 4.7</p>
-
-</div>
+  </div>
 
 </section>
+
+
 <script>
+const API = "http://127.0.0.1:5000";
 
-async function loadTrendingPage() {
+// ─── OPEN PDF & INCREMENT VIEW COUNT ─────────────────────────────────────────
+async function openPDF(pdfId, fileUrl, title) {
 
-    const response =
-    await fetch(
-        "http://localhost:5000/trending"
-    );
 
-    const data =
-    await response.json();
+  const userId = localStorage.getItem("userId");
 
-    const container =
-    document.getElementById(
-        "trendingContainer"
-    );
+  if (fileUrl && fileUrl !== 'null' && fileUrl !== 'undefined') {
 
-    container.innerHTML = "";
+    try {
 
-    data.forEach(pdf => {
+      await fetch(`${API}/pdfs/${pdfId}/view`, {
 
-       const card =
-document.createElement("div");
+        method: 'POST',
 
-card.className =
-"pdf-card";
+        headers: {
+          "Content-Type": "application/json"
+        },
 
-card.innerHTML = `
+        body: JSON.stringify({
+          userId: userId
+        })
 
-<div class="pdf-icon">
-PDF
-</div>
+      });
 
-<h3>
-${pdf.title}
-</h3>
-
-<p>
-${pdf.views} Views
-</p>
-
-`;
-
-card.onclick = () => {
+    } catch(e) {}
 
     window.open(
+`reader.html?pdf_id=${pdfId}&file=${fileUrl}&page=1`,
+"_blank"
+);
+  } else {
 
-        "http://localhost:5000/pdf_library/" +
-        pdf.pdf_link,
+    alert(`"${title}" — PDF file not available yet`);
 
-        "_blank"
+  }
+}
 
-    );
+// ─── DOWNLOAD PDF ─────────────────────────────────────────────────────────────
+async function downloadPDF(pdfId, fileUrl, title) {
 
-};
+    try{
 
-container.appendChild(card); 
+        await fetch(
+            `${API}/pdfs/${pdfId}/download`,
+            {
+                method:"POST"
+            }
+        );
 
-    });
+    }catch(err){
+
+        console.log(err);
+
+    }
+
+    const a =
+    document.createElement("a");
+
+    a.href =
+    `${API}/pdf_library/${fileUrl}`;
+
+    a.download =
+    title + ".pdf";
+
+    document.body.appendChild(a);
+
+    a.click();
+
+    document.body.removeChild(a);
 
 }
 
-loadTrendingPage();
+// ─── MAKE PDF CARD ────────────────────────────────────────────────────────────
+function makeCard(pdf, rank) {
+  const card = document.createElement('div');
+  card.className = 'pdf-card';
+  card.innerHTML = `
+    ${rank ? `<div class="rank-badge">#${rank}</div>` : ''}
+    <div class="pdf-icon">PDF</div>
+    <div>
+      <span class="views-badge">👁 ${pdf.views || 0} views</span>
+      <h3>${pdf.title}</h3>
+      <p style="font-size:0.8rem;color:#aaa;margin-top:4px;">${pdf.contributor || 'Unknown'}</p>
+    </div>
+    <div class="pdf-card-btns">
+      <button class="btn-read" onclick="openPDF(${pdf.id}, '${pdf.pdf_link}', '${pdf.title}')">Read</button>
+      <button class="btn-download" onclick="downloadPDF(${pdf.id}, '${pdf.pdf_link}', '${pdf.title}')">Download</button>
+    </div>
+  `;
+  return card;
+}
 
+// ─── LOAD HERO (TOP TRENDING PDF) ─────────────────────────────────────────────
+function loadHero(topPDF) {
+  if (!topPDF) return;
+  document.getElementById('heroTitle').textContent = topPDF.title;
+  document.getElementById('heroDesc').textContent =
+    topPDF.description || `By ${topPDF.contributor || 'Unknown'} — Most viewed PDF in the library.`;
+  document.getElementById('heroStats').innerHTML = `
+    <span>👁 ${topPDF.views || 0} Views</span>
+    <span>📄 ${topPDF.contributor || 'Unknown'}</span>
+  `;
+  document.getElementById('heroButtons').innerHTML = `
+    <button class="read-btn"
+    onclick="openPDF(${topPDF.id}, '${topPDF.pdf_link}', '${topPDF.title}')">
+        Read PDF
+    </button>
+
+    <button class="download-btn"
+    onclick="downloadPDF(${topPDF.id}, '${topPDF.pdf_link}', '${topPDF.title}')">
+        Download
+    </button>
+`;
+}
+
+// ─── LOAD ALL TRENDING DATA ────────────────────────────────────────────────────
+async function loadTrending() {
+  try {
+    const res = await fetch(`${API}/trending`);
+    const pdfs = await res.json();
+
+    if (pdfs.length === 0) {
+      document.getElementById('mostViewedRow').innerHTML = '<p class="loading">No trending PDFs yet.</p>';
+      return;
+    }
+
+    // Hero = #1 most viewed
+    loadHero(pdfs[0]);
+
+    // Most Viewed row — top 8
+    const mostViewedRow = document.getElementById('mostViewedRow');
+    mostViewedRow.innerHTML = '';
+    pdfs.slice(0, 8).forEach((pdf, i) => {
+      mostViewedRow.appendChild(makeCard(pdf, i + 1));
+    });
+
+    // Top 10 row — next 10
+    const top10Row = document.getElementById('top10Row');
+    top10Row.innerHTML = '';
+    pdfs.slice(0, 10).forEach((pdf, i) => {
+      top10Row.appendChild(makeCard(pdf, i + 1));
+    });
+
+  } catch (err) {
+    document.getElementById('mostViewedRow').innerHTML =
+      '<p class="loading" style="color:#e57373;">Failed to load. Is the server running?</p>';
+    document.getElementById('heroTitle').textContent = 'Server not connected';
+    document.getElementById('heroDesc').textContent = 'Please make sure your backend server is running on port 5000.';
+  }
+}
+
+
+function scrollRow(id, amount){
+
+  document.getElementById(id).scrollBy({
+
+    left: amount,
+
+    behavior: "smooth"
+
+  });
+
+}
+loadTrending();
 </script>
-
 </body>
-</html> 
+</html>

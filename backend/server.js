@@ -1,7 +1,8 @@
 const express = require("express");
 const mysql = require("mysql2");
 const cors = require("cors");
-
+const multer = require("multer");
+const path = require("path");
 const app = express();
 
 app.use(cors());
@@ -10,13 +11,18 @@ app.use(
     "/pdf_library",
     express.static("pdf_library")
 );
-
+app.use(
+    "/avatars",
+    express.static("avatars")
+);
 const db = mysql.createConnection({
     host: "localhost",
     user: "root",
-    password: "***********",
+    password: "Harshitha@1435",
     database: "elibrary"
 });
+
+
 
 db.connect((err) => {
 
@@ -31,12 +37,35 @@ db.connect((err) => {
 
 });
 
+const storage = multer.diskStorage({
 
+    destination: (req, file, cb) => {
+
+        cb(null, "avatars/");
+    },
+
+    filename: (req, file, cb) => {
+
+        cb(
+            null,
+            Date.now() + path.extname(file.originalname)
+        );
+
+    }
+
+});
+
+const upload = multer({
+    storage: storage
+});
 // REGISTER API
 
 app.post("/register",(req,res)=>{
 
     const {name,email,password} = req.body;
+    if(!name || !email || !password){
+    return res.send("All fields are required");
+}
 
     db.query(
         "SELECT * FROM users WHERE email=?",
@@ -91,7 +120,13 @@ app.post("/register",(req,res)=>{
 app.post("/login", (req, res) => {
 
     const { username, password } = req.body;
+if (!username || !password) {
 
+    return res.json({
+        message: "All fields are required"
+    });
+
+}
     db.query(
 
         "SELECT * FROM users WHERE email = ?",
@@ -130,8 +165,9 @@ app.post("/login", (req, res) => {
 
                     userName: user.name,
 
-                    email: user.email
+                    email: user.email,
 
+                   avatar:user.avatar
                 });
 
             }
@@ -264,8 +300,10 @@ app.get("/favorites", (req, res) => {
 
     db.query(
         `SELECT favorites.id,
-                pdfs.title,
-                pdfs.contributor
+       favorites.user_id,
+       favorites.pdf_id,
+       pdfs.title,
+       pdfs.contributor
          FROM favorites
          JOIN pdfs
          ON favorites.pdf_id = pdfs.id`,
@@ -282,26 +320,92 @@ app.get("/favorites", (req, res) => {
 
 });
 
-app.post("/favorites", (req, res) => {
+app.get("/favorites/:userId", (req, res) => {
 
-    const { user_id, pdf_id } = req.body;
+    const userId = req.params.userId;
 
     db.query(
-        "INSERT INTO favorites (user_id, pdf_id) VALUES (?, ?)",
-        [user_id, pdf_id],
+        `SELECT pdf_id
+         FROM favorites
+         WHERE user_id = ?`,
+        [userId],
         (err, result) => {
 
             if(err){
+
                 console.log(err);
+
                 return res.status(500).send("Database Error");
+
             }
 
-            res.send("Favorite Added Successfully");
+            res.json(result);
+
         }
     );
 
 });
 
+app.post("/favorites", (req, res) => {
+
+    const { user_id, pdf_id } = req.body;
+
+    const checkSql = `
+        SELECT *
+        FROM favorites
+        WHERE user_id = ?
+        AND pdf_id = ?
+    `;
+
+    db.query(
+        checkSql,
+        [user_id, pdf_id],
+        (err, result) => {
+
+            if(err){
+
+                console.log(err);
+
+                return res
+                .status(500)
+                .send("Database Error");
+
+            }
+
+            if(result.length > 0){
+
+                return res.send(
+                    "Already in Favorites"
+                );
+
+            }
+
+            db.query(
+                "INSERT INTO favorites (user_id, pdf_id) VALUES (?, ?)",
+                [user_id, pdf_id],
+                (err, insertResult) => {
+
+                    if(err){
+
+                        console.log(err);
+
+                        return res
+                        .status(500)
+                        .send("Database Error");
+
+                    }
+
+                    res.send(
+                        "Favorite Added Successfully"
+                    );
+
+                }
+            );
+
+        }
+    );
+
+});
 app.delete("/favorites/:id", (req, res) => {
 
     const id = req.params.id;
@@ -341,19 +445,56 @@ app.post("/readinglist", (req, res) => {
 
     const { user_id, pdf_id } = req.body;
 
+    const checkSql = `
+        SELECT *
+        FROM reading_list
+        WHERE user_id = ?
+        AND pdf_id = ?
+    `;
+
     db.query(
-        "INSERT INTO reading_list(user_id, pdf_id) VALUES (?, ?)",
+        checkSql,
         [user_id, pdf_id],
         (err, result) => {
-            if (err) {
-                res.status(500).json(err);
-            } else {
-                res.json({ message: "Added to Reading List" });
+
+            if(err){
+
+                return res.status(500).json(err);
+
             }
+
+            if(result.length > 0){
+
+                return res.json({
+                    success:false,
+                    message:"Already in Reading List"
+                });
+
+            }
+
+            db.query(
+                "INSERT INTO reading_list(user_id, pdf_id) VALUES (?, ?)",
+                [user_id, pdf_id],
+                (err2, result2) => {
+
+                    if(err2){
+
+                        return res.status(500).json(err2);
+
+                    }
+
+                    res.json({
+                        success:true,
+                        message:"Added to Reading List"
+                    });
+
+                }
+            );
+
         }
     );
-});
 
+});
 // Remove from Reading List
 app.delete("/readinglist/:id", (req, res) => {
 
@@ -369,10 +510,11 @@ app.delete("/readinglist/:id", (req, res) => {
         }
     );
 });
-app.get("/api/profile", (req, res) => {
-
+app.get("/api/profile/:id", (req, res) => {
+   const userId = req.params.id;
     db.query(
-        "SELECT * FROM users LIMIT 1",
+        "SELECT * FROM users WHERE id=?",
+        [userId],
         (err, result) => {
 
             if(err){
@@ -387,11 +529,11 @@ app.get("/api/profile", (req, res) => {
 });
 app.put("/api/profile", (req, res) => {
 
-    const { name, email, bio } = req.body;
+    const { userId, name, email, bio } = req.body;
 
-    db.query(
-        "UPDATE users SET name=?, email=?, bio=? WHERE id=1",
-        [name, email, bio],
+db.query(
+    "UPDATE users SET name=?, email=?, bio=? WHERE id=?",
+    [name, email, bio, userId],
         (err, result) => {
 
             if(err){
@@ -407,15 +549,263 @@ app.put("/api/profile", (req, res) => {
     );
 
 });
-app.get("/get-settings/:id", (req, res) => {
+app.post(
+    "/api/profile/avatar",
+    upload.single("avatar"),
+    (req, res) => {
+
+        const avatarPath =
+        "avatars/" + req.file.filename;
+const userId = req.body.userId;
+        db.query(
+
+            "UPDATE users SET avatar=? WHERE id=?",
+
+              [avatarPath, userId],
+
+            (err) => {
+
+                if(err){
+
+                    return res
+                    .status(500)
+                    .json({
+                        message:"Database Error"
+                    });
+
+                }
+
+                res.json({
+
+                    message:"Avatar Updated",
+
+                    avatar: avatarPath
+
+                });
+
+            }
+
+        );
+
+    }
+);
+app.delete("/api/profile/avatar/:userId", (req, res) => {
+
+    const userId = req.params.userId;
 
     db.query(
-        "SELECT * FROM settings WHERE user_id=?",
-        [req.params.id],
-        (err, result) => {
+
+        "UPDATE users SET avatar=NULL WHERE id=?",
+
+        [userId],
+
+        (err) => {
 
             if(err){
                 return res.status(500).json(err);
+            }
+
+            res.json({
+                message: "Avatar Removed"
+            });
+
+        }
+
+    );
+
+});
+app.post("/reading-history", (req, res) => {
+    const { userId, pdfId } = req.body;
+
+    db.query(
+
+        `SELECT * FROM reading_history
+         WHERE user_id=? AND pdf_id=?`,
+
+        [userId, pdfId],
+
+        (err, result) => {
+
+            if(err){
+                return res.status(500).send("Database Error");
+            }
+
+            if(result.length > 0){
+
+                db.query(
+
+                    `UPDATE reading_history
+                     SET last_read = CURRENT_TIMESTAMP
+                     WHERE user_id=? AND pdf_id=?`,
+
+                    [userId, pdfId],
+
+                    (err) => {
+
+                        if(err){
+                            return res.status(500).send("Database Error");
+                        }
+
+                        res.send("History Updated");
+                    }
+
+                );
+
+            } else {
+
+                db.query(
+
+                    `INSERT INTO reading_history
+                     (user_id, pdf_id)
+                     VALUES (?, ?)`,
+
+                    [userId, pdfId],
+
+                    (err) => {
+
+                        if(err){
+                            return res.status(500).send("Database Error");
+                        }
+
+                        res.send("History Saved");
+                    }
+
+                );
+
+            }
+
+        }
+
+    );
+
+});
+app.get("/reading-history/:userId", (req, res) => {
+
+    const userId = req.params.userId;
+
+    db.query(
+
+        `SELECT
+            rh.*,
+            p.title,
+            p.pdf_link
+         FROM reading_history rh
+         JOIN pdfs p
+            ON rh.pdf_id = p.id
+         WHERE rh.user_id = ?
+         ORDER BY rh.last_read DESC`,
+
+        [userId],
+
+        (err, result) => {
+
+            if(err){
+                return res.status(500).send("Database Error");
+            }
+
+            res.json(result);
+
+        }
+
+    );
+
+});
+app.post("/api/progress/update", (req, res) => {
+
+    const { user_id, pdf_id, last_page } = req.body;
+
+    db.query(
+
+        `UPDATE reading_history
+         SET
+            last_page = ?,
+            progress = ?,
+            last_read = CURRENT_TIMESTAMP
+         WHERE user_id = ?
+         AND pdf_id = ?`,
+
+        [
+            last_page,
+            Math.min(last_page, 100),
+            user_id,
+            pdf_id
+        ],
+
+        (err) => {
+
+            if(err){
+                console.log(err);
+                return res.status(500).send("Database Error");
+            }
+
+            res.send("Progress Updated");
+
+        }
+
+    );
+
+});
+app.get("/api/progress/continue/:userId", (req, res) => {
+
+    const userId = req.params.userId;
+
+    db.query(
+
+        `SELECT
+            rh.pdf_id,
+            rh.last_page,
+            rh.progress,
+            rh.last_read,
+            p.title,
+            p.pdf_link
+         FROM reading_history rh
+         JOIN pdfs p
+            ON rh.pdf_id = p.id
+         WHERE rh.user_id = ?
+         ORDER BY rh.last_read DESC`,
+
+        [userId],
+
+        (err, result) => {
+
+            if(err){
+                console.log(err);
+                return res.status(500).json(err);
+            }
+
+            res.json(result);
+
+        }
+
+    );
+
+});
+       
+app.get("/get-settings/:id", (req, res) => {
+
+    const userId = req.params.id;
+
+    db.query(
+        "SELECT * FROM settings WHERE user_id = ?",
+        [userId],
+        (err, result) => {
+
+            if(err){
+
+                console.log(err);
+
+                return res.status(500).json({
+                    error: "Database Error"
+                });
+
+            }
+
+            if(result.length === 0){
+
+                return res.status(404).json({
+                    message: "Settings Not Found"
+                });
+
             }
 
             res.json(result[0]);
@@ -424,30 +814,26 @@ app.get("/get-settings/:id", (req, res) => {
     );
 
 });
+
+
+// SAVE SETTINGS
+
 app.post("/save-settings", (req, res) => {
 
     const data = req.body;
 
     db.query(
+
         `UPDATE settings SET
 
-        dark_mode=?,
-        auto_save_progress=?,
-        remember_last_page=?,
-        continuous_scrolling=?,
-        fullscreen_reader=?,
-        reading_progress_bar=?,
+        dark_mode = ?,
+        auto_save_progress = ?,
+        remember_last_page = ?,
+        continuous_scrolling = ?,
+        fullscreen_reader = ?,
+        reading_progress_bar = ?
 
-        recommended_pdfs=?,
-        recently_read_pdfs=?,
-        trending_pdfs=?,
-        new_releases=?,
-
-        new_pdf_alerts=?,
-        contributor_updates=?,
-        weekly_summary=?
-
-        WHERE user_id=?`,
+        WHERE user_id = ?`,
 
         [
 
@@ -458,15 +844,6 @@ app.post("/save-settings", (req, res) => {
             data.fullscreen_reader,
             data.reading_progress_bar,
 
-            data.recommended_pdfs,
-            data.recently_read_pdfs,
-            data.trending_pdfs,
-            data.new_releases,
-
-            data.new_pdf_alerts,
-            data.contributor_updates,
-            data.weekly_summary,
-
             data.user_id
 
         ],
@@ -474,16 +851,29 @@ app.post("/save-settings", (req, res) => {
         (err, result) => {
 
             if(err){
-                return res.status(500).send("Error");
+
+                console.log(err);
+
+                return res.status(500).json({
+                    message: "Database Error"
+                });
+
             }
 
-            res.send("Settings Saved Successfully");
+            console.log(
+                "Settings Updated:",
+                result.affectedRows
+            );
+
+            res.send(
+                "Settings Saved Successfully"
+            );
 
         }
 
     );
 
-});
+});                                  
 app.get("/notifications", (req, res) => {
 
     db.query(
@@ -495,6 +885,180 @@ app.get("/notifications", (req, res) => {
             }
 
             res.json(result);
+
+        }
+    );
+
+});
+
+app.post("/reset-password",(req,res)=>{
+
+const {email,password}=req.body;
+
+const sql =
+"UPDATE users SET password=? WHERE email=?";
+
+db.query(
+sql,
+[password,email],
+(err,result)=>{
+
+if(err){
+
+res.send("Database Error");
+
+}
+else if(result.affectedRows === 0){
+
+        res.send("Email Not Found");
+
+    }
+
+else{
+
+res.send("Password Updated");
+
+}
+
+});
+
+});
+
+app.post("/check-email", (req,res)=>{
+
+    const {email} = req.body;
+
+    const sql =
+    "SELECT * FROM users WHERE email=?";
+
+    db.query(sql,[email],(err,result)=>{
+
+        if(err){
+
+            return res.json({
+                exists:false
+            });
+
+        }
+
+        if(result.length > 0){
+
+            res.json({
+                exists:true
+            });
+
+        }else{
+
+            res.json({
+                exists:false
+            });
+
+        }
+
+    });
+
+});
+
+app.post("/check-reset-email",(req,res)=>{
+
+    const { email } = req.body;
+
+    db.query(
+        "SELECT * FROM users WHERE email=?",
+        [email],
+        (err,result)=>{
+
+            if(err){
+
+                return res.json({
+                    success:false
+                });
+
+            }
+
+            if(result.length > 0){
+
+                res.json({
+                    success:true
+                });
+
+            }
+            else{
+
+                res.json({
+                    success:false
+                });
+
+            }
+
+        }
+    );
+
+});
+app.get("/reading-list/:userId", (req, res) => {
+
+    const userId = req.params.userId;
+
+    const sql = `
+        SELECT
+            pdfs.id,
+            pdfs.title,
+            pdfs.contributor,
+            pdfs.pdf_link
+        FROM reading_list
+        JOIN pdfs
+        ON reading_list.pdf_id = pdfs.id
+        WHERE reading_list.user_id = ?
+    `;
+
+    db.query(sql, [userId], (err, result) => {
+
+        if(err){
+
+            console.log(err);
+
+            return res.status(500).json({
+                error:"Database Error"
+            });
+
+        }
+
+        res.json(result);
+
+    });
+
+});
+
+
+app.delete("/reading-list/:userId/:pdfId", (req, res) => {
+
+    const userId = req.params.userId;
+    const pdfId = req.params.pdfId;
+
+    const sql = `
+        DELETE FROM reading_list
+        WHERE user_id = ?
+        AND pdf_id = ?
+    `;
+
+    db.query(
+        sql,
+        [userId, pdfId],
+        (err, result) => {
+
+            if(err){
+
+                console.log(err);
+
+                return res.status(500).json({
+                    error:"Database Error"
+                });
+
+            }
+
+            res.json({
+                message:"Removed Successfully"
+            });
 
         }
     );
@@ -633,14 +1197,21 @@ app.get("/search", (req, res) => {
 
         `SELECT *
          FROM pdfs
-         WHERE title LIKE ?`,
+         WHERE title LIKE ?
+         OR contributor LIKE ?
+         OR description LIKE ?`,
 
-        [`%${keyword}%`],
+        [
+            `%${keyword}%`,
+            `%${keyword}%`,
+            `%${keyword}%`
+        ],
 
         (err, result) => {
 
             if(err){
-                return res.status(500).send("Database Error");
+                return res.status(500)
+                .send("Database Error");
             }
 
             res.json(result);

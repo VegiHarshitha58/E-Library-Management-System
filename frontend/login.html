@@ -7,9 +7,7 @@
 
 <link rel="stylesheet"
 href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
 <style>
-
 *{
     margin:0;
     padding:0;
@@ -75,6 +73,11 @@ body{
     color:#ddd;
 }
 
+/* Professional focus effect */
+.input-group input:focus{
+    border-bottom:2px solid #00c8ff;
+}
+
 .toggle-password{
     position:absolute;
     right:5px;
@@ -90,6 +93,25 @@ body{
     font-size:14px;
 }
 
+.remember label{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    cursor:pointer;
+
+}
+
+.remember input{
+
+    width:16px;
+    height:16px;
+
+}
+
 .btn{
     width:100%;
     padding:12px;
@@ -97,7 +119,7 @@ body{
     background:#1976d2;
     color:white;
     cursor:pointer;
-    border-radius:3px;
+    border-radius:8px;
     font-size:16px;
     transition:0.3s;
 }
@@ -110,21 +132,18 @@ body{
 .links{
     display:flex;
     justify-content:space-between;
-    margin-top:25px;
-    font-size:12px;
+    margin-top:15px;
+    font-size:14px;
 }
 
 .links a{
     color:white;
     text-decoration:none;
-    display:block;
-    margin-bottom:8px;
     transition:0.3s;
 }
 
 .links a:hover{
     color:#4da3ff;
-    transform:translateX(5px);
 }
 
 @media(max-width:768px){
@@ -141,10 +160,51 @@ body{
     .login-box h1{
         font-size:40px;
     }
+
+    .links{
+        flex-direction:column;
+        gap:10px;
+    }
 }
 
-</style>
+.signup-text{
 
+    text-align:center;
+
+
+    margin-top:20px;
+
+    font-size:14px;
+
+    color:#ddd;
+
+}
+
+.signup-text a{
+
+    color:#00c8ff;
+
+    text-decoration:none;
+
+    font-weight:600;
+
+}
+
+.signup-text a:hover{
+
+    text-decoration:underline;
+
+}
+
+#message{
+    min-height:22px;
+    margin-top:12px;
+    text-align:center;
+    font-size:14px;
+    font-weight:600;
+    letter-spacing:0.3px;
+}
+</style>
 </head>
 <body>
 
@@ -152,9 +212,9 @@ body{
 
 <div class="login-box">
 
-<h1>Welcome!</h1>
+<h1>Welcome Back</h1>
 
-<p>Your Digital Library Awaits</p>
+<p>Sign in to continue your digital library journey</p>
 
 <form id="loginForm">
 
@@ -162,8 +222,9 @@ body{
 <input
 type="text"
 id="username"
-placeholder="Email"
+placeholder="Organization Email Address"
 required>
+
 </div>
 
 <div class="input-group">
@@ -181,12 +242,15 @@ onclick="togglePassword()">
 <i class="fa-solid fa-eye-slash"></i>
 
 </span>
-
 </div>
 
 <div class="remember">
-<input type="checkbox">
-Remember Me
+
+    <label>
+        <input type="checkbox" id="rememberMe">
+        Remember Me
+    </label>
+
 </div>
 
 <button
@@ -194,28 +258,27 @@ type="submit"
 class="btn"
 id="loginBtn">
 LOGIN
-</button>
+</button><p id="message"></p>
+
 
 </form>
 
 <div class="links">
 
-<div>
-<a href="#">Change Password</a>
-<a href="#">Manage Profile</a>
-</div>
-
-<div>
-<a href="#">Forgot Password</a>
-<a href="register.html">Create Account</a>
-</div>
+    <a href="forgotpassword.html">Forgot Password?</a>
 
 </div>
+
+<div class="signup-text">
+
+    Don't have an account?
+    <a href="register.html">Create Account</a>
 
 </div>
 
 </div>
 
+</div>
 <script>
 
 function togglePassword(){
@@ -253,9 +316,18 @@ document.getElementById("loginForm")
     const password =
     document.getElementById("password").value;
 
+    const message =
+    document.getElementById("message");
+
+    message.innerText = "";
+
     if(username === "" || password === ""){
 
-        alert("Please fill all fields");
+        message.style.color = "#ff7b7b";
+
+        message.innerText =
+        "Please fill all fields";
+
         return;
     }
 
@@ -263,6 +335,7 @@ document.getElementById("loginForm")
     document.getElementById("loginBtn");
 
     btn.innerHTML = "Logging In...";
+
     btn.disabled = true;
 
     try{
@@ -284,45 +357,136 @@ document.getElementById("loginForm")
         );
 
         const data =
-await response.json();
+        await response.json();
 
-if(data.message === "Login Successful"){
+        if(data.message === "Login Successful"){
+
+            message.style.color =
+            "#7CFC98";
+
+            message.innerText =
+            "✓ Login Successful";
+
+            localStorage.setItem(
+                "userId",
+                data.userId
+            );
+
+            localStorage.setItem(
+                "userName",
+                data.userName
+            );
+
+            localStorage.setItem(
+                "email",
+                data.email
+            );
+        if(data.avatar){
 
     localStorage.setItem(
-        "userId",
-        data.userId
+        "userAvatar",
+        `http://127.0.0.1:5000/${data.avatar}`
     );
 
-    localStorage.setItem(
-        "userName",
-        data.userName
-    );
-
-    localStorage.setItem(
-        "email",
-        data.email
-    );
-
-    window.location.href = "home.html";
 }
-else{
+            /* REMEMBER ME */
 
-    alert(data.message);
+            if(document.getElementById("rememberMe").checked){
 
-}
+                localStorage.setItem(
+                    "rememberedEmail",
+                    username
+                );
 
-}
+                localStorage.setItem(
+                    "rememberedPassword",
+                    password
+                );
+
+            }else{
+
+                localStorage.removeItem(
+                    "rememberedEmail"
+                );
+
+                localStorage.removeItem(
+                    "rememberedPassword"
+                );
+
+            }
+
+            setTimeout(() => {
+
+                window.location.href =
+                "home.html";
+
+            }, 1000);
+
+        }
+        else{
+
+            message.style.color =
+            "#ff7b7b";
+
+            message.innerText =
+            data.message;
+
+        }
+
+    }
     catch(error){
 
-        alert("Server Connection Failed");
+        message.style.color =
+        "#ff7b7b";
+
+        message.innerText =
+        "Server Connection Failed";
 
         console.log(error);
+
     }
 
     btn.innerHTML = "LOGIN";
+
     btn.disabled = false;
 
 });
+
+/* LOAD SAVED LOGIN DETAILS */
+
+window.onload = function(){
+
+    const savedEmail =
+    localStorage.getItem(
+        "rememberedEmail"
+    );
+
+    const savedPassword =
+    localStorage.getItem(
+        "rememberedPassword"
+    );
+
+    if(savedEmail){
+
+        document.getElementById(
+            "username"
+        ).value = savedEmail;
+
+        document.getElementById(
+            "rememberMe"
+        ).checked = true;
+
+    }
+
+    if(savedPassword){
+
+        document.getElementById(
+            "password"
+        ).value = savedPassword;
+
+    }
+
+};
 
 </script>
 

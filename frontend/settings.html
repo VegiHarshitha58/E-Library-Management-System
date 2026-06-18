@@ -1,112 +1,103 @@
-
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Settings</title>
 
-<link rel="stylesheet" href="settings.css">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Library Settings</title>
+
+    <link rel="stylesheet" href="settings.css">
 </head>
 
 <body>
 
-<div class="container">
+    <div class="settings-container">
 
-    <h1>Settings</h1>
+        <h1>Settings</h1>
 
-    <div class="settings-grid">
+        <div class="settings-card">
 
-        <div class="card">
             <h2>Reading Experience</h2>
 
-            <div class="option">
-                <input type="checkbox" id="darkMode">
-                Dark Mode
+            <div class="setting-row">
+                <span>Dark Mode</span>
+
+                <label class="switch">
+                    <input type="checkbox" id="darkMode">
+                    <span class="slider"></span>
+                </label>
             </div>
 
-            <div class="option">
-                <input type="checkbox" id="rememberPage">
-                Remember Last Page
+            <div class="setting-row">
+                <span>Continuous Scrolling</span>
+
+                <label class="switch">
+                    <input type="checkbox" id="continuousScroll">
+                    <span class="slider"></span>
+                </label>
             </div>
 
-            <div class="option">
-                <input type="checkbox" id="autoSave">
-                Auto Save Progress
+            <div class="setting-row">
+                <span>Fullscreen Reader</span>
+
+                <label class="switch">
+                    <input type="checkbox" id="fullscreenReader">
+                    <span class="slider"></span>
+                </label>
             </div>
 
-            <div class="option">
-                <input type="checkbox" id="continuousScroll">
-                Continuous Scrolling
-            </div>
-
-            <div class="option">
-                <input type="checkbox" id="fullscreenReader">
-                Fullscreen Reader
-            </div>
-
-            <div class="option">
-                <input type="checkbox" id="progressBar">
-                Reading Progress Bar
-            </div>
         </div>
 
-        <div class="card">
-            <h2>Library Preferences</h2>
+        <div class="settings-card">
 
-            <div class="option">
-                <input type="checkbox" id="recommendedPDFs">
-                Recommended PDFs
+            <h2>Reading Progress</h2>
+
+            <div class="setting-row">
+                <span>Auto Save Progress</span>
+
+                <label class="switch">
+                    <input type="checkbox" id="autoSave">
+                    <span class="slider"></span>
+                </label>
             </div>
 
-            <div class="option">
-                <input type="checkbox" id="recentlyRead">
-                Recently Read PDFs
+            <div class="setting-row">
+                <span>Remember Last Page</span>
+
+                <label class="switch">
+                    <input type="checkbox" id="rememberPage">
+                    <span class="slider"></span>
+                </label>
             </div>
 
-            <div class="option">
-                <input type="checkbox" id="trendingPDFs">
-                Trending PDFs
+            <div class="setting-row">
+                <span>Reading Progress Bar</span>
+
+                <label class="switch">
+                    <input type="checkbox" id="progressBar">
+                    <span class="slider"></span>
+                </label>
             </div>
 
-            <div class="option">
-                <input type="checkbox" id="newReleases">
-                New Releases
-            </div>
         </div>
 
-        <div class="card">
-            <h2>Notifications</h2>
+        <button class="save-btn" onclick="saveSettings()">
+            Save Changes
+        </button>
 
-            <div class="option">
-                <input type="checkbox" id="newAlerts">
-                New PDF Alerts
-            </div>
-
-            <div class="option">
-                <input type="checkbox" id="contributorUpdates">
-                Contributor Updates
-            </div>
-
-            <div class="option">
-                <input type="checkbox" id="weeklySummary">
-                Weekly Summary
-            </div>
-        </div>
+        <div id="statusMessage"></div>
 
     </div>
 
-    <button class="save-btn" onclick="saveSettings()">
-        Save Changes
-    </button>
-
-</div>
-
 <script>
 
-
-
 function saveSettings() {
+
+    const button =
+        document.querySelector(".save-btn");
+
+    button.disabled = true;
+    button.innerText = "Saving...";
 
     const data = {
 
@@ -128,28 +119,7 @@ function saveSettings() {
             document.getElementById("fullscreenReader").checked,
 
         reading_progress_bar:
-            document.getElementById("progressBar").checked,
-
-        recommended_pdfs:
-            document.getElementById("recommendedPDFs").checked,
-
-        recently_read_pdfs:
-            document.getElementById("recentlyRead").checked,
-
-        trending_pdfs:
-            document.getElementById("trendingPDFs").checked,
-
-        new_releases:
-            document.getElementById("newReleases").checked,
-
-        new_pdf_alerts:
-            document.getElementById("newAlerts").checked,
-
-        contributor_updates:
-            document.getElementById("contributorUpdates").checked,
-
-        weekly_summary:
-            document.getElementById("weeklySummary").checked
+            document.getElementById("progressBar").checked
 
     };
 
@@ -169,9 +139,20 @@ function saveSettings() {
 
     .then(message => {
 
-        alert(message);
+        const status =
+            document.getElementById("statusMessage");
 
-        console.log(message);
+        status.innerHTML =
+            "✓ Settings saved successfully";
+
+        button.disabled = false;
+        button.innerText = "Save Changes";
+
+        setTimeout(() => {
+
+            status.innerHTML = "";
+
+        }, 3000);
 
     })
 
@@ -179,12 +160,18 @@ function saveSettings() {
 
         console.error(error);
 
-        alert("Error connecting to server");
+        const status =
+            document.getElementById("statusMessage");
+
+        status.innerHTML =
+            "✗ Unable to connect to server";
+
+        button.disabled = false;
+        button.innerText = "Save Changes";
 
     });
 
 }
-
 
 window.onload = function() {
 
@@ -197,11 +184,11 @@ window.onload = function() {
         document.getElementById("darkMode").checked =
             data.dark_mode == 1;
 
-        document.getElementById("rememberPage").checked =
-            data.remember_last_page == 1;
-
         document.getElementById("autoSave").checked =
             data.auto_save_progress == 1;
+
+        document.getElementById("rememberPage").checked =
+            data.remember_last_page == 1;
 
         document.getElementById("continuousScroll").checked =
             data.continuous_scrolling == 1;
@@ -211,27 +198,6 @@ window.onload = function() {
 
         document.getElementById("progressBar").checked =
             data.reading_progress_bar == 1;
-
-        document.getElementById("recommendedPDFs").checked =
-            data.recommended_pdfs == 1;
-
-        document.getElementById("recentlyRead").checked =
-            data.recently_read_pdfs == 1;
-
-        document.getElementById("trendingPDFs").checked =
-            data.trending_pdfs == 1;
-
-        document.getElementById("newReleases").checked =
-            data.new_releases == 1;
-
-        document.getElementById("newAlerts").checked =
-            data.new_pdf_alerts == 1;
-
-        document.getElementById("contributorUpdates").checked =
-            data.contributor_updates == 1;
-
-        document.getElementById("weeklySummary").checked =
-            data.weekly_summary == 1;
 
     })
 
@@ -243,10 +209,7 @@ window.onload = function() {
 
 };
 
-
-
 </script>
 
 </body>
-</html>
-
+</html>                                 

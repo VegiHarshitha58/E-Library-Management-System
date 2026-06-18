@@ -3,221 +3,179 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>New Releases - E-Library</title>
-
 <link rel="stylesheet" href="new_releases.css">
-
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
 </head>
-
 <body>
 
 <header>
-
-<div class="logo">
-📚 E-Library
-</div>
-
-<nav>
-
-<a href="home.html">Home</a>
-<a href="trending_pdfs.html">Trending PDFs</a>
-<a href="new_releases.html">New Releases</a>
-<a href="categories.html">Categories</a>
-<a href="contributors.html">Contributors</a>
-
-</nav>
-
+  <div class="logo">📚 E-Library</div>
+  <nav>
+    <a href="home.html">Home</a>
+    <a href="trending_pdfs.html">Trending PDFs</a>
+    <a href="new_releases.html">New Releases</a>
+    <a href="categories.html">Categories</a>
+    <a href="contributors.html">Contributors</a>
+  </nav>
 </header>
 
 <section class="hero">
-
-<div class="hero-content">
-
-<span class="tag">
-🆕 NEW PDF COLLECTION
-</span>
-
-<h1>Artificial Intelligence Notes</h1>
-
-<p>
-Recently uploaded study materials,
-research papers, notes and project reports
-for students and researchers.
-</p>
-
-<div class="stats">
-
-<span>📄 180 Pages</span>
-<span>⭐ 4.8 Rating</span>
-<span>⬇ 1200 Downloads</span>
-
-</div>
-
-<div class="buttons">
-
-<button class="read-btn"
-onclick="alert('PDF Reader will be connected soon')">
-Read PDF
-</button>
-
-<button class="download-btn"
-onclick="alert('Download feature coming soon')">
-Download
-</button>
-
-</div>
-
+  <div class="hero-content">
+    <span class="tag">🆕 NEW PDF COLLECTION</span>
+    <h1>New Releases</h1>
+    <p>Recently uploaded study materials, research papers, notes and project reports for students and researchers.</p>
+  </div>
 </section>
 
 <section class="pdf-section">
-
-<h2>🆕 Added This Week</h2>
-
-<div class="pdf-row" id="newReleasesContainer">
-
-</div>
-
+  <h2>🆕 Recently Added PDFs</h2>
+  <div class="pdf-row" id="newReleasesRow">
+    <p style="color:#aaa;">Loading...</p>
+  </div>
 </section>
 
 <section class="pdf-section">
-
-<h2>📚 Recently Uploaded PDFs</h2>
-
-<div class="pdf-row">
-
-<div class="pdf-card"
-onclick="alert('PDF details page coming soon')">
-<div class="pdf-icon">PDF</div>
-<h3>Computer Networks</h3>
-<p>Semester Material</p>
-</div>
-
-<div class="pdf-card"
-onclick="alert('PDF details page coming soon')">
-<div class="pdf-icon">PDF</div>
-<h3>Operating Systems</h3>
-<p>Study Notes</p>
-</div>
-
-<div class="pdf-card"
-    onclick="alert('PDF details page coming soon')">
-<div class="pdf-icon">PDF</div>
-<h3>Cyber Security</h3>
-<p>Research Material</p>
-</div>
-
-<div class="pdf-card"
-    onclick="alert('PDF details page coming soon')">
-<div class="pdf-icon">PDF</div>
-<h3>Data Mining</h3>
-<p>Project Report</p>
-</div>
-
-</div>
-
+  <h2>📚 All New Uploads</h2>
+  <div class="pdf-row" id="allNewRow">
+    <p style="color:#aaa;">Loading...</p>
+  </div>
 </section>
+
 <script>
+const API = "http://127.0.0.1:5000";
 
-async function loadNewReleasesPage() {
+function makeCard(pdf) {
+  const card = document.createElement("div");
+  card.className = "pdf-card";
+  card.innerHTML = `
+    <div class="pdf-icon">PDF</div>
+    <h3>${pdf.title}</h3>
+    <p style="font-size:0.8rem;color:#aaa;margin-top:4px;">${pdf.contributor || 'Unknown'}</p>
+    <div style="display:flex;gap:8px;margin-top:12px;">
+      <button class="read-btn" style="flex:1;padding:8px;border:none;border-radius:6px;background:#00c8ff;cursor:pointer;font-size:0.8rem;"
+   onclick="openPDF(${pdf.id}, '${pdf.pdf_link}', '${pdf.title}')">Read</button>
+      <button class="download-btn" style="flex:1;padding:8px;border:none;border-radius:6px;background:white;cursor:pointer;font-size:0.8rem;"
+        onclick="downloadPDF(${pdf.id},'${pdf.pdf_link}', '${pdf.title}')">Download</button>
+    </div>
+  `;
+  return card;
+}
 
-    const response =
-    await fetch(
-        "http://localhost:5000/new-releases"
-    );
+async function openPDF(pdfId, fileUrl, title) {
 
-    const data =
-    await response.json();
+    const userId =
+    localStorage.getItem("userId");
 
-    const container =
-    document.getElementById(
-        "newReleasesContainer"
-    );
+    if(fileUrl && fileUrl !== "null"){
 
-    container.innerHTML = "";
+        try{
 
-    data.forEach(pdf => {
-        const uploadDate =
-new Date(pdf.upload_date);
+            await fetch(
+                `${API}/pdfs/${pdfId}/view`,
+                {
+                    method:"POST",
 
-const formattedDate =
-uploadDate.toLocaleDateString(
-    "en-IN",
+                    headers:{
+                        "Content-Type":"application/json"
+                    },
+
+                    body:JSON.stringify({
+                        userId:userId
+                    })
+                }
+            );
+
+        }catch(err){
+
+            console.log(err);
+
+        }
+
+        window.open(
+            `reader.html?pdf_id=${pdfId}&file=${fileUrl}&page=1`,
+            "_blank"
+        );
+
+    }else{
+
+        alert(`"${title}" — PDF file not available yet`);
+
+    }
+
+}
+// ─── DOWNLOAD PDF ─────────────────────────────────────────────────────────────
+async function downloadPDF(pdfId, fileUrl, title) {
+
+    console.log("Download clicked", pdfId);
+
+
+    try{
+
+        const response = await fetch(
+    `${API}/pdfs/${pdfId}/download`,
     {
-        day: "numeric",
-        month: "short",
-        year: "numeric"
+        method:"POST"
     }
 );
 
-        const card =
-        document.createElement("div");
+console.log(await response.text());
+      
+    }catch(err){
 
-        card.className =
-        "pdf-card";
+        console.log(err);
 
-        card.innerHTML = `
+    }
 
-            <div class="pdf-icon">
-                PDF
-            </div>
+    const a =
+    document.createElement("a");
 
-            <h3>
-                ${pdf.title}
-            </h3>
+    a.href =
+    `${API}/pdf_library/${fileUrl}`;
 
-            <p>
-               Uploaded: ${formattedDate}
-            </p>
+    a.download =
+    title + ".pdf";
 
-        `;
+    document.body.appendChild(a);
 
-        card.onclick = async () => {
+    a.click();
 
-            const userId =
-            localStorage.getItem("userId");
-
-            await fetch(
-
-                `http://localhost:5000/pdfs/${pdf.id}/view`,
-
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                        "application/json"
-                    },
-
-                    body: JSON.stringify({
-                        userId
-                    })
-                }
-
-            );
-
-            window.open(
-
-                "http://localhost:5000/pdf_library/" +
-                pdf.pdf_link,
-
-                "_blank"
-
-            );
-
-        };
-
-        container.appendChild(card);
-
-    });
+    document.body.removeChild(a);
 
 }
+async function loadNewReleases() {
+  try {
+    const res = await fetch(`${API}/new-releases`);
+    const pdfs = await res.json();
 
-loadNewReleasesPage();
+    const row1 = document.getElementById("newReleasesRow");
+    const row2 = document.getElementById("allNewRow");
+    row1.innerHTML = "";
+    row2.innerHTML = "";
 
+    if (pdfs.length === 0) {
+      row1.innerHTML = "<p style='color:#aaa;'>No new releases found.</p>";
+      return;
+    }
+
+    // First 6 in top row
+    pdfs.slice(0, 6).forEach(pdf => row1.appendChild(makeCard(pdf)));
+
+    // Rest in second row
+    pdfs.slice(6).forEach(pdf => row2.appendChild(makeCard(pdf)));
+
+    if (pdfs.length <= 6) {
+      row2.innerHTML = "<p style='color:#aaa;'>No more PDFs.</p>";
+    }
+
+  } catch (err) {
+    document.getElementById("newReleasesRow").innerHTML =
+      "<p style='color:#e57373;'>Failed to load. Is the server running?</p>";
+  }
+}
+
+loadNewReleases();
 </script>
+
+
 </body>
 </html>

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<title>PDF Reader</title>
+
+<style>
+body {
+    margin: 0;
+    background: #0d0d0d;
+    font-family: Arial;
+    color: white;
+}
+
+.topbar {
+    height: 55px;
+    background: #161616;
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    justify-content: space-between;
+    border-bottom: 1px solid #333;
+    
+}
+
+.back-btn {
+    background: #e50914;
+    border: none;
+    padding: 8px 12px;
+    color: white;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+iframe {
+    width: 100%;
+    height: calc(100vh - 55px);
+    border: none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="topbar">
+    <button class="back-btn" onclick="goBack()">← Back</button>
+    <div id="title">PDF Reader</div>
+
+    <button id="bookmarkBtn" onclick="saveBookmark()" style="
+    background:#f5c542;
+    border:none;
+    padding:6px 10px;
+    border-radius:4px;
+    cursor:pointer;
+    font-weight:bold;
+">
+⭐ Bookmark
+</button>
+    <div id="progress">Page 1</div>
+</div>
+
+<iframe id="pdfFrame"></iframe>
+
+<script>
+
+const params = new URLSearchParams(window.location.search);
+
+let pdfFile = params.get("file");
+let pdfId = Number(params.get("pdf_id"));
+let page = parseInt(params.get("page")) || 1;
+
+let userId = localStorage.getItem("userId") || 1;
+console.log("Saving History", userId, pdfId);
+fetch("http://localhost:5000/reading-history", {
+
+    method: "POST",
+
+    headers: {
+        "Content-Type": "application/json"
+    },
+
+    body: JSON.stringify({
+        userId: userId,
+        pdfId: pdfId
+    })
+
+})
+.then(res => res.text())
+.then(data => console.log(data))
+.catch(err => console.log(err));
+
+
+
+    let enableBookmark = true;
+
+
+    
+    // ⭐ IMPORTANT: after settings load, load bookmark/resume
+    loadSavedPage();
+
+/* -----------------------------
+   LOAD SETTINGS (resume mode)
+------------------------------*/
+
+fetch("http://localhost:5000/get-settings/" + userId)
+.then(res => res.json())
+.then(data => {
+
+    enableBookmark = data.enable_bookmark == 1;
+
+    const btn = document.getElementById("bookmarkBtn");
+
+    if (enableBookmark) {
+        btn.style.display = "inline-block";
+        btn.innerText = "⭐ Bookmark";
+    } else {
+        btn.style.display = "none";
+
+        document.getElementById("progress").innerText =
+            "Bookmarks Disabled in Settings";
+    }
+
+});
+            
+
+        
+
+/* -----------------------------
+   SAVE PROGRESS (REAL)
+------------------------------*/
+
+let currentPage = page;
+
+function saveProgress() {
+
+    fetch("http://localhost:5000/api/progress/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            user_id: userId,
+            pdf_id: pdfId,
+            last_page: currentPage
+        })
+    });
+
+}
+
+function loadSavedPage() {
+
+    // 1st priority → bookmark
+    let savedBookmark = localStorage.getItem("bookmark_pdf_" + pdfId);
+
+    if (savedBookmark) {
+
+        currentPage = parseInt(savedBookmark);
+
+        document.getElementById("progress").innerText =
+            "⭐ Bookmark Page " + currentPage;
+
+        document.getElementById("pdfFrame").src =
+            "http://localhost:5000/pdf_library/" +
+            pdfFile +
+            "#page=" + currentPage;
+
+        return;
+    }
+
+    // 2nd priority → resume from DB
+    fetch(`http://localhost:5000/api/progress/${userId}/${pdfId}`)
+.then(res => res.json())
+.then(data => {
+
+    if (data.last_page) {
+
+        currentPage = data.last_page;
+
+        document.getElementById("progress").innerText =
+            "📌 Resumed Page " + currentPage;
+
+        document.getElementById("pdfFrame").src =
+            "http://localhost:5000/pdf_library/" +
+            pdfFile +
+            "#page=" + currentPage;
+
+    } else {
+
+        document.getElementById("pdfFrame").src =
+            "http://localhost:5000/pdf_library/" +
+            pdfFile;
+
+    }
+
+})
+.catch(() => {
+
+    document.getElementById("pdfFrame").src =
+        "http://localhost:5000/pdf_library/" +
+        pdfFile;
+
+});
+}
+
+/* Simulated page tracker (replace later with real PDF.js if needed) */
+setInterval(() => {
+
+    currentPage += 1;
+
+    document.getElementById("progress").innerText =
+        "Page " + currentPage;
+
+    saveProgress();
+
+}, 8000);
+
+function goBack() {
+
+    if (window.history.length > 1) {
+        window.history.back();
+    } else {
+        window.location.href = "home.html";
+    }
+
+}
+
+function saveBookmark() {
+
+    if (!enableBookmark) {
+        alert("Bookmarks are disabled in Settings");
+        return;
+    }
+
+    localStorage.setItem(
+        "bookmark_pdf_" + pdfId,
+        currentPage
+    );
+
+    document.getElementById("progress").innerText =
+        "⭐ Bookmarked Page " + currentPage + " (Saved)";
+
+    alert("Bookmark saved at page " + currentPage);
+}
+</script>
+
+</body>
+</html>

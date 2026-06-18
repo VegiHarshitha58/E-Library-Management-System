@@ -285,6 +285,61 @@ body::after {
 .save-btn:active {
     transform: translateY(0);
 }
+.avatar-menu{
+
+    position:absolute;
+
+    top:140px;
+
+    left:50%;
+
+    transform:translateX(-50%);
+
+    background:white;
+
+    border-radius:12px;
+
+    box-shadow:0 8px 25px rgba(0,0,0,0.15);
+
+    display:none;
+
+    flex-direction:column;
+
+    overflow:hidden;
+
+    z-index:1000;
+
+    min-width:170px;
+
+}
+
+.avatar-menu button{
+
+    border:none;
+
+    background:white;
+
+    padding:12px 18px;
+
+    text-align:left;
+
+    cursor:pointer;
+
+    font-size:14px;
+
+}
+
+.avatar-menu button:hover{
+
+    background:#f5f5f5;
+
+}
+
+#removePhotoBtn{
+
+    color:#e53935;
+
+}
 
 </style>
 </head>
@@ -308,7 +363,17 @@ body::after {
             id="avatarInput"
             accept="image/*"
             hidden>
+<div class="avatar-menu" id="avatarMenu">
 
+    <button id="changePhotoBtn">
+        Change Photo
+    </button>
+
+    <button id="removePhotoBtn">
+        Remove Photo
+    </button>
+
+</div>
         <h2 id="displayName">Priscilla John</h2>
         <p id="displayEmail">priscilla@example.com</p>
         <div class="divider"></div>
@@ -343,7 +408,6 @@ body::after {
         <button type="submit" class="save-btn">
             Save Changes
         </button>
-
     </form>
 
 </div>
@@ -351,13 +415,27 @@ body::after {
 <script>
 
 // Load profile from backend when page opens
-window.onload = loadProfile;
+window.onload = function() {
+    loadProfile();
+    // Load saved avatar if exists
+    const savedAvatar = localStorage.getItem("userAvatar");
+    if (savedAvatar) {
+        document.getElementById("avatarPreview").src = savedAvatar;
+    }
+};
 
 function loadProfile() {
 
-    fetch("http://localhost:5000/api/profile")
+    const userId = localStorage.getItem("userId");
+
+    fetch(`http://localhost:5000/api/profile/${userId}`)
     .then(response => response.json())
     .then(data => {
+        if (data.avatar) {
+    const avatarUrl = `http://127.0.0.1:5000/${data.avatar}`;
+    document.getElementById("avatarPreview").src = avatarUrl;
+    localStorage.setItem("userAvatar", avatarUrl);
+}
 
         document.getElementById("name").value =
             data.name || "";
@@ -389,21 +467,43 @@ document.getElementById("avatarInput");
 const avatarPreview =
 document.getElementById("avatarPreview");
 
-avatarInput.addEventListener(
-"change",
-function(){
-
+avatarInput.addEventListener("change", async function() {
     const file = this.files[0];
+    if (!file) return;
 
-    if(file){
+    // Preview immediately
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        avatarPreview.src = e.target.result;
+        localStorage.setItem("userAvatar", e.target.result);
+    };
+    reader.readAsDataURL(file);
 
-        avatarPreview.src =
-        URL.createObjectURL(file);
+    // Upload to server
+    try {
+        const formData = new FormData();
+formData.append("avatar", file);
 
+const userId = localStorage.getItem("userId");
+formData.append("userId", userId);
+
+        const res = await fetch("http://127.0.0.1:5000/api/profile/avatar", {
+            method: "POST",
+            body: formData
+        });
+
+        const data = await res.json();
+        localStorage.setItem(
+    "userAvatar",
+    `http://127.0.0.1:5000/${data.avatar}`
+);
+        alert("Profile picture updated! ✅");
+
+    } catch(err) {
+        console.error(err);
+        alert("Failed to upload image");
     }
-
 });
-
 
 // Save profile to database
 document
@@ -416,16 +516,15 @@ function(e){
 
     const profileData = {
 
-        name:
-        document.getElementById("name").value,
+    userId: localStorage.getItem("userId"),
 
-        email:
-        document.getElementById("email").value,
+    name: document.getElementById("name").value,
 
-        bio:
-        document.getElementById("bio").value
+    email: document.getElementById("email").value,
 
-    };
+    bio: document.getElementById("bio").value
+
+};
 
     fetch(
         "http://localhost:5000/api/profile",
@@ -467,6 +566,76 @@ function(e){
 
 });
 
+const avatarContainer =
+document.querySelector(".avatar-container");
+
+const avatarMenu =
+document.getElementById("avatarMenu");
+
+avatarContainer.addEventListener("click", function(e){
+
+    e.preventDefault();
+
+    if(
+        avatarMenu.style.display === "flex"
+    ){
+        avatarMenu.style.display = "none";
+    }
+    else{
+        avatarMenu.style.display = "flex";
+    }
+
+});
+
+document.addEventListener("click", function(e){
+
+    if(
+        !avatarContainer.contains(e.target) &&
+        !avatarMenu.contains(e.target)
+    ){
+        avatarMenu.style.display = "none";
+    }
+
+});
+document
+.getElementById("changePhotoBtn")
+.addEventListener("click", function(){
+
+    document
+    .getElementById("avatarInput")
+    .click();
+
+});
+document
+.getElementById("removePhotoBtn")
+.addEventListener("click", async function(){
+
+    const userId =
+    localStorage.getItem("userId");
+
+    const response =
+    await fetch(
+
+        `http://localhost:5000/api/profile/avatar/${userId}`,
+
+        {
+            method:"DELETE"
+        }
+
+    );
+
+    const data =
+    await response.json();
+
+    localStorage.removeItem(
+        "userAvatar"
+    );
+
+    alert(data.message);
+
+    location.reload();
+
+});
 </script>
 
 

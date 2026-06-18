@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Reading History</title>
+
+<style>
+
+body{
+    background:#111;
+    color:white;
+    font-family:Arial;
+    padding:30px;
+}
+
+.card{
+    background:#222;
+    padding:15px;
+    margin-bottom:15px;
+    border-radius:10px;
+}
+
+.date{
+    color:orange;
+}
+
+button{
+    background:#e50914;
+    border:none;
+    padding:8px;
+    color:white;
+    cursor:pointer;
+    border-radius:5px;
+    margin-top:10px;
+}
+</style>
+
+</head>
+
+<body>
+
+<h1>📖 Reading History</h1>
+
+<div id="historyContainer"></div>
+
+<script>
+const userId = localStorage.getItem("userId");
+
+fetch(`http://localhost:5000/reading-history/${userId}`)
+.then(res=>res.json())
+
+.then(data=>{
+
+    const container =
+    document.getElementById(
+        "historyContainer"
+    );
+
+    data.forEach(item=>{
+
+        container.innerHTML += `
+
+        <div class="card">
+
+            <h3>${item.title}</h3>
+
+ <p>📄 Last Page: ${item.last_page}</p>
+
+    <p>📊 Progress: ${item.progress}%</p>
+
+<p class="date">
+    📅 Last Read:
+    ${new Date(item.last_read).toLocaleString()}
+</p>
+
+<button onclick="resume(
+    ${item.pdf_id},
+    '${item.pdf_link}',
+    ${item.last_page}
+)">
+    ▶ Resume Reading
+</button>
+
+        </div>
+
+        `;
+
+    });
+
+});
+
+function resume(pdf_id, file, last_page){
+
+    window.location.href =
+        `reader.html?pdf_id=${pdf_id}&file=${file}&page=${last_page}`;
+}
+</script>
+
+</body>
+</html>

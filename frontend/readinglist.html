@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Reading List</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Reading List</title>
 
-    <link rel="stylesheet" href="readinglist.css">
+<link rel="stylesheet" href="readinglist.css">
 </head>
 
 <body>
-    <nav class="navbar">
+
+<nav class="navbar">
 
     <div class="logo">
         📚 E-Library
@@ -29,80 +29,245 @@
 <div class="container">
 
     <div class="header">
-
-        <h1>My Reading List</h1>
-
-        <input type="text"
-               placeholder="Search PDFs...">
-
+        <h1 id="readingListTitle">
+            My Reading List
+        </h1>
     </div>
 
-    <div class="books-grid">
-
-        <div class="book-card"
-        onclick="alert('PDF Details Page Coming Soon')">
-
-            <div class="pdf-icon">PDF</div>
-
-            <h3>Introduction to Algorithms</h3>
-
-            <p>Thomas H. Cormen</p>
-
-            <button onclick="alert('PDF Reader coming soon')">
-    Open PDF
-</button>
-
-        </div>
-
-        <div class="book-card"
-        onclick="alert('PDF Details Page Coming Soon')">
-
-            <div class="pdf-icon">PDF</div>
-
-            <h3>Database Management Systems</h3>
-
-            <p>Raghu Ramakrishnan</p>
-          <button onclick="alert('PDF Reader coming soon')">
-    Open PDF
-</button>  
-
-        </div>
-
-        <div class="book-card"
-            onclick="alert('PDF Details Page Coming Soon')">
-
-            <div class="pdf-icon">PDF</div>
-
-            <h3>Operating Systems</h3>
-
-            <p>Galvin</p>
-
-            <button onclick="alert('PDF Reader coming soon')">
-    Open PDF
-</button>
-
-        </div>
-
-        <div class="book-card"
-onclick="alert('PDF Details Page Coming Soon')">
-
-            <div class="pdf-icon">PDF</div>
-
-            <h3>Computer Networks</h3>
-
-            <p>Andrew Tanenbaum</p>
-
-            <button onclick="alert('PDF Reader coming soon')">
-    Open PDF
-</button>
-
-
-        </div>
-
+    <div
+    class="books-grid"
+    id="readingListContainer">
     </div>
 
 </div>
 
+<script>
+
+const userId =
+localStorage.getItem("userId");
+
+console.log(
+"User ID:",
+userId
+);
+
+const container =
+document.getElementById(
+"readingListContainer"
+);
+
+const title =
+document.getElementById(
+"readingListTitle"
+);
+
+let toastTimer;
+
+function showToast(msg){
+
+    let toast =
+    document.getElementById("toast");
+
+    if(!toast){
+
+        toast =
+        document.createElement("div");
+
+        toast.id = "toast";
+
+        toast.style.position = "fixed";
+        toast.style.bottom = "20px";
+        toast.style.right = "20px";
+
+        toast.style.background =
+        "#22c55e";
+
+        toast.style.color =
+        "white";
+
+        toast.style.padding =
+        "12px 18px";
+
+        toast.style.borderRadius =
+        "10px";
+
+        toast.style.fontWeight =
+        "600";
+
+        toast.style.zIndex =
+        "9999";
+
+        toast.style.boxShadow =
+        "0 4px 12px rgba(0,0,0,0.3)";
+
+        document.body.appendChild(toast);
+
+    }
+
+    toast.innerText = msg;
+
+    toast.style.display = "block";
+
+    clearTimeout(toastTimer);
+
+    toastTimer = setTimeout(() => {
+
+        toast.style.display = "none";
+
+    }, 2500);
+
+}
+
+async function loadReadingList(){
+
+    try{
+
+        const response =
+        await fetch(
+        `http://localhost:5000/reading-list/${userId}`
+        );
+
+        const data =
+        await response.json();
+
+        console.log(data);
+
+        title.innerText =
+        `My Reading List (${data.length})`;
+
+        if(data.length === 0){
+
+            container.innerHTML = `
+                <div style="
+                    text-align:center;
+                    width:100%;
+                    margin-top:40px;
+                ">
+                    <h2>📚</h2>
+                    <h2>Your Reading List is Empty</h2>
+                    <p>
+                        Save PDFs to read later
+                    </p>
+                </div>
+            `;
+
+            return;
+        }
+
+        container.innerHTML = "";
+
+        data.forEach(pdf => {
+
+            container.innerHTML += `
+
+            <div class="book-card">
+
+                <button
+                class="remove-btn"
+                onclick="removeFromReadingList(${pdf.id})">
+
+                    ✕
+
+                </button>
+
+                <div class="pdf-icon">
+                    PDF
+                </div>
+
+                <h3>
+                    ${pdf.title}
+                </h3>
+
+                <p>
+                    ${pdf.contributor}
+                </p>
+
+                <button
+class="open-btn"
+onclick="openPdf(${pdf.id}, '${pdf.pdf_link}')">
+
+    Open PDF
+
+</button>
+
+            </div>
+
+            `;
+
+        });
+
+    }
+    catch(error){
+
+        console.log(error);
+
+        container.innerHTML = `
+            <h2>
+                Failed to load Reading List
+            </h2>
+        `;
+
+    }
+
+}
+
+async function removeFromReadingList(pdfId){
+
+    const confirmDelete =
+    confirm(
+    "Remove this PDF from Reading List?"
+    );
+
+    if(!confirmDelete){
+
+        return;
+
+    }
+
+    try{
+
+        const response =
+        await fetch(
+        `http://localhost:5000/reading-list/${userId}/${pdfId}`,
+        {
+            method:"DELETE"
+        });
+
+        const data =
+        await response.json();
+
+        showToast(
+            data.message ||
+            "Removed Successfully"
+        );
+
+        loadReadingList();
+
+    }
+    catch(error){
+
+        console.log(error);
+
+        showToast(
+            "Failed to remove PDF"
+        );
+
+    }
+
+}
+
+function openPdf(pdfId, pdfLink){
+
+    window.open(
+        `reader.html?pdf_id=${pdfId}&file=${pdfLink}&page=1`,
+        "_blank"
+    );
+
+}
+
+loadReadingList();
+
+</script>
 
 </body>
 </html>

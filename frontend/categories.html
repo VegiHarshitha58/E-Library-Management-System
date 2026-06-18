@@ -3,194 +3,213 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Categories - E-Library</title>
-
 <link rel="stylesheet" href="categories.css">
+<style>
+  .category-card { cursor: pointer; position: relative; }
+  .category-count {
+    display: block; font-size: 0.8rem;
+    font-weight: 400; margin-top: 6px;
+    color: rgba(255,255,255,0.5);
+  }
+  .category-card:hover .category-count { color: rgba(0,0,0,0.6); }
+  .loading { text-align:center; padding: 40px; color: #aaa; font-size: 1rem; }
 
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  /* PDF modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85); z-index: 1000;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: #1e1e1e; border-radius: 12px;
+    padding: 2rem; width: 90%; max-width: 700px;
+    max-height: 80vh; overflow-y: auto;
+  }
+  .modal h2 { margin-bottom: 1rem; color: #00c8ff; }
+  .modal-close {
+    float: right; background: none; border: none;
+    color: white; font-size: 1.5rem; cursor: pointer;
+  }
+  .pdf-list { display: flex; flex-direction: column; gap: 10px; margin-top: 1rem; }
+  .pdf-item {
+    background: #2a2a2a; padding: 12px 16px; border-radius: 8px;
+    display: flex; justify-content: space-between; align-items: center;
+    cursor: pointer; transition: background 0.2s;
+  }
+  .pdf-item:hover { background: #333; }
+  .pdf-item-title { font-size: 0.9rem; font-weight: 500; }
+  .pdf-item-contributor { font-size: 0.75rem; color: #aaa; margin-top: 2px; }
+  .pdf-item-btn {
+    background: #00c8ff; color: black; border: none;
+    padding: 6px 14px; border-radius: 6px;
+    cursor: pointer; font-size: 0.8rem; font-weight: 600;
+    flex-shrink: 0; margin-left: 12px;
+  }
+  .no-pdfs { color: #aaa; text-align: center; padding: 20px; }
+</style>
 </head>
-
 <body>
 
 <header>
-
-<div class="logo">
-📚 E-Library
-</div>
-
-<nav>
-<a href="home.html">Home</a>
-<a href="trending_pdfs.html">Trending PDFs</a>
-<a href="new_releases.html">New Releases</a>
-<a href="categories.html">Categories</a>
-<a href="contributors.html">Contributors</a>
-</nav>
-
+  <div class="logo">📚 E-Library</div>
+  <nav>
+    <a href="home.html">Home</a>
+    <a href="trending_pdfs.html">Trending PDFs</a>
+    <a href="new_releases.html">New Releases</a>
+    <a href="categories.html">Categories</a>
+    <a href="contributors.html">Contributors</a>
+  </nav>
 </header>
 
 <section class="hero">
+  <div class="hero-content">
+    <span class="tag">📂 PDF COLLECTIONS</span>
+    <h1>Explore Categories</h1>
+    <p>Browse thousands of PDFs organized by subject, department, and academic discipline.</p>
+  </div>
+</section>
 
-<div class="hero-content">
-
-<span class="tag">
-📂 PDF COLLECTIONS
-</span>
-
-<h1>Explore Categories</h1>
-
-<p>
-Browse thousands of PDFs organized by subject,
-department, and academic discipline.
-</p>
-
-</div>
-
+<section class="categories" id="categoriesContainer">
+  <div class="loading">Loading categories...</div>
 </section>
 
 
 
-<section class="categories"
-id="categoriesContainer">
-</section>
-
-<section class="pdf-results">
-
-<h2 id="selectedCategory">
-Select a Category
-</h2>
-
-<div id="pdfContainer">
+<!-- PDF Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h2 id="modalTitle">Category PDFs</h2>
+    <div class="pdf-list" id="modalPdfList"></div>
+  </div>
 </div>
-
-</section>
-
-<h2>🔥 Popular Categories</h2>
-
-<div class="popular-row">
-
-<div class="popular-card">
-Programming PDFs
-</div>
-
-<div class="popular-card">
-DBMS Notes
-</div>
-
-<div class="popular-card">
-Question Papers
-</div>
-
-<div class="popular-card">
-AI Study Material
-</div>
-
-</div>
-
-</section>
 
 <script>
+const API = "http://127.0.0.1:5000";
 
-// Future backend integration
+async function loadCategories() {
+  const container = document.getElementById("categoriesContainer");
+  try {
+    const res = await fetch(`${API}/categories`);
+    const categories = await res.json();
+    container.innerHTML = "";
 
-document.querySelectorAll(".category-card").forEach(card => {
+    if (categories.length === 0) {
+      container.innerHTML = '<div class="loading">No categories found.</div>';
+      return;
+    }
 
-card.addEventListener("click", () => {
-
-const category = card.dataset.category;
-
-console.log("Selected Category:", category);
-
-// Future API call
-// fetch(`http://localhost:5000/categories/${category}`)
-
-});
-
-});
-
-</script>
-<script>
-
-fetch("http://localhost:5000/categories")
-.then(response => response.json())
-.then(data => {
-
-    const container =
-    document.getElementById("categoriesContainer");
-
-    data.forEach(category => {
-        const card =
-document.createElement("div");
-
-card.className =
-"category-card";
-
-card.innerText =
-category.category_name;
-
-card.onclick = async () => {
-    document.getElementById(
-    "selectedCategory"
-).innerText =
-`PDFs in ${category.category_name}`;
-
-    const response =
-    await fetch(
-
-        `http://localhost:5000/categories/${category.id}/pdfs`
-
-    );
-
-    const pdfs =
-    await response.json();
-const pdfContainer =
-document.getElementById(
-    "pdfContainer"
-);
-
-pdfContainer.innerHTML = "";
-
-pdfs.forEach(pdf => {
-
-    pdfContainer.innerHTML += `
-
-        <div class="pdf-card">
-
-            <h3>
-                ${pdf.title}
-            </h3>
-
-            <button
-            onclick="window.open(
-            'http://localhost:5000/pdf_library/${pdf.pdf_link}',
-            '_blank')">
-
-                Open PDF
-
-            </button>
-
-        </div>
-
-    `;
-
-});
-
-};
-
-container.appendChild(card);
-
-        
+    categories.forEach(cat => {
+      const card = document.createElement("div");
+      card.className = "category-card";
+      card.innerHTML = `
+        ${cat.category_name}
+        <span class="category-count">Click to browse PDFs</span>
+      `;
+      card.onclick = () => loadCategoryPDFs(cat.id, cat.category_name);
+      container.appendChild(card);
     });
 
-})
-.catch(error => {
+  } catch (err) {
+    container.innerHTML = '<div class="loading">Failed to load categories. Is the server running?</div>';
+  }
+}
 
-    console.log(error);
+async function loadCategoryPDFs(categoryId, categoryName) {
+  const overlay = document.getElementById("modalOverlay");
+  const title = document.getElementById("modalTitle");
+  const list = document.getElementById("modalPdfList");
 
+  title.textContent = `📂 ${categoryName}`;
+  list.innerHTML = '<p style="color:#aaa;text-align:center;">Loading PDFs...</p>';
+  overlay.classList.add("show");
+
+  try {
+  const res = await fetch(
+    `${API}/categories/${categoryId}/pdfs`
+);
+    const pdfs = await res.json();
+    list.innerHTML = "";
+
+    if (pdfs.length === 0) {
+      list.innerHTML = '<p class="no-pdfs">No PDFs in this category yet.</p>';
+      return;
+    }
+
+    pdfs.forEach(pdf => {
+      const item = document.createElement("div");
+      item.className = "pdf-item";
+      item.innerHTML = `
+        <div>
+          <div class="pdf-item-title">${pdf.title}</div>
+          <div class="pdf-item-contributor">${pdf.contributor || 'Unknown'}</div>
+        </div>
+        <button class="pdf-item-btn" onclick="openPDF(${pdf.id}, '${pdf.pdf_link}', '${pdf.title}')">Read</button>
+      `;
+      list.appendChild(item);
+    });
+
+  } catch (err) {
+    list.innerHTML = '<p class="no-pdfs">Failed to load PDFs.</p>';
+  }
+}
+
+async function openPDF(pdfId, fileUrl, title) {
+
+    const userId =
+    localStorage.getItem("userId");
+
+    if(fileUrl && fileUrl !== "null"){
+
+        try{
+
+            await fetch(
+                `${API}/pdfs/${pdfId}/view`,
+                {
+                    method:"POST",
+
+                    headers:{
+                        "Content-Type":"application/json"
+                    },
+
+                    body:JSON.stringify({
+                        userId:userId
+                    })
+                }
+            );
+
+        }catch(err){
+
+            console.log(err);
+
+        }
+
+        window.open(
+            `reader.html?pdf_id=${pdfId}&file=${fileUrl}&page=1`,
+            "_blank"
+        );
+
+    }else{
+
+        alert(`"${title}" — PDF file not available yet`);
+
+    }
+
+}
+function closeModal() {
+  document.getElementById("modalOverlay").classList.remove("show");
+}
+
+// Close modal on overlay click
+document.getElementById("modalOverlay").addEventListener("click", (e) => {
+  if (e.target === document.getElementById("modalOverlay")) closeModal();
 });
 
-</script>
 
+
+loadCategories();
+</script>
 </body>
 </html>

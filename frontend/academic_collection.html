@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Academic Collection - E-Library</title>
+
+<link rel="stylesheet" href="trending_pdfs.css">
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+</head>
+
+<body>
+
+<header>
+
+<div class="logo">
+📚 E-Library
+</div>
+
+<nav>
+
+<a href="home.html">Home</a>
+<a href="academic_collection.html">Academic Collection</a>
+<a href="new_releases.html">New Releases</a>
+<a href="categories.html">Categories</a>
+<a href="contributors.html">Contributors</a>
+
+</nav>
+
+<div class="search-box">
+
+<input
+type="text"
+id="searchInput"
+placeholder="Search PDFs, authors, categories...">
+
+<i class="fas fa-search"></i>
+
+</div>
+
+</header>
+
+<section class="hero">
+
+<div class="hero-content">
+
+<span class="tag">
+📚 ACADEMIC COLLECTION
+</span>
+
+<h1>Academic Resources Library</h1>
+
+<p>
+Browse academic PDFs including Data Structures,
+DBMS, Operating Systems, Computer Networks,
+Java, Python and more.
+</p>
+
+<div class="stats">
+
+<span>📄 Study Materials</span>
+
+<span>📚 Academic PDFs</span>
+
+<span>🎓 University Resources</span>
+
+</div>
+
+</div>
+
+</section>
+
+<section class="pdf-section">
+
+<h2>📚 Academic Collection</h2>
+
+<div class="slider-wrapper">
+
+<button class="scroll-btn left" id="academicLeft">
+❮
+</button>
+
+<div class="pdf-row" id="academicContainer">
+</div>
+
+<button class="scroll-btn right" id="academicRight">
+❯
+</button>
+
+</div>
+
+</section>
+
+<script>
+
+async function loadAcademicPage() {
+
+    const response =
+    await fetch(
+        "http://localhost:5000/pdfs"
+    );
+
+    const data =
+    await response.json();
+
+    const container =
+    document.getElementById(
+        "academicContainer"
+    );
+
+    container.innerHTML = "";
+
+    data.forEach(pdf => {
+
+        const card =
+        document.createElement("div");
+
+        card.className =
+        "pdf-card";
+
+        card.innerHTML = `
+
+        <div class="pdf-icon">
+        PDF
+        </div>
+
+        <h3>
+        ${pdf.title}
+        </h3>
+
+        <p>
+        ${pdf.author || "Academic PDF"}
+        </p>
+
+        `;
+
+        card.onclick = () => {
+
+            window.location.href =
+            "reader.html?file=" +
+            pdf.pdf_link +
+            "&pdf_id=" +
+            pdf.id;
+
+        };
+
+        container.appendChild(card);
+
+    });
+
+}
+
+loadAcademicPage();
+document.getElementById("academicLeft")
+.addEventListener("click", () => {
+
+    document.getElementById("academicContainer")
+    .scrollBy({
+        left: -500,
+        behavior: "smooth"
+    });
+
+});
+
+document.getElementById("academicRight")
+.addEventListener("click", () => {
+
+    document.getElementById("academicContainer")
+    .scrollBy({
+        left: 500,
+        behavior: "smooth"
+    });
+
+});
+</script>
+<script src="search.js"></script>
+</body>
+</html>
