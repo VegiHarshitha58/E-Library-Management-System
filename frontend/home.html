@@ -1017,7 +1017,7 @@ Object.entries(bookData).forEach(([key, books]) => {
 async function loadAcademicPDFs() {
 
     const response =
-    await fetch("http://localhost:5000/pdfs");
+    await fetch("http://localhost:5000/home-academic");
 
     const data =
     await response.json();
@@ -1110,11 +1110,14 @@ localStorage.getItem("userId");
 loadAcademicPDFs();
 
 async function loadTopPicks() {
+const userId =
+localStorage.getItem("userId");
 
-    const response =
-    await fetch(
-        "http://localhost:5000/top-picks"
-    );
+const response =
+await fetch(
+    `http://localhost:5000/top-picks/${userId}`
+);
+    
 
     const data =
     await response.json();
@@ -1160,12 +1163,15 @@ async function loadTopPicks() {
 
 }
 
-
+loadTopPicks();
 async function loadRecommended() {
+
+    const userId =
+    localStorage.getItem("userId");
 
     const response =
     await fetch(
-        "http://localhost:5000/recommended"
+        `http://localhost:5000/recommended/${userId}`
     );
 
     const data =
@@ -1210,13 +1216,13 @@ async function loadRecommended() {
 
 }
 
-
+loadRecommended();
 
 
 async function loadTrendingPDFs() {
 
     const response =
-    await fetch("http://localhost:5000/trending");
+    await fetch("http://localhost:5000/home-trending");
 
     const data =
     await response.json();
@@ -1299,9 +1305,7 @@ loadTrendingPDFs();
 async function loadNewReleases() {
 
     const response =
-    await fetch(
-        "http://localhost:5000/new-releases"
-    );
+    await fetch("http://localhost:5000/home-new-releases");
 
     const data =
     await response.json();
@@ -1401,6 +1405,7 @@ card.appendChild(listBtn);
     });
 
 }
+loadNewReleases();
 
 async function loadHeroBanner() {
 
@@ -1513,7 +1518,7 @@ function loadContinueReading() {
             const lastPage = book.last_page || 0;
 
             // simple safe progress calculation
-const progress = book.last_page || 0;
+const progress = book.progress || 0;
 
             item.innerHTML = `
                 <div class="continue-thumb">
@@ -1526,7 +1531,7 @@ const progress = book.last_page || 0;
                     </div>
 
                     <div class="continue-author">
-                        Last page: ${lastPage}
+                        Last page: ${book.last_page} of ${book.total_pages}
                     </div>
 
                     <div class="progress-bar">
@@ -1534,7 +1539,7 @@ const progress = book.last_page || 0;
                     </div>
 
                     <div class="continue-pct">
-                        ${progress}% complete
+                        ${book.progress}% complete
                     </div>
                 </div>
             `;
@@ -1549,16 +1554,22 @@ const progress = book.last_page || 0;
 
     })
     .catch(err => {
-        console.error("Continue Reading error:", err);
 
-        const container = document.getElementById("continueContainer");
-        if (container) {
-            container.innerHTML = `
-                <div style="color:red;font-size:0.9rem;padding:10px;">
-                    Failed to load Continue Reading ❌
-                </div>
-            `;
-        }
+    console.error("Continue Reading error:", err);
+
+    const container =
+    document.getElementById("continueContainer");
+
+    if(container){
+
+        container.innerHTML = `
+        <div style="color:red;padding:10px;">
+            Failed to load Continue Reading
+        </div>
+        `;
+    }
+    });
+}
  loadContinueReading();
 
 async function initializeHome(){
@@ -1570,14 +1581,11 @@ async function initializeHome(){
     loadRecommended();
     loadTrendingPDFs();
     loadNewReleases();
- loadContinueReading();
-
+    loadContinueReading();
 
 }
 
 initializeHome();
-    });
-}
 
 
     

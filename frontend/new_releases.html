@@ -26,19 +26,51 @@
     <p>Recently uploaded study materials, research papers, notes and project reports for students and researchers.</p>
   </div>
 </section>
-
 <section class="pdf-section">
   <h2>🆕 Recently Added PDFs</h2>
-  <div class="pdf-row" id="newReleasesRow">
-    <p style="color:#aaa;">Loading...</p>
+
+  <div class="row-wrapper">
+
+    <button class="arrow left"
+      onclick="scrollRow('newReleasesRow',-800)">
+      ‹
+    </button>
+
+    <div class="pdf-row" id="newReleasesRow">
+      <p style="color:#aaa;">Loading...</p>
+    </div>
+
+    <button class="arrow right"
+      onclick="scrollRow('newReleasesRow',800)">
+      ›
+    </button>
+
   </div>
+
 </section>
+
 
 <section class="pdf-section">
   <h2>📚 All New Uploads</h2>
-  <div class="pdf-row" id="allNewRow">
-    <p style="color:#aaa;">Loading...</p>
+
+  <div class="row-wrapper">
+
+    <button class="arrow left"
+      onclick="scrollRow('allNewRow',-800)">
+      ‹
+    </button>
+
+    <div class="pdf-row" id="allNewRow">
+      <p style="color:#aaa;">Loading...</p>
+    </div>
+
+    <button class="arrow right"
+      onclick="scrollRow('allNewRow',800)">
+      ›
+    </button>
+
   </div>
+
 </section>
 
 <script>
@@ -174,6 +206,18 @@ async function loadNewReleases() {
 }
 
 loadNewReleases();
+
+function scrollRow(id, amount){
+
+  document.getElementById(id).scrollBy({
+
+    left: amount,
+
+    behavior: "smooth"
+
+  });
+
+}
 </script>
 
 

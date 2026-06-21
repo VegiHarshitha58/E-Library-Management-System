@@ -158,3 +158,101 @@ transform:scale(1.05);
 
 background:#444;
 }
+.team-photo{
+    width:120px;
+    height:120px;
+    border-radius:50%;
+    object-fit:cover;
+    margin-bottom:15px;
+    border:3px solid #00c8ff;
+}
+
+.team-role{
+    margin-top:8px;
+    color:#cccccc;
+    font-size:14px;
+}
+
+.contributor-card h3{
+    margin-top:10px;
+}
+.top-card{
+    text-align:center;
+    font-weight:bold;
+}
+.top-row{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+    gap:20px;
+}
+
+.top-card{
+    min-width:unset;
+    height:120px;
+    background:#333;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    border-radius:12px;
+    font-size:20px;
+    font-weight:bold;
+    text-align:center;
+}
+.details-section{
+padding:40px;
+}
+
+#contributor-details{
+background:#222;
+padding:25px;
+border-radius:15px;
+margin-top:20px;
+line-height:1.8;
+}
+
+.contributor-card{
+cursor:pointer;
+}
+.modal{
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.8);
+z-index:1000;
+}
+
+.modal-content{
+background:#222;
+width:80%;
+max-width:800px;
+margin:50px auto;
+padding:30px;
+border-radius:15px;
+color:white;
+max-height:80vh;
+overflow-y:auto;
+}
+
+.close-btn{
+float:right;
+font-size:35px;
+cursor:pointer;
+color:white;
+}
+.modal-content a{
+color:#00c8ff;
+text-decoration:none;
+font-weight:bold;
+}
+
+.modal-content a:hover{
+text-decoration:underline;
+}
+.click-note{
+font-size:12px;
+color:#aaaaaa;
+margin-top:8px;
+}

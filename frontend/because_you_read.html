@@ -76,10 +76,14 @@ Perfect for exploring new resources and study materials.
 
 async function loadRecommended() {
 
-    const response =
-    await fetch(
-        "http://localhost:5000/recommended"
-    );
+
+const userId =
+localStorage.getItem("userId");
+
+const response =
+await fetch(
+    `http://localhost:5000/recommended-all/${userId}`
+);
 
     const data =
     await response.json();

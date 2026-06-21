@@ -40,12 +40,11 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
 <span class="tag">
 👨‍🏫 KNOWLEDGE CONTRIBUTORS
 </span>
-
-<h1>Meet Our Contributors</h1>
+<h1>Meet The Team Behind E-Library</h1>
 
 <p>
-Explore PDFs uploaded by faculty members,
-researchers, departments, and student contributors.
+Meet the developers and contributors who designed,
+built and improved the E-Library Management System.
 </p>
 
 </div>
@@ -54,69 +53,300 @@ researchers, departments, and student contributors.
 
 <section class="contributors-grid">
 
-<div class="contributor-card">
-<div class="icon">💻</div>
-<h3>Computer Science Department</h3>
-<p>250 PDFs Available</p>
+<div class="contributor-card" onclick="showContributor('Harshitha Vegi')">
+<img src="images/team-images/Harshitha.jpeg" class="team-photo">
+<h3>Harshitha Vegi</h3>
+<p>Full Stack Developer</p>
+<p class="click-note">Click to view profile</p>
 </div>
 
-<div class="contributor-card">
-<div class="icon">📐</div>
-<h3>Mathematics Department</h3>
-<p>180 PDFs Available</p>
+<div class="contributor-card" onclick="showContributor('M Prakriti')">
+<img src="images/team-images/M Prakriti.jpeg" class="team-photo">
+<h3>M Prakriti</h3>
+<p>System Engineer</p>
+<p class="click-note">Click to view profile</p>
 </div>
 
-<div class="contributor-card">
-<div class="icon">⚡</div>
-<h3>Physics Department</h3>
-<p>150 PDFs Available</p>
+<div class="contributor-card" onclick="showContributor('Jahnavi')">
+<img src="images/team-images/Jahnavi.jpeg" class="team-photo">
+<h3>Jahnavi</h3>
+<p>Frontend Developer</p>
+<p class="click-note">Click to view profile</p>
 </div>
 
-<div class="contributor-card">
-<div class="icon">🧪</div>
-<h3>Chemistry Department</h3>
-<p>120 PDFs Available</p>
+<div class="contributor-card" onclick="showContributor('V. Aniela John')">
+<img src="images/team-images/Aneila.jpeg" class="team-photo">
+<h3>V. Aniela John</h3>
+<p>Full Stack Developer</p>
+<p class="click-note">Click to view profile</p>
 </div>
 
-<div class="contributor-card">
-<div class="icon">🔬</div>
-<h3>Research Publications</h3>
-<p>300 PDFs Available</p>
+<div class="contributor-card" onclick="showContributor('V. Priscilla John')">
+<img src="images/team-images/Priscilla.jpeg" class="team-photo">
+<h3>V. Priscilla John</h3>
+<p>Full Stack Developer</p>
+<p class="click-note">Click to view profile</p>
 </div>
 
-<div class="contributor-card">
-<div class="icon">🎓</div>
-<h3>Faculty Uploads</h3>
-<p>210 PDFs Available</p>
+</section>
+<section class="top-section">
+
+<h2>📊 Community Impact</h2>
+
+<div class="top-row">
+
+<div class="top-card">
+1200+ PDFs
+</div>
+
+<div class="top-card">
+12 Categories
+</div>
+
+<div class="top-card">
+Open Source
+</div>
+
+<div class="top-card">
+Growing Community
+</div>
+
 </div>
 
 </section>
 
 <section class="top-section">
 
-<h2>⭐ Top Contributors</h2>
-
-<div class="top-row">
-
+<h2>🚀 How To Contribute</h2>
 <div class="top-card">
-Computer Science Department
+Fork Repository
 </div>
 
 <div class="top-card">
-Research Publications
+Create Branch
 </div>
 
 <div class="top-card">
-Faculty Uploads
+Make Changes
 </div>
 
 <div class="top-card">
-Mathematics Department
+Submit Pull Request
 </div>
 
 </div>
 
 </section>
+<div id="contributorModal" class="modal">
+
+<div class="modal-content">
+
+<span class="close-btn" onclick="closeModal()">
+&times;
+</span>
+
+<div id="modalBody">
+</div>
+
+</div>
+
+</div>
+<script>
+ 
+
+const contributors = {
+
+"Harshitha Vegi": `
+<h2>Harshitha Vegi</h2>
+
+<h3>Full Stack Developer</h3>
+
+<p>
+Hey! I'm Harshitha, a Computer Science Engineering student passionate about building modern, user-friendly web applications and solving real-world problems through technology. I enjoy working across both frontend and backend development, turning ideas into functional and impactful products.
+
+Currently, I'm contributing to the development of an E-Library Management System, where I work on UI design, database integration, API development, and feature implementation. I love exploring new technologies, participating in hackathons, and continuously expanding my skills in software development.
+</p>
+
+<p>
+<strong>Tech Stack:</strong><br>
+HTML, CSS, JavaScript, Java, Python, Node.js, Express.js, MySQL, Git, GitHub
+</p>
+
+<p>
+<p>
+<strong>📧 Email:</strong><br>
+<a href="mailto:vegiharshitha58@gmail.com">
+vegiharshitha58@gmail.com
+</a>
+</p>
+
+<p>
+<strong>💼 LinkedIn:</strong><br>
+<a href="https://www.linkedin.com/in/harshitha-vegi"
+target="_blank">
+View Profile
+</a>
+</p>
+
+<p>
+<strong>🐙 GitHub:</strong><br>
+<a href="https://github.com/VegiHarshitha58"
+target="_blank">
+github.com/VegiHarshitha58
+</a>
+</p>
+`,
+
+"M Prakriti": `
+<h2>M Prakriti</h2>
+
+<h3>Rust Enthusiast & Systems Programming Explorer</h3>
+
+<p>
+Hey! I'm Prakriti 👋
+
+I'm a Computer Science student who loves understanding how technology works beneath the surface. While many developers focus only on applications, I'm fascinated by the layers underneath—from operating systems and virtualization to compilers, low-level programming, and intelligent systems.
+My current journey revolves around Rust 🦀, systems programming, open-source contributions, and AI-powered applications. I enjoy building projects that challenge me to think differently, whether it's creating a minimal hypervisor from scratch, developing desktop applications with Rust and Tauri, or exploring how AI can solve real-world healthcare problems.
+Recently, I've been working on projects like NanoVMM, a minimal hypervisor built in Rust, and CreativeOS, an AI-powered desktop application.
+What excites me most isn't just building software—it's understanding why things work the way they do. Every bug, failed build, debugging session, and late-night rabbit hole teaches me something new, and that's what keeps me motivated.
+Beyond coding, I enjoy documenting my learning journey, solving DSA problems, exploring emerging technologies, creating educational content, and continuously pushing myself outside my comfort zone.
+I'm always eager to learn, collaborate, contribute to open source, and connect with people who enjoy building meaningful technology. 🌱✨
+</p>
+
+<p>
+<strong>Projects:</strong><br>
+NanoVMM, CreativeOS
+</p>
+
+<p>
+<strong>📧 Email:</strong><br>
+<a href="mailto:fakem3326@gmail.com">
+fakem3326@gmail.com
+</a>
+</p>
+
+<p>
+<strong>💼 LinkedIn:</strong><br>
+<a href="https://www.linkedin.com/in/m-prakriti-b75143231/"
+target="_blank">
+View LinkedIn Profile
+</a>
+</p>
+
+<p>
+<strong>🐙 GitHub:</strong><br>
+<a href="https://github.com/mprakriti04-glitch"
+target="_blank">
+github.com/mprakriti04-glitch
+</a>
+</p>
+`,
+
+"Jahnavi": `
+<h2>Jahnavi</h2>
+<p><strong>Role:</strong> Frontend Developer</p>
+<p>👋 Hey, I’m Jahnavi
+
+I’m a Computer Science student who enjoys turning simple ideas into functional web applications that actually work in real life, not just in theory.
+
+Right now, I’m deeply involved in building an E-Library Management System.Through this project, I’ve been learning how frontend, backend, and databases connect like three layers of one system — and how small features can completely change user experience.
+
+While building it, I worked on features like resume reading, bookmarking pages, notifications, and reading history. Each part helped me understand how small details can completely change how a system feels to use.</p>
+<p>
+<strong>🐙 GitHub:</strong><br>
+<a href="https://github.com/pjahnavi047-oss" target="_blank">
+github.com/pjahnavi047-oss
+</a>
+</p>
+
+<p>
+<strong>📧 Email:</strong><br>
+<a href="mailto:pjahnavi047@gmail.com">
+pjahnavi047@gmail.com
+</a>
+</p>
+`,
+
+"V. Aniela John": `
+<h2>V. Aniela John</h2>
+<p><strong>Role:</strong> Backend Developer</p>
+<p>Hey! I'm Aniela 👋
+    I'm a Computer Science Engineering student who loves learning new things and building projects that turn ideas into reality. 💻✨ I enjoy web development, problem-solving, and exploring how technology works behind the scenes.
+
+I'm always looking for opportunities to learn, improve my skills, and work with people who are passionate about creating something meaningful. 🌱🚀 Apart from coding, I enjoy public speaking, meeting new people, and challenging myself to grow both personally and professionally.</p>
+<p>
+<strong>💼 LinkedIn:</strong><br>
+<a href="https://www.linkedin.com/in/aniela-john-vipparthi-257354367"
+target="_blank">
+View LinkedIn Profile
+</a>
+</p>
+
+<p>
+<strong>📧 Email:</strong><br>
+<a href="mailto:anielajohn77@gmail.com">
+anielajohn77@gmail.com
+</a>
+</p>
+<p>
+<strong>🐙 GitHub:</strong><br>
+<a href="https://github.com/anielajohn77-cmd"
+target="_blank">
+github.com/anielajohn77-cmd
+</a>
+</p>
+`,
+
+"V. Priscilla John": `
+<h2>V. Priscilla John</h2>
+<p><strong>Role:</strong> Full Stack Developer</p>
+<p>Hey! I'm Priscilla👋
+
+I'm an IT student with a passion for turning ideas into real, working applications. 💻✨ I love diving deep into both frontend and backend development — from crafting beautiful interfaces to building powerful APIs and databases that bring everything together.                                                                              
+I recently been a part of a  complete E-Library Management System building from scratch and I have worked on featuring user authentication, PDF management, real-time search with autocomplete, smart notifications, trending analytics, reading lists, and much more! 🚀                                                        📚 Every bug I fixed and every feature I built taught me something new, and that's what keeps me going.                                  
+I'm always eager to learn, collaborate, and push my limits to create something meaningful. 🌱✨                                            Outside of coding, I enjoy exploring new technologies, challenging myself, and connecting with people who share the same passion for building things.</p>
+<p>
+<strong>💼 LinkedIn:</strong><br>
+<a href="https://www.linkedin.com/in/priscilla-john-vipparthi-b9a694326"
+target="_blank">
+View LinkedIn Profile
+</a>
+</p>
+
+<p>
+<strong>🐙 GitHub:</strong><br>
+<a href="https://github.com/priscillajohn2007"
+target="_blank">
+github.com/priscillajohn2007
+</a>
+</p>
+<p>
+<strong>📧 Email:</strong><br>
+<a href="mailto:priscillajohn7997@gmail.com">
+priscillajohn7997@gmail.com
+</a>
+</p>
+`
+};
+
+function showContributor(name){
+
+document.getElementById("modalBody").innerHTML =
+contributors[name];
+
+document.getElementById("contributorModal").style.display =
+"block";
+
+}
+
+function closeModal(){
+
+document.getElementById("contributorModal").style.display =
+"none";
+
+}
+
+</script>
 
 </body>
 </html>

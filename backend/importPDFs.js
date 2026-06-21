@@ -59,7 +59,6 @@ function importPDFs() {
 
                 const folderPath =
                 path.join(libraryPath, folder);
-cd 
                 const files =
                 fs.readdirSync(folderPath);
 
@@ -71,34 +70,63 @@ cd
                     const title =
                     path.parse(file).name;
 
-                    db.query(
+                    
+const pdfLink =
+folder + "/" + file;
 
-                        `INSERT INTO pdfs
-                        (title, category_id, contributor, pdf_link)
-                        VALUES (?, ?, ?, ?)`,
+db.query(
 
-                        [
-                            title,
-                            categoryId,
-                            "Admin",
-                            folder + "/" + file
-                        ],
+    "SELECT id FROM pdfs WHERE pdf_link = ?",
 
-                        (err, result) => {
+    [pdfLink],
 
-                            if(err){
-                                console.log(err);
-                                return;
-                            }
+    (err, existing) => {
 
-                            console.log(
-                                `Imported: ${file}`
-                            );
+        if(err){
+            console.log(err);
+            return;
+        }
 
-                        }
+        if(existing.length > 0){
 
-                    );
+            console.log(
+                `Skipped (already exists): ${file}`
+            );
 
+            return;
+        }
+
+        db.query(
+
+            `INSERT INTO pdfs
+            (title, category_id, contributor, pdf_link)
+            VALUES (?, ?, ?, ?)`,
+
+            [
+                title,
+                categoryId,
+                "Admin",
+                pdfLink
+            ],
+
+            (err) => {
+
+                if(err){
+                    console.log(err);
+                    return;
+                }
+
+                console.log(
+                    `Imported: ${file}`
+                );
+
+            }
+
+        );
+
+    }
+
+);
                 });
 
             }

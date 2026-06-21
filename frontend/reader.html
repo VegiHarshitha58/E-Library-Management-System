@@ -60,7 +60,25 @@ iframe {
     <div id="progress">Page 1</div>
 </div>
 
-<iframe id="pdfFrame"></iframe>
+<div style="text-align:center; margin-top:10px;">
+    <button onclick="prevPage()">⬅ Prev</button>
+
+    <span id="pageInfo">
+        Page 1 / 1
+    </span>
+
+    <button onclick="nextPage()">Next ➡</button>
+</div>
+
+<canvas
+    id="pdfCanvas"
+    style="
+        display:block;
+        margin:auto;
+        background:white;
+        margin-top:10px;
+    ">
+</canvas>
 
 <script>
 
@@ -134,84 +152,69 @@ let currentPage = page;
 
 function saveProgress() {
 
-    fetch("http://localhost:5000/api/progress/update", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            user_id: userId,
-            pdf_id: pdfId,
-            last_page: currentPage
-        })
-    });
+    fetch(
+        "http://localhost:5000/api/progress/update",
+        {
+            method: "POST",
+
+            headers: {
+                "Content-Type":"application/json"
+            },
+
+            body: JSON.stringify({
+
+                user_id: userId,
+
+                pdf_id: pdfId,
+
+                last_page: currentPage,
+
+                total_pages: totalPages
+
+            })
+        }
+    );
 
 }
 
 function loadSavedPage() {
 
-    // 1st priority → bookmark
-    let savedBookmark = localStorage.getItem("bookmark_pdf_" + pdfId);
+    let savedBookmark =
+    localStorage.getItem(
+        "bookmark_pdf_" + pdfId
+    );
 
-    if (savedBookmark) {
+    if(savedBookmark){
 
-        currentPage = parseInt(savedBookmark);
+        currentPage =
+        parseInt(savedBookmark);
 
         document.getElementById("progress").innerText =
-            "⭐ Bookmark Page " + currentPage;
-
-        document.getElementById("pdfFrame").src =
-            "http://localhost:5000/pdf_library/" +
-            pdfFile +
-            "#page=" + currentPage;
+        "⭐ Bookmark Page " + currentPage;
 
         return;
     }
 
-    // 2nd priority → resume from DB
-    fetch(`http://localhost:5000/api/progress/${userId}/${pdfId}`)
-.then(res => res.json())
-.then(data => {
+    fetch(
+        `http://localhost:5000/api/progress/${userId}/${pdfId}`
+    )
+    .then(res => res.json())
+    .then(data => {
 
-    if (data.last_page) {
+        if(data.last_page){
 
-        currentPage = data.last_page;
+            currentPage =
+            data.last_page;
 
-        document.getElementById("progress").innerText =
+            document.getElementById("progress").innerText =
             "📌 Resumed Page " + currentPage;
 
-        document.getElementById("pdfFrame").src =
-            "http://localhost:5000/pdf_library/" +
-            pdfFile +
-            "#page=" + currentPage;
+        }
 
-    } else {
+    })
+    .catch(err => console.log(err));
 
-        document.getElementById("pdfFrame").src =
-            "http://localhost:5000/pdf_library/" +
-            pdfFile;
-
-    }
-
-})
-.catch(() => {
-
-    document.getElementById("pdfFrame").src =
-        "http://localhost:5000/pdf_library/" +
-        pdfFile;
-
-});
 }
-
-/* Simulated page tracker (replace later with real PDF.js if needed) */
-setInterval(() => {
-
-    currentPage += 1;
-
-    document.getElementById("progress").innerText =
-        "Page " + currentPage;
-
-    saveProgress();
-
-}, 8000);
 
 function goBack() {
 
@@ -240,7 +243,94 @@ function saveBookmark() {
 
     alert("Bookmark saved at page " + currentPage);
 }
+let pdfDoc = null;
+let totalPages = 0;
+
+const canvas =
+document.getElementById("pdfCanvas");
+
+const ctx =
+canvas.getContext("2d");
+
+async function loadPDF() {
+
+    const pdfUrl =
+    "http://localhost:5000/pdf_library/" +
+    pdfFile;
+
+    pdfDoc =
+    await pdfjsLib.getDocument(pdfUrl).promise;
+
+    totalPages =
+    pdfDoc.numPages;
+
+    renderPage(currentPage);
+
+}
+
+async function renderPage(pageNum) {
+
+    const page =
+    await pdfDoc.getPage(pageNum);
+
+    const viewport =
+    page.getViewport({ scale: 1.5 });
+
+    canvas.width =
+    viewport.width;
+
+    canvas.height =
+    viewport.height;
+
+    await page.render({
+        canvasContext: ctx,
+        viewport: viewport
+    }).promise;
+
+    document.getElementById("pageInfo")
+    .innerText =
+    `Page ${pageNum} / ${totalPages}`;
+
+    document.getElementById("progress")
+    .innerText =
+    `${Math.round((pageNum / totalPages) * 100)}%`;
+
+    saveProgress();
+
+}
+function nextPage(){
+
+    if(currentPage >= totalPages)
+        return;
+
+    currentPage++;
+
+    renderPage(currentPage);
+
+}
+function prevPage(){
+
+    if(currentPage <= 1)
+        return;
+
+    currentPage--;
+
+    renderPage(currentPage);
+
+}
+
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+</script>
+
+<script>
+  loadPDF();
+</script>
+
 
 </body>
 </html>

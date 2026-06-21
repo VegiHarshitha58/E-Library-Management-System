@@ -3,6 +3,7 @@ const mysql = require("mysql2");
 const cors = require("cors");
 const multer = require("multer");
 const path = require("path");
+const bcrypt = require("bcrypt");
 const app = express();
 
 app.use(cors());
@@ -60,25 +61,26 @@ const upload = multer({
 });
 // REGISTER API
 
-app.post("/register",(req,res)=>{
+app.post("/register", async (req,res)=>{
 
     const {name,email,password} = req.body;
+
     if(!name || !email || !password){
-    return res.send("All fields are required");
-}
+
+        return res.send("All fields are required");
+
+    }
 
     db.query(
         "SELECT * FROM users WHERE email=?",
         [email],
-        (err,result)=>{
+        async (err,result)=>{
 
             if(err){
 
                 console.log(err);
+                return res.send("Registration Failed");
 
-                return res.send(
-                    "Registration Failed"
-                );
             }
 
             if(result.length > 0){
@@ -86,12 +88,23 @@ app.post("/register",(req,res)=>{
                 return res.send(
                     "Email already registered"
                 );
+
             }
 
+            const hashedPassword =
+            await bcrypt.hash(password,10);
+
             db.query(
+
                 "INSERT INTO users(name,email,password) VALUES(?,?,?)",
-                [name,email,password],
-                (err,result)=>{
+
+                [
+                    name,
+                    email,
+                    hashedPassword
+                ],
+
+                (err)=>{
 
                     if(err){
 
@@ -101,15 +114,18 @@ app.post("/register",(req,res)=>{
                             "Registration Failed"
                         );
 
-                    }else{
-
-                        return res.send(
-                            "Registration Successful"
-                        );
                     }
+
+                    res.send(
+                        "Registration Successful"
+                    );
+
                 }
+
             );
+
         }
+
     );
 
 });
@@ -132,8 +148,8 @@ if (!username || !password) {
         "SELECT * FROM users WHERE email = ?",
 
         [username],
+async (err, result) => {
 
-        (err, result) => {
 
             if (err) {
 
@@ -155,7 +171,13 @@ if (!username || !password) {
 
             const user = result[0];
 
-            if (user.password === password) {
+           const match =
+await bcrypt.compare(
+    password,
+    user.password
+);
+
+if(match) {
 
                 return res.json({
 
@@ -181,7 +203,37 @@ if (!username || !password) {
     );
 
 });
+app.get("/home-trending", (req,res)=>{
 
+    db.query(
+        "SELECT * FROM pdfs ORDER BY views DESC LIMIT 8",
+        (err,result)=>{
+            res.json(result);
+        }
+    );
+
+});
+
+app.get("/home-new-releases", (req,res)=>{
+
+    db.query(
+        "SELECT * FROM pdfs ORDER BY upload_date DESC LIMIT 8",
+        (err,result)=>{
+            res.json(result);
+        }
+    );
+
+});
+app.get("/home-academic", (req,res)=>{
+
+    db.query(
+        "SELECT * FROM pdfs LIMIT 8",
+        (err,result)=>{
+            res.json(result);
+        }
+    );
+
+});
 app.get("/categories", (req, res) => {
 
     db.query(
@@ -296,135 +348,6 @@ app.get("/new-releases", (req, res) => {
 
 });
 
-app.get("/favorites", (req, res) => {
-
-    db.query(
-        `SELECT favorites.id,
-       favorites.user_id,
-       favorites.pdf_id,
-       pdfs.title,
-       pdfs.contributor
-         FROM favorites
-         JOIN pdfs
-         ON favorites.pdf_id = pdfs.id`,
-        (err, result) => {
-
-            if(err){
-                console.log(err);
-                return res.status(500).send("Database Error");
-            }
-
-            res.json(result);
-        }
-    );
-
-});
-
-app.get("/favorites/:userId", (req, res) => {
-
-    const userId = req.params.userId;
-
-    db.query(
-        `SELECT pdf_id
-         FROM favorites
-         WHERE user_id = ?`,
-        [userId],
-        (err, result) => {
-
-            if(err){
-
-                console.log(err);
-
-                return res.status(500).send("Database Error");
-
-            }
-
-            res.json(result);
-
-        }
-    );
-
-});
-
-app.post("/favorites", (req, res) => {
-
-    const { user_id, pdf_id } = req.body;
-
-    const checkSql = `
-        SELECT *
-        FROM favorites
-        WHERE user_id = ?
-        AND pdf_id = ?
-    `;
-
-    db.query(
-        checkSql,
-        [user_id, pdf_id],
-        (err, result) => {
-
-            if(err){
-
-                console.log(err);
-
-                return res
-                .status(500)
-                .send("Database Error");
-
-            }
-
-            if(result.length > 0){
-
-                return res.send(
-                    "Already in Favorites"
-                );
-
-            }
-
-            db.query(
-                "INSERT INTO favorites (user_id, pdf_id) VALUES (?, ?)",
-                [user_id, pdf_id],
-                (err, insertResult) => {
-
-                    if(err){
-
-                        console.log(err);
-
-                        return res
-                        .status(500)
-                        .send("Database Error");
-
-                    }
-
-                    res.send(
-                        "Favorite Added Successfully"
-                    );
-
-                }
-            );
-
-        }
-    );
-
-});
-app.delete("/favorites/:id", (req, res) => {
-
-    const id = req.params.id;
-
-    db.query(
-        "DELETE FROM favorites WHERE id = ?",
-        [id],
-        (err, result) => {
-
-            if(err){
-                console.log(err);
-                return res.status(500).send("Database Error");
-            }
-
-            res.send("Favorite Removed");
-        }
-    );
-
-});
 
 // Get Reading List
 app.get("/readinglist", (req, res) => {
@@ -710,41 +633,119 @@ app.get("/reading-history/:userId", (req, res) => {
     );
 
 });
+
 app.post("/api/progress/update", (req, res) => {
 
-    const { user_id, pdf_id, last_page } = req.body;
+    const {
+        user_id,
+        pdf_id,
+        last_page,
+        total_pages
+    } = req.body;
+
+    if(!user_id || !pdf_id){
+        return res.status(400).send("Missing Data");
+    }
+
+    const progress =
+    total_pages > 0
+        ? Math.round((last_page / total_pages) * 100)
+        : 0;
 
     db.query(
 
-        `UPDATE reading_history
-         SET
-            last_page = ?,
-            progress = ?,
-            last_read = CURRENT_TIMESTAMP
+        `SELECT id
+         FROM reading_history
          WHERE user_id = ?
          AND pdf_id = ?`,
 
-        [
-            last_page,
-            Math.min(last_page, 100),
-            user_id,
-            pdf_id
-        ],
+        [user_id, pdf_id],
 
-        (err) => {
+        (err, result) => {
 
             if(err){
                 console.log(err);
                 return res.status(500).send("Database Error");
             }
 
-            res.send("Progress Updated");
+            if(result.length > 0){
+
+                db.query(
+
+                    `UPDATE reading_history
+                     SET
+                        last_page = ?,
+                        total_pages = ?,
+                        progress = ?,
+                        last_read = CURRENT_TIMESTAMP
+                     WHERE user_id = ?
+                     AND pdf_id = ?`,
+
+                    [
+                        last_page,
+                        total_pages,
+                        progress,
+                        user_id,
+                        pdf_id
+                    ],
+
+                    (err2) => {
+
+                        if(err2){
+                            console.log(err2);
+                            return res.status(500).send("Database Error");
+                        }
+
+                        res.send("Progress Updated");
+
+                    }
+
+                );
+
+            }
+            else{
+
+                db.query(
+
+                    `INSERT INTO reading_history
+                    (
+                        user_id,
+                        pdf_id,
+                        last_page,
+                        total_pages,
+                        progress
+                    )
+                    VALUES(?,?,?,?,?)`,
+
+                    [
+                        user_id,
+                        pdf_id,
+                        last_page,
+                        total_pages,
+                        progress
+                    ],
+
+                    (err3) => {
+
+                        if(err3){
+                            console.log(err3);
+                            return res.status(500).send("Database Error");
+                        }
+
+                        res.send("Progress Created");
+
+                    }
+
+                );
+
+            }
 
         }
 
     );
 
 });
+
 app.get("/api/progress/continue/:userId", (req, res) => {
 
     const userId = req.params.userId;
@@ -754,6 +755,7 @@ app.get("/api/progress/continue/:userId", (req, res) => {
         `SELECT
             rh.pdf_id,
             rh.last_page,
+            rh.total_pages,
             rh.progress,
             rh.last_read,
             p.title,
@@ -780,7 +782,263 @@ app.get("/api/progress/continue/:userId", (req, res) => {
     );
 
 });
-       
+app.get("/api/progress/:userId/:pdfId", (req,res)=>{
+
+    const { userId, pdfId } = req.params;
+
+    db.query(
+
+        `SELECT *
+         FROM reading_history
+         WHERE user_id = ?
+         AND pdf_id = ?`,
+
+        [userId,pdfId],
+
+        (err,result)=>{
+
+            if(err){
+                console.log(err);
+                return res.status(500).json(err);
+            }
+
+            if(result.length === 0){
+                return res.json({});
+            }
+
+            res.json(result[0]);
+
+        }
+
+    );
+
+});
+
+app.get("/recommended/:userId", (req, res) => {
+
+    const userId = req.params.userId;
+
+    db.query(
+
+        `SELECT rh.pdf_id,
+                p.category_id
+         FROM reading_history rh
+         JOIN pdfs p
+         ON rh.pdf_id = p.id
+         WHERE rh.user_id = ?
+         ORDER BY rh.last_read DESC
+         LIMIT 1`,
+
+        [userId],
+
+        (err, result) => {
+
+            if(err){
+                return res.status(500).json(err);
+            }
+
+            if(result.length === 0){
+
+                return db.query(
+
+                    `SELECT *
+                     FROM pdfs
+                     ORDER BY views DESC
+                     LIMIT 8`,
+
+                    (err2, rows) => {
+
+                        if(err2){
+                            return res.status(500).json(err2);
+                        }
+
+                        res.json(rows);
+
+                    }
+
+                );
+
+            }
+
+            const categoryId =
+            result[0].category_id;
+
+            const currentPdf =
+            result[0].pdf_id;
+
+            db.query(
+
+                `SELECT *
+                 FROM pdfs
+                 WHERE category_id = ?
+                 AND id != ?
+                 LIMIT 8`,
+
+                [categoryId, currentPdf],
+
+                (err3, rows) => {
+
+                    if(err3){
+                        return res.status(500).json(err3);
+                    }
+
+                    res.json(rows);
+
+                }
+
+            );
+
+        }
+
+    );
+
+});
+app.get("/top-picks/:userId", (req, res) => {
+
+    const userId = req.params.userId;
+
+    db.query(
+
+        `SELECT p.category_id,
+                COUNT(*) AS cnt
+         FROM reading_history rh
+         JOIN pdfs p
+         ON rh.pdf_id = p.id
+         WHERE rh.user_id = ?
+         GROUP BY p.category_id
+         ORDER BY cnt DESC
+         LIMIT 1`,
+
+        [userId],
+
+        (err, result) => {
+
+            if(err){
+                return res.status(500).json(err);
+            }
+
+            if(result.length === 0){
+
+                return db.query(
+                    `SELECT *
+                     FROM pdfs
+                     ORDER BY views DESC
+                     LIMIT 8`,
+                    (err2, rows) => {
+                        if(err2) return res.status(500).json(err2);
+                        res.json(rows);
+                    }
+                );
+
+            }
+
+            const categoryId = result[0].category_id;
+
+            db.query(
+
+                `SELECT *
+                 FROM pdfs
+                 WHERE category_id = ?
+                 ORDER BY views DESC
+                 LIMIT 8`,
+
+                [categoryId],
+
+                (err3, rows) => {
+
+                    if(err3){
+                        return res.status(500).json(err3);
+                    }
+
+                    res.json(rows);
+
+                }
+
+            );
+
+        }
+
+    );
+
+});
+app.get("/recommended-all/:userId", (req, res) => {
+
+    const userId = req.params.userId;
+
+    db.query(
+
+        `SELECT rh.pdf_id,
+                p.category_id
+         FROM reading_history rh
+         JOIN pdfs p
+         ON rh.pdf_id = p.id
+         WHERE rh.user_id = ?
+         ORDER BY rh.last_read DESC
+         LIMIT 1`,
+
+        [userId],
+
+        (err, result) => {
+
+            if(err){
+                return res.status(500).json(err);
+            }
+
+            if(result.length === 0){
+
+                return db.query(
+
+                    `SELECT *
+                     FROM pdfs
+                     ORDER BY views DESC`,
+
+                    (err2, rows) => {
+
+                        if(err2){
+                            return res.status(500).json(err2);
+                        }
+
+                        res.json(rows);
+
+                    }
+
+                );
+
+            }
+
+            const categoryId =
+            result[0].category_id;
+
+            const currentPdf =
+            result[0].pdf_id;
+
+            db.query(
+
+                `SELECT *
+                 FROM pdfs
+                 WHERE category_id = ?
+                 AND id != ?`,
+
+                [categoryId, currentPdf],
+
+                (err3, rows) => {
+
+                    if(err3){
+                        return res.status(500).json(err3);
+                    }
+
+                    res.json(rows);
+
+                }
+
+            );
+
+        }
+
+    );
+
+});
+
 app.get("/get-settings/:id", (req, res) => {
 
     const userId = req.params.id;
@@ -891,16 +1149,19 @@ app.get("/notifications", (req, res) => {
 
 });
 
-app.post("/reset-password",(req,res)=>{
+app.post("/reset-password",async (req,res)=>{
 
 const {email,password}=req.body;
 
 const sql =
 "UPDATE users SET password=? WHERE email=?";
 
+const hashedPassword =
+await bcrypt.hash(password,10);
+
 db.query(
 sql,
-[password,email],
+[hashedPassword,email],
 (err,result)=>{
 
 if(err){

@@ -182,38 +182,58 @@ transition:0.3s;
 }
 .row-wrapper{
   position:relative;
+  overflow:hidden;
 }
 
 .arrow{
 
-  position:absolute;
+    position:absolute;
 
-  top:50%;
+    top:0;
+    bottom:0;
 
-  transform:translateY(-50%);
+    width:50px;
 
-  width:45px;
-  height:45px;
+    border:none;
 
-  border:none;
+    cursor:pointer;
 
-  border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
 
-  background:rgba(0,0,0,0.8);
+    z-index:5;
 
-  color:white;
+    opacity:0;
 
-  font-size:22px;
+    transition:opacity .2s;
 
-  cursor:pointer;
+    font-size:32px;
 
-  z-index:100;
+    color:white;
+
+    background:linear-gradient(
+        90deg,
+        #141414 0%,
+        transparent 100%
+    );
 }
 
-.left{
-  left:5px;
+.arrow.right{
+
+    right:0;
+
+    background:linear-gradient(
+        270deg,
+        #141414 0%,
+        transparent 100%
+    );
 }
 
-.right{
-  right:5px;
+.arrow.left{
+    left:0;
+}
+
+.row-wrapper:hover .arrow{
+    opacity:1;
 }
