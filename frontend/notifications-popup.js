@@ -1,0 +1,320 @@
+// ─── SHARED NOTIFICATIONS POPUP — works on every page ────────────────────────
+window.API = window.API || "http://127.0.0.1:5000";
+
+// ─── STYLES ───────────────────────────────────────────────────────────────────
+const npStyle = document.createElement("style");
+npStyle.textContent = `
+  .np-popup {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-120px);
+    background: #1e1e1e;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 16px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    max-width: 420px;
+    width: 90%;
+    z-index: 99999;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+    transition: transform 0.5s cubic-bezier(0.34,1.56,0.64,1), opacity 0.4s;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .np-popup.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+  .np-popup-emoji { font-size: 2rem; flex-shrink: 0; }
+  .np-popup-body { flex: 1; }
+  .np-popup-title { font-size: 0.88rem; font-weight: 700; color: #f0f0f0; margin-bottom: 3px; }
+  .np-popup-msg { font-size: 0.78rem; color: #aaa; line-height: 1.4; }
+  .np-popup-close { background: none; border: none; color: #555; font-size: 1.1rem; cursor: pointer; padding: 0 4px; flex-shrink: 0; }
+  .np-popup-close:hover { color: #aaa; }
+  .np-popup-bar {
+    position: absolute; bottom: 0; left: 0; height: 3px;
+    background: linear-gradient(90deg, #00c8ff, #9b59b6);
+    border-radius: 0 0 16px 16px; width: 100%;
+    animation: npBar 5s linear forwards;
+  }
+  @keyframes npBar { from { width: 100%; } to { width: 0%; } }
+  .np-bell-wrapper { position: relative; display: inline-flex; }
+  .np-badge {
+    position: absolute; top: -6px; right: -6px;
+    background: #e50914; color: white; font-size: 0.6rem; font-weight: 700;
+    min-width: 18px; height: 18px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 4px; border: 2px solid #0d0d0d;
+    animation: npPulse 2s infinite; z-index: 10;
+  }
+  @keyframes npPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+`;
+document.head.appendChild(npStyle);
+
+// ─── CREATE POPUP ELEMENT ─────────────────────────────────────────────────────
+const popup = document.createElement('div');
+popup.className = 'np-popup';
+document.body.appendChild(popup);
+
+let popupTimer;
+let popupQueue = [];
+let isShowingPopup = false;
+let currentPopupPdfId = null;
+
+// ─── MARK NOTIFICATION AS SEEN ────────────────────────────────────────────────
+function markNotifSeen(id) {
+  try {
+    const seen = JSON.parse(localStorage.getItem('seenNotifIds') || '[]');
+    const idStr = String(id);
+    if (!seen.includes(idStr)) {
+      seen.push(idStr);
+      localStorage.setItem('seenNotifIds', JSON.stringify(seen));
+    }
+  } catch(e) {}
+}
+
+// ─── SHOW POPUP ───────────────────────────────────────────────────────────────
+function npShowPopup(emoji, title, msg, pdfId) {
+  if (localStorage.getItem('notifMuted') === 'true') return;
+  if (isShowingPopup) {
+    popupQueue.push({ emoji, title, msg, pdfId });
+    return;
+  }
+
+  isShowingPopup = true;
+  currentPopupPdfId = pdfId;
+
+  popup.innerHTML = `
+    <div class="np-popup-emoji">${emoji}</div>
+    <div class="np-popup-body">
+      <div class="np-popup-title">${title}</div>
+      <div class="np-popup-msg">${msg}</div>
+    </div>
+    <button class="np-popup-close" id="npClose">✕</button>
+    <div class="np-popup-bar"></div>
+  `;
+
+  document.getElementById('npClose').addEventListener('click', (e) => {
+    e.stopPropagation();
+    npHidePopup();
+  });
+
+  popup.addEventListener('click', npPopupClick);
+  popup.classList.add('show');
+  clearTimeout(popupTimer);
+  popupTimer = setTimeout(() => npHidePopup(), 5000);
+}
+
+function npHidePopup() {
+  popup.classList.remove('show');
+  popup.removeEventListener('click', npPopupClick);
+  clearTimeout(popupTimer);
+  setTimeout(() => {
+    isShowingPopup = false;
+    if (popupQueue.length > 0) {
+      const next = popupQueue.shift();
+      npShowPopup(next.emoji, next.title, next.msg, next.pdfId);
+    }
+  }, 600);
+}
+
+async function npPopupClick(){
+
+    npHidePopup();
+
+    if(!currentPopupPdfId)
+        return;
+
+    try{
+
+        const response =
+        await fetch(
+            `${window.API}/pdfs/${currentPopupPdfId}`
+        );
+
+        const pdf =
+        await response.json();
+
+        console.log(pdf);
+
+        if(pdf && pdf.pdf_link){
+
+            await fetch(
+                `${window.API}/pdfs/${currentPopupPdfId}/view`,
+                {
+                    method:"POST"
+                }
+            );
+
+            window.location.href =
+            `reader.html?pdf_id=${pdf.id}&file=${pdf.pdf_link}&page=1`;
+
+        }
+
+    }catch(err){
+
+        console.log(err);
+
+    }
+
+}
+
+// ─── BELL BADGE ───────────────────────────────────────────────────────────────
+function npUpdateBadge(count) {
+  const bellBtns = document.querySelectorAll(
+    'button[title="Notifications"], .nav-icon-btn, a[href="notifications.html"]'
+  );
+  bellBtns.forEach(btn => {
+    if (!btn.parentElement.classList.contains('np-bell-wrapper')) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'np-bell-wrapper';
+      btn.parentNode.insertBefore(wrapper, btn);
+      wrapper.appendChild(btn);
+    }
+    const wrapper = btn.parentElement;
+    const existing = wrapper.querySelector('.np-badge');
+    if (existing) existing.remove();
+    if (count > 0) {
+      const badge = document.createElement('div');
+      badge.className = 'np-badge';
+      badge.textContent = count > 9 ? '9+' : count;
+      wrapper.appendChild(badge);
+    }
+  });
+}
+
+// ─── MOTIVATIONAL MESSAGES ────────────────────────────────────────────────────
+const npMotivational = [
+  { emoji: '☕', title: 'Coffee + Book = Perfect!', msg: 'Grab a cup and dive into something amazing! 📖✨' },
+  { emoji: '🥺', title: 'Did you forget me, sweetie?', msg: 'Your library misses you! Come read something lovely 💕' },
+  { emoji: '💌', title: 'A little note for you...', msg: 'Hey darling, your favourite PDF is waiting patiently 🌸📖' },
+  { emoji: '🌷', title: 'Missing you already!', msg: 'The library feels empty without you! Come read something cozy 🤗' },
+  { emoji: '🍪', title: 'Cookie for your thoughts?', msg: 'How about a sweet reading session right now? 📚🍪' },
+  { emoji: '🌙', title: 'Psst... still awake?', msg: 'Perfect time for a late night reading adventure! 🌟📖' },
+  { emoji: '🦋', title: 'Hey you! Yes, you!', msg: 'You\'re one page away from something amazing! 💫' },
+  { emoji: '💝', title: 'Just checking in, love!', msg: 'Your reading list is missing you dearly! 💕📚' },
+  { emoji: '🚀', title: 'Level Up Today!', msg: 'The most successful people read every day. Let\'s go! 🔥📖' },
+  { emoji: '🌟', title: 'Stay Curious!', msg: 'Feed your curiosity with something amazing from your library! 🧠⚡' },
+];
+
+// ─── MAIN INIT ────────────────────────────────────────────────────────────────
+async function npInit() {
+  const userId =
+localStorage.getItem("userId");
+
+if(userId){
+
+    await fetch(
+        `${window.API}/notifications/check-reading/${userId}`
+    );
+
+    await fetch(
+        `${window.API}/notifications/check-return/${userId}`
+    );
+
+}
+  if (localStorage.getItem('notifMuted') === 'true') return;
+
+  try {
+    const [notifRes, readingRes] = await Promise.all([
+      fetch(`${window.API}/notifications`),
+      fetch(`${window.API}/readinglist`)
+    ]);
+
+    const notifications = await notifRes.json();
+    const readingList   = await readingRes.json();
+
+    const userId =
+localStorage.getItem("userId");
+
+const badgeRes =
+await fetch(
+`${window.API}/notifications/unread-count/${userId}`
+);
+
+const badgeData =
+await badgeRes.json();
+
+npUpdateBadge(
+    badgeData.count
+);
+
+// Keep this for popup logic
+const seenIds =
+JSON.parse(
+    localStorage.getItem('seenNotifIds') || '[]'
+);
+
+const newNotifs =
+notifications.filter(
+    n => !seenIds.includes(String(n.id))
+);
+
+    const lastShown = parseInt(localStorage.getItem('lastNotifShown') || '0');
+    const now       = Date.now();
+    const oneHour   = 60 * 60 * 1000;
+
+    if (newNotifs.length > 0) {
+      // ── Always show popup for NEW notifications immediately ──────────────
+      // Only throttle motivational/reading list ones to 1 hour
+      const newPdfNotifs = newNotifs.filter(n => n.type === 'new_pdf');
+      const otherNotifs  = newNotifs.filter(n => n.type !== 'new_pdf');
+
+      if (newPdfNotifs.length > 0) {
+        // Show new PDF notification immediately — always
+        setTimeout(() => {
+          const notif = newPdfNotifs[0];
+          npShowPopup('📄', '🎉 New PDF Added!', notif.message, notif.pdf_id || null);
+          // Mark only this one as seen
+          markNotifSeen(String(notif.id));
+          localStorage.setItem('lastNotifShown', now.toString());
+        }, 1500);
+
+      } else if (otherNotifs.length > 0 && (now - lastShown >= oneHour || lastShown === 0)) {
+        // Show other notifications once per hour
+        setTimeout(() => {
+          const notif = otherNotifs[0];
+          npShowPopup('🔔', 'Notification', notif.message, notif.pdf_id || null);
+          markNotifSeen(String(notif.id));
+          localStorage.setItem('lastNotifShown', now.toString());
+        }, 1500);
+      }
+
+    } else if (readingList.length > 0 && (now - lastShown >= oneHour || lastShown === 0)) {
+      // No new notifications — show reading list reminder once per hour
+      const item = readingList[Math.floor(Math.random() * readingList.length)];
+      const msgs = [
+        `Did you forget about "${item.title}", sweetie? 🥺`,
+        `"${item.title}" misses you! When will you start reading? 💕`,
+        `Hey! "${item.title}" is waiting for you 😢`,
+      ];
+      setTimeout(() => {
+        npShowPopup('📚', 'Reading List Reminder! 💕',
+          msgs[Math.floor(Math.random() * msgs.length)],
+          item.pdf_id || item.id
+        );
+        localStorage.setItem('lastNotifShown', now.toString());
+      }, 1500);
+
+    } else if (newNotifs.length === 0 && readingList.length === 0 && now - lastShown >= oneHour) {
+      // No unseen notifs and no reading list — show motivational once per hour
+      const m = npMotivational[Math.floor(Math.random() * npMotivational.length)];
+      setTimeout(() => {
+        npShowPopup(m.emoji, m.title, m.msg, null);
+        localStorage.setItem('lastNotifShown', now.toString());
+      }, 1500);
+    }
+
+  } catch(err) {
+    console.warn('notifications-popup.js error:', err);
+  }
+}
+
+// ─── CHECK EVERY HOUR ─────────────────────────────────────────────────────────
+setInterval(npInit, 60 * 60 * 1000);
+
+// ─── START ────────────────────────────────────────────────────────────────────
+npInit();

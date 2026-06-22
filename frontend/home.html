@@ -1146,18 +1146,70 @@ await fetch(
             badge: "hot"
 
         }, "picks");
+        const listBtn =
+document.createElement("button");
 
-        card.onclick = () => {
+listBtn.innerHTML = "🔖";
 
-            window.location.href =
-            "reader.html?file=" +
-            pdf.pdf_link +
-            "&pdf_id=" +
-            pdf.id;
+listBtn.style.position = "absolute";
+listBtn.style.bottom = "8px";
+listBtn.style.right = "8px";
 
-        };
+listBtn.style.border = "none";
+listBtn.style.background = "rgba(255,255,255,0.08)";
+listBtn.style.color = "#ffd54f";
 
-        container.appendChild(card);
+listBtn.style.width = "34px";
+listBtn.style.height = "34px";
+
+listBtn.style.borderRadius = "8px";
+listBtn.style.cursor = "pointer";
+
+listBtn.style.display = "flex";
+listBtn.style.alignItems = "center";
+listBtn.style.justifyContent = "center";
+
+listBtn.style.backdropFilter = "blur(8px)";
+
+listBtn.onclick = (e) => {
+
+    e.stopPropagation();
+
+    addToReadingList(pdf.id);
+
+};
+
+card.appendChild(listBtn);
+
+        card.onclick = async () => {
+          const userId =
+localStorage.getItem("userId");
+
+    await fetch(
+
+    `http://localhost:5000/pdfs/${pdf.id}/view`,
+
+    {
+        method: "POST",
+
+        headers: {
+            "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+            userId: userId
+        })
+    }
+
+);
+
+    window.open(
+`reader.html?pdf_id=${pdf.id}&file=${pdf.pdf_link}&page=1`,
+"_blank"
+);
+
+};
+  container.appendChild(card);
 
     });
 
@@ -1200,22 +1252,75 @@ async function loadRecommended() {
 
         }, "because");
 
-        card.onclick = () => {
+const listBtn =
+document.createElement("button");
 
-            window.location.href =
-            "reader.html?file=" +
-            pdf.pdf_link +
-            "&pdf_id=" +
-            pdf.id;
+listBtn.innerHTML = "🔖";
 
-        };
+listBtn.style.position = "absolute";
+listBtn.style.bottom = "8px";
+listBtn.style.right = "8px";
+
+listBtn.style.border = "none";
+listBtn.style.background = "rgba(255,255,255,0.08)";
+listBtn.style.color = "#ffd54f";
+
+listBtn.style.width = "34px";
+listBtn.style.height = "34px";
+
+listBtn.style.borderRadius = "8px";
+listBtn.style.cursor = "pointer";
+
+listBtn.style.display = "flex";
+listBtn.style.alignItems = "center";
+listBtn.style.justifyContent = "center";
+
+listBtn.style.backdropFilter = "blur(8px)";
+
+listBtn.onclick = (e) => {
+
+    e.stopPropagation();
+
+    addToReadingList(pdf.id);
+
+};
+
+card.appendChild(listBtn);
+
+        card.onclick = async () => {
+          const userId =
+localStorage.getItem("userId");
+
+    await fetch(
+
+    `http://localhost:5000/pdfs/${pdf.id}/view`,
+
+    {
+        method: "POST",
+
+        headers: {
+            "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+            userId: userId
+        })
+    }
+
+);
+
+    window.open(
+`reader.html?pdf_id=${pdf.id}&file=${pdf.pdf_link}&page=1`,
+"_blank"
+);
+
+};
 
         container.appendChild(card);
 
     });
 
 }
-
 loadRecommended();
 
 
@@ -1573,7 +1678,23 @@ const progress = book.progress || 0;
  loadContinueReading();
 
 async function initializeHome(){
+const userId =
+localStorage.getItem("userId");
 
+fetch(
+    "http://localhost:5000/user-activity",
+    {
+        method:"POST",
+
+        headers:{
+            "Content-Type":"application/json"
+        },
+
+        body:JSON.stringify({
+            userId:userId
+        })
+    }
+);
     await loadFavoriteIds();
 
     loadAcademicPDFs();
@@ -1717,8 +1838,14 @@ loadReadingCount();
 let notificationsData = [];
 
 async function loadNotifications() {
+const userId =
+localStorage.getItem("userId");
 
-    const res = await fetch("http://localhost:5000/notifications");
+const res =
+await fetch(
+`http://localhost:5000/notifications/${userId}`
+);
+    
     notificationsData = await res.json();
 
     const panel = document.getElementById("notificationPanel");
@@ -1729,10 +1856,24 @@ async function loadNotifications() {
         const div = document.createElement("div");
         div.className = "notification-item";
 
-        div.innerHTML = `
-            <h4>${n.title}</h4>
-            <p>${n.message}</p>
-        `;
+      let heading = "🔔 Notification";
+
+if(n.type === "new_pdf")
+    heading = "📄 New PDF";
+
+if(n.type === "reading_reminder")
+    heading = "📚 Continue Reading";
+
+if(n.type === "welcome")
+    heading = "🎉 Welcome";
+
+if(n.type === "welcome_back")
+    heading = "🌷 Welcome Back";
+
+div.innerHTML = `
+    <h4>${heading}</h4>
+    <p>${n.message}</p>
+`;
 
        div.onclick = () => {
     openNotification(n);
@@ -1753,16 +1894,32 @@ function toggleNotifications() {
     }
 }
 
-function openNotification(n){
+async function openNotification(n){
 
-    const pdf = n.pdf_id || n.pdfId || n.pdf_link;
+    try{
 
-    if(!pdf){
-        showToast("No PDF linked to this notification");
+        await fetch(
+
+            `http://localhost:5000/notifications/read/${n.id}`,
+
+            {
+                method:"POST"
+            }
+
+        );
+
+    }catch(err){
+
+        console.log(err);
+
+    }
+
+    if(!n.pdf_id){
         return;
     }
 
-    window.location.href = "reader.html?file=" + pdf;
+    window.location.href =
+    `reader.html?pdf_id=${n.pdf_id}&file=${encodeURIComponent(n.pdf_link)}&page=1`;
 }
 
 </script>
@@ -1822,5 +1979,6 @@ font-size:14px;">
 © 2026 E-Library Management System
 </footer>
 <script src="search.js"></script>
+<script src="notifications-popup.js"></script>
 </body>
 </html>

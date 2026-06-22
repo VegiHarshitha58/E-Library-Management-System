@@ -96,33 +96,62 @@ db.query(
             return;
         }
 
+db.query(
+
+    `INSERT INTO pdfs
+    (title, category_id, contributor, pdf_link)
+    VALUES (?, ?, ?, ?)`,
+
+    [
+        title,
+        categoryId,
+        "Admin",
+        pdfLink
+    ],
+
+    (err, pdfResult) => {
+
+        if(err){
+            console.log(err);
+            return;
+        }
+
         db.query(
 
-            `INSERT INTO pdfs
-            (title, category_id, contributor, pdf_link)
+            `INSERT INTO notifications
+            (
+                user_id,
+                message,
+                type,
+                pdf_id
+            )
             VALUES (?, ?, ?, ?)`,
 
             [
-                title,
-                categoryId,
-                "Admin",
-                pdfLink
+                null,
+                `New PDF uploaded: ${title}`,
+                "new_pdf",
+                pdfResult.insertId
             ],
 
-            (err) => {
+            (err2) => {
 
-                if(err){
-                    console.log(err);
-                    return;
+                if(err2){
+                    console.log(err2);
                 }
-
-                console.log(
-                    `Imported: ${file}`
-                );
 
             }
 
         );
+
+        console.log(
+            `Imported: ${file}`
+        );
+
+    }
+
+);
+    
 
     }
 

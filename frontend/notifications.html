@@ -49,8 +49,12 @@ research papers, and library announcements.
 </section>
 <script>
 
-fetch("http://localhost:5000/notifications")
+const userId =
+localStorage.getItem("userId");
 
+fetch(
+`http://localhost:5000/notifications/${userId}`
+)
 .then(response => response.json())
 
 .then(data => {
@@ -59,25 +63,44 @@ fetch("http://localhost:5000/notifications")
     document.getElementById("notificationsContainer");
 
     container.innerHTML = "";
+data.forEach(item => {
 
-    data.forEach(item => {
+    let icon = "🔔";
 
-        container.innerHTML += `
+    if(item.type === "new_pdf")
+        icon = "📄";
 
-        <div class="notification-card">
+    if(item.type === "reading_reminder")
+        icon = "📚";
 
-            <h3>🔔 Notification</h3>
+    if(item.type === "recommendation")
+        icon = "⭐";
+    if(item.type === "welcome")
+    icon = "🎉";
+if(item.type === "welcome_back")
+    icon = "🌷";
 
-            <p>${item.message}</p>
+    container.innerHTML += `
 
-            <span>${item.created_at}</span>
+   <div class="notification-card"
+onclick="openNotification(
+    ${item.id},
+    '${item.pdf_link}',
+    ${item.pdf_id}
+)"
+>
+        <h3>${icon} Notification</h3>
 
-        </div>
+        <p>${item.message}</p>
 
-        `;
+        <span>${item.created_at}</span>
 
-    });
+    </div>
 
+    `;
+
+});
+    
 })
 
 .catch(error => {
@@ -85,8 +108,29 @@ fetch("http://localhost:5000/notifications")
     console.error(error);
 
 });
+async function openNotification(
+    notificationId,
+    file,
+    pdfId
+){
+
+    await fetch(
+
+        `http://localhost:5000/notifications/read/${notificationId}`,
+
+        {
+            method:"POST"
+        }
+
+    );
+
+    if(!file) return;
+
+    window.location.href =
+    `reader.html?pdf_id=${pdfId}&file=${file}&page=1`;
+
+}
 
 </script>
-
 </body>
 </html>

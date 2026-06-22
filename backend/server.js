@@ -61,6 +61,10 @@ const upload = multer({
 });
 // REGISTER API
 
+
+
+            
+
 app.post("/register", async (req,res)=>{
 
     const {name,email,password} = req.body;
@@ -72,14 +76,20 @@ app.post("/register", async (req,res)=>{
     }
 
     db.query(
+
         "SELECT * FROM users WHERE email=?",
+
         [email],
+
         async (err,result)=>{
 
             if(err){
 
                 console.log(err);
-                return res.send("Registration Failed");
+
+                return res.send(
+                    "Registration Failed"
+                );
 
             }
 
@@ -104,7 +114,7 @@ app.post("/register", async (req,res)=>{
                     hashedPassword
                 ],
 
-                (err)=>{
+                (err,userResult)=>{
 
                     if(err){
 
@@ -115,6 +125,41 @@ app.post("/register", async (req,res)=>{
                         );
 
                     }
+
+                    // 🔔 Welcome Notification
+
+                    db.query(
+
+                        `INSERT INTO notifications
+                        (
+                            user_id,
+                            message,
+                            type
+                        )
+                        VALUES(?,?,?)`,
+
+                        [
+                            userResult.insertId,
+
+                            "🎉 Welcome to E-Library! Start exploring PDFs and build your reading journey.",
+
+                            "welcome"
+                        ],
+
+                        (notifErr)=>{
+
+                            if(notifErr){
+
+                                console.log(
+                                    "Notification Error:",
+                                    notifErr
+                                );
+
+                            }
+
+                        }
+
+                    );
 
                     res.send(
                         "Registration Successful"
@@ -1131,12 +1176,12 @@ app.post("/save-settings", (req, res) => {
 
     );
 
-});                                  
-app.get("/notifications", (req, res) => {
+});            
+app.get("/notifications", (req,res)=>{
 
     db.query(
         "SELECT * FROM notifications ORDER BY created_at DESC",
-        (err, result) => {
+        (err,result)=>{
 
             if(err){
                 return res.status(500).json(err);
@@ -1145,6 +1190,397 @@ app.get("/notifications", (req, res) => {
             res.json(result);
 
         }
+    );
+
+});            
+app.get("/notifications/:userId", (req,res)=>{
+
+    const userId = req.params.userId;
+
+    db.query(
+
+        `SELECT
+            n.*,
+            p.pdf_link
+         FROM notifications n
+         LEFT JOIN pdfs p
+         ON n.pdf_id = p.id
+         WHERE n.user_id = ?
+         OR n.user_id IS NULL
+         ORDER BY n.created_at DESC`,
+
+        [userId],
+
+        (err,result)=>{
+
+            if(err){
+                return res.status(500).json(err);
+            }
+
+            res.json(result);
+
+        }
+
+    );
+
+});
+app.get(
+"/notifications/unread-count/:userId",
+(req,res)=>{
+
+    const userId =
+    req.params.userId;
+
+    db.query(
+
+        `SELECT COUNT(*) AS count
+         FROM notifications
+         WHERE
+         (user_id = ?
+         OR user_id IS NULL)
+         AND is_read = 0`,
+
+        [userId],
+
+        (err,result)=>{
+
+            if(err){
+
+                console.log(err);
+
+                return res.status(500).json(err);
+
+            }
+
+            res.json(result[0]);
+
+        }
+
+    );
+
+});
+app.post("/notifications/continue-reading", (req,res)=>{
+
+    const {
+        userId,
+        pdfId,
+        title
+    } = req.body;
+
+    db.query(
+
+        `INSERT INTO notifications
+        (
+            user_id,
+            message,
+            type,
+            pdf_id
+        )
+        VALUES(?,?,?,?)`,
+
+        [
+            userId,
+
+            `📚 Continue Reading: ${title}`,
+
+            "reading_reminder",
+
+            pdfId
+        ],
+
+        (err)=>{
+
+            if(err){
+
+                console.log(err);
+
+                return res.status(500).send(
+                    "Notification Failed"
+                );
+
+            }
+
+            res.send(
+                "Reminder Created"
+            );
+
+        }
+
+    );
+
+});
+
+            app.get("/notifications/check-reading/:userId", (req,res)=>{
+
+    const userId = req.params.userId;
+
+    db.query(
+
+        `SELECT
+            rh.pdf_id,
+            rh.last_page,
+            rh.progress,
+            rh.last_read,
+            p.title
+        FROM reading_history rh
+        JOIN pdfs p
+        ON rh.pdf_id = p.id
+        WHERE rh.user_id = ?
+        AND rh.progress < 100`,
+
+        [userId],
+
+        (err,result)=>{
+
+            if(err){
+                console.log(err);
+                return res.status(500).json(err);
+            }
+
+            const now = new Date();
+
+            result.forEach(item=>{
+
+                const lastRead =
+                new Date(item.last_read);
+
+                const diffDays =
+                Math.floor(
+                    (now - lastRead)
+                    /(1000*60*60*24)
+                );
+
+                if(diffDays >= 3){
+
+                    db.query(
+
+                        `SELECT id
+                         FROM notifications
+                         WHERE user_id = ?
+                         AND pdf_id = ?
+                         AND type = 'reading_reminder'`,
+
+                        [
+                            userId,
+                            item.pdf_id
+                        ],
+
+                        (err2, existing)=>{
+
+                            if(err2){
+                                console.log(err2);
+                                return;
+                            }
+
+                            if(existing.length > 0){
+                                return;
+                            }
+
+                            db.query(
+
+                                `INSERT INTO notifications
+                                (
+                                    user_id,
+                                    message,
+                                    type,
+                                    pdf_id
+                                )
+                                VALUES(?,?,?,?)`,
+
+                                [
+                                    userId,
+
+                                    `You stopped reading "${item.title}" at page ${item.last_page}. Continue where you left off.`,
+
+                                    "reading_reminder",
+
+                                    item.pdf_id
+                                ],
+
+                                (err3)=>{
+
+                                    if(err3){
+                                        console.log(err3);
+                                    }
+
+                                }
+
+                            );
+
+                        }
+
+                    );
+
+                }
+
+            });
+
+            res.send("Checked");
+
+        }
+
+    );
+
+});
+
+
+            app.get("/notifications/check-return/:userId",(req,res)=>{
+
+    const userId = req.params.userId;
+
+    db.query(
+
+        `SELECT last_visit
+         FROM user_activity
+         WHERE user_id = ?`,
+
+        [userId],
+
+        (err,result)=>{
+
+            if(err){
+                console.log(err);
+                return res.status(500).send("Error");
+            }
+
+            if(result.length === 0){
+                return res.send("No Activity");
+            }
+
+            const lastVisit =
+            new Date(result[0].last_visit);
+
+            const now =
+            new Date();
+
+            const diffDays =
+            Math.floor(
+                (now - lastVisit)
+                /(1000*60*60*24)
+            );
+
+            if(diffDays >= 7){
+
+                db.query(
+
+                    `SELECT id
+                     FROM notifications
+                     WHERE user_id = ?
+                     AND type = 'welcome_back'`,
+
+                    [userId],
+
+                    (err2, existing)=>{
+
+                        if(err2){
+                            console.log(err2);
+                            return;
+                        }
+
+                        if(existing.length > 0){
+                            return;
+                        }
+
+                        db.query(
+
+                            `INSERT INTO notifications
+                            (
+                                user_id,
+                                message,
+                                type
+                            )
+                            VALUES(?,?,?)`,
+
+                            [
+                                userId,
+
+                                "🌷 Welcome back! It's been a while since your last visit. Discover something new today.",
+
+                                "welcome_back"
+                            ],
+
+                            (err3)=>{
+
+                                if(err3){
+                                    console.log(err3);
+                                }
+
+                            }
+
+                        );
+
+                    }
+
+                );
+
+            }
+
+            res.send("Checked");
+
+        }
+
+    );
+
+});
+app.post("/notifications/read/:id",(req,res)=>{
+
+    const id = req.params.id;
+
+    db.query(
+
+        `UPDATE notifications
+         SET is_read = 1
+         WHERE id = ?`,
+
+        [id],
+
+        (err)=>{
+
+            if(err){
+
+                console.log(err);
+
+                return res.status(500).send(
+                    "Database Error"
+                );
+
+            }
+
+            res.send(
+                "Notification Read"
+            );
+
+        }
+
+    );
+
+});
+app.post("/user-activity", (req,res)=>{
+
+    const { userId } = req.body;
+
+    db.query(
+
+        `INSERT INTO user_activity
+        (user_id,last_visit)
+        VALUES(?,CURRENT_TIMESTAMP)
+
+        ON DUPLICATE KEY UPDATE
+        last_visit = CURRENT_TIMESTAMP`,
+
+        [userId],
+
+        (err)=>{
+
+            if(err){
+                console.log(err);
+                return res.status(500).send("Error");
+            }
+
+            res.send("Updated");
+
+        }
+
     );
 
 });
@@ -1356,7 +1792,34 @@ app.get("/pdfs", (req, res) => {
     );
 
 });
+app.get("/pdfs/:id",(req,res)=>{
 
+    const pdfId = req.params.id;
+
+    db.query(
+
+        "SELECT * FROM pdfs WHERE id = ?",
+
+        [pdfId],
+
+        (err,result)=>{
+
+            if(err){
+                console.log(err);
+                return res.status(500).json(err);
+            }
+
+            if(result.length === 0){
+                return res.status(404).send("PDF Not Found");
+            }
+
+            res.json(result[0]);
+
+        }
+
+    );
+
+});
 
  app.post("/pdfs/:id/view", (req, res) => {
 
