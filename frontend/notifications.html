@@ -4,133 +4,701 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Notifications - E-Library</title>
-
 <link rel="stylesheet" href="notifications.css">
-</head>
+<style>
+.notif-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px 0;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.notif-header h2 { font-size: 1rem; color: #aaa; }
+.header-btns { display: flex; gap: 10px; }
+.mark-all-btn {
+  background: none; border: 1px solid #444;
+  color: #aaa; padding: 6px 14px; border-radius: 20px;
+  cursor: pointer; font-size: 0.8rem; transition: all 0.2s;
+}
+.mark-all-btn:hover { border-color: #00c8ff; color: #00c8ff; }
 
+.notification-card {
+  background: #222; padding: 20px 25px;
+  border-radius: 16px; transition: 0.3s; cursor: pointer;
+  border-left: 4px solid transparent;
+  display: flex; gap: 16px; align-items: flex-start;
+  position: relative; overflow: hidden;
+}
+.notification-card:hover { transform: translateY(-4px) scale(1.01); background: #2a2a2a; box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
+.notification-card.unread { background: #1a2a2a; }
+.notification-card.type-new_pdf    { border-left-color: #46d369; }
+.notification-card.type-reminder   { border-left-color: #f5a623; }
+.notification-card.type-reading_list { border-left-color: #9b59b6; }
+.notification-card.type-motivational { border-left-color: #00c8ff; }
+.notification-card.type-general    { border-left-color: #e50914; }
+.notification-card.type-welcome    { border-left-color: #f1c40f; }
+.notification-card.type-welcome_back {
+  border-left-color: #f1c40f;
+}
+
+.notification-card.type-reading_reminder {
+  border-left-color: #f5a623;
+}
+
+.notif-emoji {
+  font-size: 2rem; flex-shrink: 0;
+  width: 52px; height: 52px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+}
+.notif-body { flex: 1; }
+.notif-title { font-size: 1rem; font-weight: 700; color: #f0f0f0; margin-bottom: 5px; }
+.notif-message { font-size: 0.875rem; color: #bbb; line-height: 1.6; margin-bottom: 8px; }
+.notif-footer { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.notif-time { font-size: 0.75rem; color: #666; }
+.notif-tag {
+  font-size: 0.65rem; font-weight: 700;
+  padding: 2px 10px; border-radius: 10px;
+  text-transform: uppercase; letter-spacing: 0.8px;
+}
+.tag-new_pdf     { background: rgba(70,211,105,0.15); color: #46d369; }
+.tag-reminder    { background: rgba(245,166,35,0.15);  color: #f5a623; }
+.tag-reading_list{ background: rgba(155,89,182,0.15);  color: #9b59b6; }
+.tag-motivational{ background: rgba(0,200,255,0.15);   color: #00c8ff; }
+.tag-general     { background: rgba(229,9,20,0.15);    color: #e50914; }
+.tag-welcome     { background: rgba(241,196,15,0.15);  color: #f1c40f; }
+
+
+.tag-welcome_back{
+  background: rgba(241,196,15,0.15);
+  color: #f1c40f;
+}
+
+.unread-dot {
+  width: 10px; height: 10px;
+  background: #00c8ff; border-radius: 50%;
+  flex-shrink: 0; margin-top: 6px;
+}
+.notif-action-btn {
+  font-size: 0.75rem; background: rgba(255,255,255,0.08);
+  border: none; color: #ccc; padding: 4px 12px;
+  border-radius: 10px; cursor: pointer; transition: 0.2s;
+}
+.notif-action-btn:hover { background: rgba(255,255,255,0.15); color: white; }
+
+.empty-state { text-align: center; padding: 60px 20px; color: #555; }
+.empty-state .empty-emoji { font-size: 4rem; margin-bottom: 16px; }
+.empty-state p { font-size: 1rem; }
+
+.filter-row {
+  display: flex; gap: 10px; flex-wrap: wrap;
+  padding: 16px 40px 10px;
+}
+.filter-btn {
+  padding: 6px 16px; border-radius: 20px;
+  border: 1px solid #333; background: none;
+  color: #aaa; font-size: 0.8rem; cursor: pointer; transition: all 0.2s;
+}
+.filter-btn:hover, .filter-btn.active { border-color: #00c8ff; color: #00c8ff; background: rgba(0,200,255,0.08); }
+.notif-delete-btn{
+  position:absolute;
+  right:15px;
+  top:50%;
+  transform:translateY(-50%);
+  border:none;
+  background:rgba(229,9,20,0.15);
+  color:#ff6b6b;
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  font-size:20px;
+  cursor:pointer;
+
+  opacity:0;
+  transition:all 0.3s ease;
+}
+
+.notification-card:hover .notif-delete-btn{
+  opacity:1;
+}
+
+.notification-card:hover{
+  transform:translateX(-35px);
+}
+
+
+#undoToast{
+  position:fixed;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%);
+  background:#222;
+  padding:12px 20px;
+  border-radius:10px;
+  z-index:9999;
+}
+
+#undoToast button{
+  margin-left:10px;
+  background:none;
+  border:none;
+  color:#00c8ff;
+  cursor:pointer;
+  font-weight:bold;
+}
+.tag-completed{
+    background: rgba(34,197,94,0.15);
+    color: #22c55e;
+    border: 1px solid rgba(34,197,94,0.3);
+}
+.tag-reading_list_reminder{
+  background: rgba(245,158,11,0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245,158,11,0.3);
+}
+</style>
+</head>
 <body>
 
 <header>
-
-<div class="logo">
-📚 E-Library
-</div>
-
-<nav>
-<a href="home.html">Home</a>
-<a href="categories.html">Categories</a>
-<a href="contributors.html">Contributors</a>
-<a href="notifications.html">Notifications</a>
-</nav>
-
+  <div class="logo">📚 E-Library</div>
+  <nav>
+    <a href="home.html">Home</a>
+    <a href="categories.html">Categories</a>
+    <a href="contributors.html">Contributors</a>
+    <a href="notifications.html">Notifications</a>
+  </nav>
 </header>
 
 <section class="hero">
+  <div class="hero-content">
+    <span class="tag">🔔 UPDATES</span>
+    <h1>Notifications</h1>
+    <p>Stay updated with new uploads, reading reminders, and library announcements.</p>
+  </div>
+</section>
 
-<div class="hero-content">
-
-<span class="tag">
-🔔 UPDATES
-</span>
-
-<h1>Notifications</h1>
-
-<p>
-Stay updated with new uploads, contributors,
-research papers, and library announcements.
-</p>
-
+<div class="notif-header">
+  <h2 id="notifCount">Loading...</h2>
+  <div class="header-btns">
+    <button class="mark-all-btn" onclick="markAllRead()">✅ Mark all as read</button>
+    <button class="mark-all-btn" onclick="clearAllNotifs()" style="border-color:#e57373;color:#e57373;">🗑️ Clear All</button>
+    <button class="mark-all-btn" id="muteBtn" onclick="toggleMute()" style="border-color:#f5a623;color:#f5a623;">🔕 Mute</button>
+  </div>
 </div>
 
-</section>
+<div class="filter-row">
+  <button class="filter-btn active" onclick="filterNotifs('all', this)">🔔 All</button>
+  <button class="filter-btn" onclick="filterNotifs('new_pdf', this)">📄 New PDFs</button>
+  <button class="filter-btn" onclick="filterNotifs('reminder', this)">⏰ Reminders</button>
+  <button class="filter-btn" onclick="filterNotifs('reading_list', this)">📚 Reading List</button>
+</div>
 
-<section class="notifications" id="notificationsContainer">
+<section class="notifications" id="notificationsContainer"></section>
 
-</section>
 <script>
+const API = "http://127.0.0.1:5000";
+let allNotifications = [];
 
-const userId =
-localStorage.getItem("userId");
+// ─── NOTIFICATION CONFIG ──────────────────────────────────────────────────────
+const notifConfig = {
+  new_pdf:       { emoji: '📄', label: 'New PDF',       tagClass: 'tag-new_pdf' },
+  reminder:      { emoji: '⏰', label: 'Reminder',      tagClass: 'tag-reminder' },
+  welcome_back: {
+  emoji: '🌷',
+  label: 'Welcome Back',
+  tagClass: 'tag-welcome_back'
+},
+reading_list_reminder: {
+    emoji: '📚',
+    label: 'Reading List Reminder',
+    tagClass: 'tag-reading_list_reminder'
+},
+completed_pdf: {
+    emoji: '🎉',
+    label: 'Completed',
+    tagClass:'tag-completed'},
+reading_reminder: {
+  emoji: '📖',
+  label: 'Continue Reading',
+  tagClass: 'tag-reading_reminder'
+},
+  reading_list:  { emoji: '📚', label: 'Reading List',  tagClass: 'tag-reading_list' },
+  general:       { emoji: '🔔', label: 'General',       tagClass: 'tag-general' },
+  welcome:       { emoji: '🎉', label: 'Welcome',       tagClass: 'tag-welcome' },
+};
 
-fetch(
-`http://localhost:5000/notifications/${userId}`
-)
-.then(response => response.json())
+// ─── FORMAT DATE ──────────────────────────────────────────────────────────────
+function formatDate(dateStr) {
+  const date = new Date(dateStr);
+  const now  = new Date();
+  const diff = Math.floor((now - date) / 1000);
+  if (diff < 60)     return 'Just now';
+  if (diff < 3600)   return `${Math.floor(diff/60)}m ago`;
+  if (diff < 86400)  return `${Math.floor(diff/3600)}h ago`;
+  if (diff < 604800) return `${Math.floor(diff/86400)}d ago`;
+  return date.toLocaleDateString();
+}
 
-.then(data => {
+// ─── DETECT TYPE ──────────────────────────────────────────────────────────────
+function detectType(item) {
 
-    const container =
-    document.getElementById("notificationsContainer");
+  if (item.type && item.type !== 'general') {
+    return item.type;
+  }
 
-    container.innerHTML = "";
-data.forEach(item => {
+  const msg = (item.message || '').toLowerCase();
 
-    let icon = "🔔";
+  if (
+      msg.includes('new') &&
+      (
+        msg.includes('pdf') ||
+        msg.includes('upload') ||
+        msg.includes('added')
+      )
+  ) {
+      return 'new_pdf';
+  }
 
-    if(item.type === "new_pdf")
-        icon = "📄";
+  if (msg.includes('welcome back')) {
+      return 'welcome_back';
+  }
 
-    if(item.type === "reading_reminder")
-        icon = "📚";
+  if (msg.includes('welcome')) {
+      return 'welcome';
+  }
 
-    if(item.type === "recommendation")
-        icon = "⭐";
-    if(item.type === "welcome")
-    icon = "🎉";
-if(item.type === "welcome_back")
-    icon = "🌷";
+  if (
+      msg.includes('continue') ||
+      msg.includes('remind')
+  ) {
+      return 'reading_reminder';
+  }
 
-    container.innerHTML += `
+  if (
+      msg.includes('reading list')
+  ) {
+      return 'reading_list';
+  }
 
-   <div class="notification-card"
-onclick="openNotification(
-    ${item.id},
-    '${item.pdf_link}',
-    ${item.pdf_id}
-)"
->
-        <h3>${icon} Notification</h3>
+  if (
+      msg.includes('completed') ||
+      msg.includes('congratulations')
+  ) {
+      return 'completed_pdf';
+  }
 
-        <p>${item.message}</p>
+  return 'general';
+}
 
-        <span>${item.created_at}</span>
+// ─── GET READ IDS FROM LOCALSTORAGE ──────────────────────────────────────────
+function getReadIds() {
+  return JSON.parse(localStorage.getItem('readNotifIds') || '[]');
+}
 
-    </div>
+function saveReadIds(ids) {
+  localStorage.setItem('readNotifIds', JSON.stringify(ids));
+}
 
-    `;
+function isRead(id) {
 
-});
-    
-})
-
-.catch(error => {
-
-    console.error(error);
-
-});
-async function openNotification(
-    notificationId,
-    file,
-    pdfId
-){
-
-    await fetch(
-
-        `http://localhost:5000/notifications/read/${notificationId}`,
-
-        {
-            method:"POST"
-        }
-
+    const notif =
+    allNotifications.find(
+        n => String(n.id) === String(id)
     );
 
-    if(!file) return;
-
-    window.location.href =
-    `reader.html?pdf_id=${pdfId}&file=${file}&page=1`;
+    return notif && notif.is_read == 1;
 
 }
 
+function markOneRead(id){
+
+    const notif =
+    allNotifications.find(
+        n => String(n.id) === String(id)
+    );
+
+    if(notif){
+
+        notif.is_read = 1;
+
+    }
+
+}
+// ─── MAKE CARD ────────────────────────────────────────────────────────────────
+function makeCard(item) {
+  const type   = detectType(item);
+  const config = notifConfig[type] || notifConfig.general;
+  const read   = isRead(item.id);
+
+  const card = document.createElement('div');
+  card.className = `notification-card type-${type} ${!read ? 'unread' : ''}`;
+  card.dataset.type = type;
+  card.dataset.id   = item.id;
+
+  card.innerHTML = `
+    <div class="notif-emoji">${config.emoji}</div>
+    <div class="notif-body">
+      <div class="notif-title">${getTitle(type)}</div>
+      <div class="notif-message">${item.message}</div>
+      <div class="notif-footer">
+        <span class="notif-time">🕐 ${formatDate(item.created_at)}</span>
+        <span class="notif-tag ${config.tagClass}">${config.label}</span>
+        ${item.pdf_id
+          ? `<button class="notif-action-btn">📄 Open PDF →</button>`
+          : `<button class="notif-action-btn">🏠 Go to Library →</button>` 
+        }
+      </div>
+    </div>
+    ${!read ? '<div class="unread-dot"></div>' : ''}
+  `;
+  const deleteBtn = document.createElement("button");
+
+deleteBtn.className = "notif-delete-btn";
+deleteBtn.innerHTML = "🗑";
+
+deleteBtn.onclick = (e) => {
+    e.stopPropagation();
+    deleteNotification(item.id);
+};
+
+card.appendChild(deleteBtn);
+
+  card.addEventListener('click', () => handleClick(item, type, card));
+  return card;
+}
+
+// ─── GET TITLE ────────────────────────────────────────────────────────────────
+function getTitle(type) {
+  return {
+    new_pdf:      '📄 Fresh Drop! New PDF Available',
+    reminder:     '⏰ Hey! Don\'t Forget to Read',
+    reading_list: '📚 Your Reading List is Waiting!',
+    general:      '🔔 Library Update',
+    welcome:      '🎉 Welcome to E-Library!',
+    welcome_back: '🌷 Welcome Back!',
+reading_reminder: '📚 Continue Reading',
+  }[type] || '🔔 Notification';
+}
+
+// ─── HANDLE CLICK ─────────────────────────────────────────────────────────────
+async function handleClick(item, type, card) {
+  // Mark as read
+  markOneRead(item.id);
+  await fetch(
+    `http://localhost:5000/notifications/read/${item.id}`,
+    {
+        method:"POST"
+    }
+);
+card.classList.remove("unread");
+card.classList.add("read");
+
+updateCount();
+  card.classList.remove('unread');
+  const dot = card.querySelector('.unread-dot');
+  
+  if (dot) dot.remove();
+
+  // Also mark in seenNotifIds so popup doesn't show again
+  const seen = JSON.parse(localStorage.getItem('seenNotifIds') || '[]');
+  if (!seen.includes(String(item.id))) {
+    seen.push(String(item.id));
+    localStorage.setItem('seenNotifIds', JSON.stringify(seen));
+  }
+
+  // Update count
+  updateCount();
+
+  // Navigate
+  if (item.pdf_id) {
+    try {
+      const res = await fetch(`${API}/pdfs/${item.pdf_id}`);
+      const pdf = await res.json();
+      if (pdf && pdf.pdf_link) {
+        // Open in pdf-reader.html
+
+        window.location.href =
+`reader.html?pdf_id=${pdf.id}&file=${encodeURIComponent(pdf.pdf_link)}&page=1`;
+      } else {
+        window.location.href = 'home.html';
+      }
+    } catch(e) {
+      window.location.href = 'home.html';
+    }
+  } else {
+    window.location.href = 'home.html';
+  }
+}
+
+// ─── UPDATE COUNT ─────────────────────────────────────────────────────────────
+function updateCount() {
+  const total  = allNotifications.length;
+  const unread = allNotifications.filter(n => !isRead(n.id)).length;
+  document.getElementById('notifCount').textContent =
+    `${total} notifications · ${unread} unread`;
+  if (typeof npUpdateBadge === 'function') npUpdateBadge(unread);
+}
+
+// ─── MARK ALL READ ────────────────────────────────────────────────────────────
+function markAllRead() {
+  allNotifications.forEach(n => markOneRead(n.id));
+  document.querySelectorAll('.notification-card').forEach(card => {
+    card.classList.remove('unread');
+    const dot = card.querySelector('.unread-dot');
+    if (dot) dot.remove();
+  });
+  // Also update seenNotifIds
+  const seen = allNotifications.map(n => String(n.id));
+  localStorage.setItem('seenNotifIds', JSON.stringify(seen));
+  updateCount();
+}
+
+// ─── CLEAR ALL ────────────────────────────────────────────────────────────────
+function clearAllNotifs() {
+  if (!confirm("Clear all notifications? 🗑️")) return;
+  localStorage.setItem('notifCleared', 'true');
+  localStorage.setItem('notifClearedTime', new Date().toISOString());
+  allNotifications = [];
+  document.getElementById('notificationsContainer').innerHTML = `
+    <div class="empty-state">
+      <div class="empty-emoji">🔕</div>
+      <p>All notifications cleared! You're all caught up 🎉</p>
+      <button onclick="restoreNotifs()" style="margin-top:16px;padding:8px 20px;border:1px solid #444;background:none;color:#aaa;border-radius:20px;cursor:pointer;font-size:0.85rem;">🔄 Restore</button>
+    </div>`;
+  document.getElementById('notifCount').textContent = '0 notifications';
+  if (typeof npUpdateBadge === 'function') npUpdateBadge(0);
+}
+
+function restoreNotifs() {
+  localStorage.removeItem('notifCleared');
+  localStorage.removeItem('notifClearedTime');
+  loadNotifications();
+}
+
+// ─── FILTER ───────────────────────────────────────────────────────────────────
+function filterNotifs(type, btn) {
+
+  document
+    .querySelectorAll('.filter-btn')
+    .forEach(b => b.classList.remove('active'));
+
+  btn.classList.add('active');
+
+  document
+    .querySelectorAll('.notification-card')
+    .forEach(card => {
+
+      if(type === 'all'){
+        card.style.display = 'flex';
+      }
+
+      else if(type === 'reminder'){
+
+        card.style.display =
+          card.dataset.type === 'reminder' ||
+          card.dataset.type === 'reading_reminder'
+            ? 'flex'
+            : 'none';
+
+      }
+
+      else{
+
+        card.style.display =
+          card.dataset.type === type
+            ? 'flex'
+            : 'none';
+
+      }
+
+    });
+
+}
+// ─── MUTE ─────────────────────────────────────────────────────────────────────
+let isMuted = localStorage.getItem('notifMuted') === 'true';
+function toggleMute() {
+  isMuted = !isMuted;
+  localStorage.setItem('notifMuted', isMuted);
+  updateMuteBtn();
+}
+function updateMuteBtn() {
+  const btn = document.getElementById('muteBtn');
+  if (!btn) return;
+  if (isMuted) { btn.textContent = '🔔 Unmute'; btn.style.borderColor = '#46d369'; btn.style.color = '#46d369'; }
+  else         { btn.textContent = '🔕 Mute';   btn.style.borderColor = '#f5a623'; btn.style.color = '#f5a623'; }
+}
+updateMuteBtn();
+
+// ─── LOAD NOTIFICATIONS ───────────────────────────────────────────────────────
+async function loadNotifications() {
+  const container = document.getElementById('notificationsContainer');
+const userId = localStorage.getItem("userId");
+
+await fetch(
+  `${API}/notifications/generate-reading-list-reminders/${userId}`,
+  {
+    method: "POST"
+  }
+);
+  // Check cleared state
+  const isCleared   = localStorage.getItem('notifCleared') === 'true';
+  const clearedTime = localStorage.getItem('notifClearedTime');
+
+  if (isCleared) {
+    try {
+      const checkRes  = await fetch(`${API}/notifications`);
+      const checkData = await checkRes.json();
+      const clearedAt = new Date(clearedTime).getTime();
+      const hasNew    = checkData.some(n => new Date(n.created_at).getTime() > clearedAt);
+
+      if (!hasNew) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-emoji">🔕</div>
+            <p>All notifications cleared! You're all caught up 🎉</p>
+            <button onclick="restoreNotifs()" style="margin-top:16px;padding:8px 20px;border:1px solid #444;background:none;color:#aaa;border-radius:20px;cursor:pointer;font-size:0.85rem;">🔄 Restore</button>
+          </div>`;
+        document.getElementById('notifCount').textContent = '0 notifications';
+        if (typeof npUpdateBadge === 'function') npUpdateBadge(0);
+        return;
+      } else {
+        localStorage.removeItem('notifCleared');
+        localStorage.removeItem('notifClearedTime');
+      }
+    } catch(e) {
+      localStorage.removeItem('notifCleared');
+    }
+  }
+
+  try {
+    const [notifRes, readingRes] = await Promise.all([
+      fetch(`${API}/notifications`),
+      fetch(`${API}/readinglist`)
+    ]);
+
+    const notifications = await notifRes.json();
+    const readingList   = await readingRes.json();
+
+    // ── Sort: newest first ────────────────────────────────────────────────
+    notifications.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    // ── Generate reading list smart notifications ─────────────────────────
+    
+
+    // ── Combine: DB notifications first (newest), then smart ones ─────────
+    allNotifications = notifications;
+
+    container.innerHTML = '';
+
+    if (allNotifications.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-emoji">🔕</div>
+          <p>No notifications yet! Start reading to get personalized updates 📚</p>
+        </div>`;
+      document.getElementById('notifCount').textContent = '0 notifications';
+      return;
+    }
+
+    allNotifications.forEach(item => container.appendChild(makeCard(item)));
+    updateCount();
+
+  } catch(err) {
+    console.error(err);
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-emoji">⚠️</div>
+        <p>Failed to load notifications. Is the server running?</p>
+      </div>`;
+  }
+}
+
+loadNotifications();
+let lastDeleted = null;
+
+function deleteNotification(id){
+
+    const yes =
+    confirm(
+      "Delete this notification?"
+    );
+
+    if(!yes) return;
+
+    const card =
+    document.querySelector(
+      `[data-id="${id}"]`
+    );
+
+    if(!card) return;
+
+    lastDeleted = {
+      element: card,
+      parent: card.parentNode
+    };
+
+    card.remove();
+    allNotifications =
+allNotifications.filter(
+    n => String(n.id) !== String(id)
+);
+
+updateCount();
+
+    showUndoToast();
+
+}
+function showUndoToast(){
+
+    const toast =
+    document.createElement("div");
+
+    toast.id = "undoToast";
+
+    toast.innerHTML =
+    `
+    Notification deleted
+    <button onclick="undoDelete()">
+    UNDO
+    </button>
+    `;
+
+    document.body.appendChild(toast);
+
+    setTimeout(()=>{
+
+        const t =
+        document.getElementById(
+          "undoToast"
+        );
+
+        if(t){
+            t.remove();
+            lastDeleted = null;
+        }
+
+    },5000);
+
+}
+function undoDelete(){
+
+    if(!lastDeleted) return;
+
+    lastDeleted.parent.appendChild(
+      lastDeleted.element
+    );
+
+    document
+    .getElementById("undoToast")
+    ?.remove();
+
+    lastDeleted = null;
+
+}
 </script>
+<script src="theme.js"></script>
 </body>
 </html>

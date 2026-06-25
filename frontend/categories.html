@@ -105,9 +105,16 @@ async function loadCategories() {
       const card = document.createElement("div");
       card.className = "category-card";
       card.innerHTML = `
-        ${cat.category_name}
-        <span class="category-count">Click to browse PDFs</span>
-      `;
+    ${cat.category_name}
+
+    <span class="category-count">
+        ${cat.total_pdfs} PDF${cat.total_pdfs !== 1 ? "s" : ""}
+    </span>
+
+    <span class="category-count">
+        Click to browse PDFs
+    </span>
+`;
       card.onclick = () => loadCategoryPDFs(cat.id, cat.category_name);
       container.appendChild(card);
     });
@@ -146,7 +153,11 @@ async function loadCategoryPDFs(categoryId, categoryName) {
           <div class="pdf-item-title">${pdf.title}</div>
           <div class="pdf-item-contributor">${pdf.contributor || 'Unknown'}</div>
         </div>
-        <button class="pdf-item-btn" onclick="openPDF(${pdf.id}, '${pdf.pdf_link}', '${pdf.title}')">Read</button>
+        <button
+class="pdf-item-btn"
+onclick="openPDF(${pdf.id}, '${pdf.pdf_link}', '${pdf.title}')">
+Open PDF
+</button>
       `;
       list.appendChild(item);
     });
@@ -186,10 +197,13 @@ async function openPDF(pdfId, fileUrl, title) {
 
         }
 
-        window.open(
-            `reader.html?pdf_id=${pdfId}&file=${fileUrl}&page=1`,
-            "_blank"
-        );
+        localStorage.setItem(
+    "returnPage",
+    window.location.href
+);
+
+window.location.href =
+`reader.html?pdf_id=${pdfId}&file=${fileUrl}&page=1`;
 
     }else{
 
@@ -211,6 +225,7 @@ document.getElementById("modalOverlay").addEventListener("click", (e) => {
 
 loadCategories();
 </script>
+<script src="theme.js"></script>
 <script src="notifications-popup.js"></script>
 </body>
 </html>

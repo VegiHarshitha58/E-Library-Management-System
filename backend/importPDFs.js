@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const mysql = require("mysql2");
-
+const ENABLE_UPLOAD_NOTIFICATIONS = true;
 const db = mysql.createConnection({
     host: "localhost",
     user: "root",
@@ -116,33 +116,37 @@ db.query(
             return;
         }
 
-        db.query(
+        if (ENABLE_UPLOAD_NOTIFICATIONS) {
 
-            `INSERT INTO notifications
-            (
-                user_id,
-                message,
-                type,
-                pdf_id
-            )
-            VALUES (?, ?, ?, ?)`,
+    db.query(
 
-            [
-                null,
-                `New PDF uploaded: ${title}`,
-                "new_pdf",
-                pdfResult.insertId
-            ],
+        `INSERT INTO notifications
+        (
+            user_id,
+            message,
+            type,
+            pdf_id
+        )
+        VALUES (?, ?, ?, ?)`,
 
-            (err2) => {
+        [
+            null,
+            `New PDF uploaded: ${title}`,
+            "new_pdf",
+            pdfResult.insertId
+        ],
 
-                if(err2){
-                    console.log(err2);
-                }
+        (err2) => {
 
+            if(err2){
+                console.log(err2);
             }
 
-        );
+        }
+
+    );
+
+}
 
         console.log(
             `Imported: ${file}`

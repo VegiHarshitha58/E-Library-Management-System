@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>New Releases - E-Library</title>
 <link rel="stylesheet" href="new_releases.css">
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
 
@@ -27,12 +29,12 @@
   </div>
 </section>
 <section class="pdf-section">
-  <h2>🆕 Recently Added PDFs</h2>
+  <h2>🆕 Just Added</h2>
 
   <div class="row-wrapper">
 
     <button class="arrow left"
-      onclick="scrollRow('newReleasesRow',-800)">
+      onclick="scrollRow('newReleasesRow')">
       ‹
     </button>
 
@@ -41,7 +43,7 @@
     </div>
 
     <button class="arrow right"
-      onclick="scrollRow('newReleasesRow',800)">
+      onclick="scrollRow('newReleasesRow')">
       ›
     </button>
 
@@ -51,12 +53,12 @@
 
 
 <section class="pdf-section">
-  <h2>📚 All New Uploads</h2>
+  <h2>⭐ Popular New Releases</h2>
 
   <div class="row-wrapper">
 
     <button class="arrow left"
-      onclick="scrollRow('allNewRow',-800)">
+      onclick="scrollRow('allNewRow')">
       ‹
     </button>
 
@@ -65,7 +67,7 @@
     </div>
 
     <button class="arrow right"
-      onclick="scrollRow('allNewRow',800)">
+      onclick="scrollRow('allNewRow')">
       ›
     </button>
 
@@ -75,22 +77,76 @@
 
 <script>
 const API = "http://127.0.0.1:5000";
+const userId = localStorage.getItem("userId");
+
+const favoriteIds = new Set();
+const readingListIds = new Set();
 
 function makeCard(pdf) {
-  const card = document.createElement("div");
-  card.className = "pdf-card";
-  card.innerHTML = `
-    <div class="pdf-icon">PDF</div>
-    <h3>${pdf.title}</h3>
-    <p style="font-size:0.8rem;color:#aaa;margin-top:4px;">${pdf.contributor || 'Unknown'}</p>
-    <div style="display:flex;gap:8px;margin-top:12px;">
-      <button class="read-btn" style="flex:1;padding:8px;border:none;border-radius:6px;background:#00c8ff;cursor:pointer;font-size:0.8rem;"
-   onclick="openPDF(${pdf.id}, '${pdf.pdf_link}', '${pdf.title}')">Read</button>
-      <button class="download-btn" style="flex:1;padding:8px;border:none;border-radius:6px;background:white;cursor:pointer;font-size:0.8rem;"
-        onclick="downloadPDF(${pdf.id},'${pdf.pdf_link}', '${pdf.title}')">Download</button>
-    </div>
-  `;
-  return card;
+
+    const card =
+    document.createElement("div");
+
+    card.className =
+    "pdf-card";
+
+    card.innerHTML = `
+        <button
+class="fav-btn"
+onclick="
+event.stopPropagation();
+toggleFavorite(${pdf.id}, this);
+">
+<i class="${
+favoriteIds.has(pdf.id)
+? 'fa-solid fa-heart'
+: 'fa-regular fa-heart'
+}"></i>
+</button>
+
+        <div class="pdf-icon">
+            PDF
+        </div>
+
+        <h3>
+            ${pdf.title}
+        </h3>
+
+        <p style="
+            font-size:0.8rem;
+            color:#aaa;
+            margin-top:4px;
+        ">
+            ${pdf.contributor || "Unknown"}
+        </p>
+
+<button
+class="list-btn"
+onclick="
+event.stopPropagation();
+toggleReadingList(${pdf.id}, this);
+">
+<i class="${
+readingListIds.has(pdf.id)
+? 'fa-solid fa-bookmark'
+: 'fa-regular fa-bookmark'
+}"></i>
+</button>
+
+    `;
+
+    card.onclick = () => {
+
+        openPDF(
+            pdf.id,
+            pdf.pdf_link,
+            pdf.title
+        );
+
+    };
+
+    return card;
+
 }
 
 async function openPDF(pdfId, fileUrl, title) {
@@ -123,10 +179,13 @@ async function openPDF(pdfId, fileUrl, title) {
 
         }
 
-        window.open(
-            `reader.html?pdf_id=${pdfId}&file=${fileUrl}&page=1`,
-            "_blank"
-        );
+      localStorage.setItem(
+    "returnPage",
+    window.location.href
+);
+
+window.location.href =
+`reader.html?pdf_id=${pdfId}&file=${fileUrl}&page=1`;
 
     }else{
 
@@ -174,28 +233,220 @@ console.log(await response.text());
     document.body.removeChild(a);
 
 }
+async function loadFavoriteIds(){
+
+    try{
+
+        const response =
+        await fetch(`${API}/favorites/${userId}`);
+
+        const favorites =
+        await response.json();
+
+        favoriteIds.clear();
+
+        favorites.forEach(item=>{
+
+            favoriteIds.add(item.pdf_id);
+
+        });
+
+    }catch(err){
+
+        console.log(err);
+
+    }
+
+}
+async function loadReadingListIds(){
+
+    try{
+
+        const response =
+        await fetch(`${API}/reading-list/${userId}`);
+
+        const data =
+        await response.json();
+
+        readingListIds.clear();
+
+        data.forEach(pdf=>{
+
+            readingListIds.add(pdf.id);
+
+        });
+
+    }catch(err){
+
+        console.log(err);
+
+    }
+
+}
+async function toggleFavorite(pdfId, btn){
+
+    try{
+
+        const icon =
+        btn.querySelector("i");
+
+        if(favoriteIds.has(pdfId)){
+
+            await fetch(
+
+                `${API}/favorites/user/${userId}/pdf/${pdfId}`,
+
+                {
+                    method:"DELETE"
+                }
+
+            );
+
+            favoriteIds.delete(pdfId);
+
+            icon.classList.remove("fa-solid");
+            icon.classList.add("fa-regular");
+
+        }else{
+
+            await fetch(
+
+                `${API}/favorites`,
+
+                {
+
+                    method:"POST",
+
+                    headers:{
+                        "Content-Type":"application/json"
+                    },
+
+                    body:JSON.stringify({
+
+                        user_id:userId,
+                        pdf_id:pdfId
+
+                    })
+
+                }
+
+            );
+
+            favoriteIds.add(pdfId);
+
+            icon.classList.remove("fa-regular");
+            icon.classList.add("fa-solid");
+
+        }
+
+    }catch(err){
+
+        console.log(err);
+
+    }
+
+}
+async function toggleReadingList(pdfId, btn){
+
+    try{
+
+        const icon =
+        btn.querySelector("i");
+
+        if(readingListIds.has(pdfId)){
+
+            await fetch(
+
+                `${API}/reading-list/${userId}/${pdfId}`,
+
+                {
+                    method:"DELETE"
+                }
+
+            );
+
+            readingListIds.delete(pdfId);
+
+            icon.classList.remove("fa-solid");
+            icon.classList.add("fa-regular");
+
+        }else{
+
+            await fetch(
+
+                `${API}/readinglist`,
+
+                {
+
+                    method:"POST",
+
+                    headers:{
+                        "Content-Type":"application/json"
+                    },
+
+                    body:JSON.stringify({
+
+                        user_id:userId,
+                        pdf_id:pdfId
+
+                    })
+
+                }
+
+            );
+
+            readingListIds.add(pdfId);
+
+            icon.classList.remove("fa-regular");
+            icon.classList.add("fa-solid");
+
+        }
+
+    }catch(err){
+
+        console.log(err);
+
+    }
+
+}
 async function loadNewReleases() {
   try {
-    const res = await fetch(`${API}/new-releases`);
-    const pdfs = await res.json();
+   const latestRes =
+await fetch(`${API}/new-releases`);
+
+const latestPdfs =
+await latestRes.json();
+
+const popularRes =
+await fetch(`${API}/popular-new-releases`);
+
+const popularPdfs =
+await popularRes.json();
 
     const row1 = document.getElementById("newReleasesRow");
     const row2 = document.getElementById("allNewRow");
     row1.innerHTML = "";
     row2.innerHTML = "";
 
-    if (pdfs.length === 0) {
+    if (latestPdfs.length === 0) {
       row1.innerHTML = "<p style='color:#aaa;'>No new releases found.</p>";
       return;
     }
 
-    // First 6 in top row
-    pdfs.slice(0, 6).forEach(pdf => row1.appendChild(makeCard(pdf)));
+    latestPdfs.slice(0, 8).forEach((pdf, index) => {
 
+    pdf.isNew = index < 3;
+
+    row1.appendChild(makeCard(pdf));
+
+});
     // Rest in second row
-    pdfs.slice(6).forEach(pdf => row2.appendChild(makeCard(pdf)));
+    popularPdfs.forEach(pdf => {
 
-    if (pdfs.length <= 6) {
+    row2.appendChild(makeCard(pdf));
+
+});
+   if (popularPdfs.length === 0) {
       row2.innerHTML = "<p style='color:#aaa;'>No more PDFs.</p>";
     }
 
@@ -204,22 +455,32 @@ async function loadNewReleases() {
       "<p style='color:#e57373;'>Failed to load. Is the server running?</p>";
   }
 }
+(async()=>{
 
-loadNewReleases();
+    await loadFavoriteIds();
 
-function scrollRow(id, amount){
+    await loadReadingListIds();
 
-  document.getElementById(id).scrollBy({
+    await loadNewReleases();
 
-    left: amount,
+})();
 
-    behavior: "smooth"
+function scrollRow(id){
 
-  });
+    const row =
+    document.getElementById(id);
+
+    row.scrollBy({
+
+        left:row.clientWidth,
+
+        behavior:"smooth"
+
+    });
 
 }
 </script>
 <script src="notifications-popup.js"></script>
-
+<script src="theme.js"></script>
 </body>
 </html>

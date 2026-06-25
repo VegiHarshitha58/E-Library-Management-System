@@ -11,89 +11,375 @@ body{
     font-family:Arial;
     padding:30px;
 }
-
-.card{
-    background:#222;
-    padding:15px;
-    margin-bottom:15px;
-    border-radius:10px;
-}
-
 .date{
     color:orange;
 }
+.history-left{
 
-button{
-    background:#e50914;
-    border:none;
-    padding:8px;
-    color:white;
-    cursor:pointer;
-    border-radius:5px;
-    margin-top:10px;
+    flex-shrink:0;
+
 }
+.card{
+
+    display:flex;
+
+    gap:22px;
+
+    align-items:flex-start;
+
+    background:#222;
+
+    padding:22px;
+
+    margin-bottom:20px;
+
+    border-radius:12px;
+
+    border:1px solid #303030;
+
+    transition:0.25s;
+
+}
+
+.card:hover{
+
+    transform:translateY(-3px);
+
+    box-shadow:0 10px 24px rgba(0,0,0,.25);
+
+}
+
+.pdf-icon{
+
+    width:70px;
+
+    height:90px;
+
+    background:#2a2a2a;
+
+    border-radius:8px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-size:34px;
+
+}
+
+.history-right{
+
+    flex:1;
+
+}
+.history-right h3{
+
+    margin-bottom:12px;
+
+    font-size:22px;
+
+}
+
+.history-right p{
+
+    margin:10px 0;
+
+    color:#ddd;
+
+    line-height:1.6;
+
+}
+.progress-bg{
+
+    width:100%;
+
+    height:8px;
+
+    background:#333;
+
+    border-radius:10px;
+
+    overflow:hidden;
+
+}
+
+.progress-fill{
+
+    height:100%;
+
+    background:linear-gradient(
+        90deg,
+        #7a1f3d,
+        #9b274d
+    );
+
+}
+.resume-btn{
+
+    background:linear-gradient(135deg,#7a1f3d,#9b274d);
+
+    color:white;
+
+    border:none;
+
+    padding:10px 18px;
+
+    border-radius:8px;
+
+    font-size:14px;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:0.2s;
+
+}
+
+.resume-btn:hover{
+
+    transform:translateY(-2px);
+
+    box-shadow:0 6px 18px rgba(122,31,61,.35);
+
+}
+.back-btn{
+
+    background:none;
+
+    border:none;
+
+    color:#d1d5db;
+
+    font-size:16px;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    margin-bottom:20px;
+
+}
+
+.back-btn:hover{
+
+    color:white;
+
+}
+
 </style>
 
 </head>
 
 <body>
+<button class="back-btn" onclick="goHome()">
+    ← Back
+</button>
 
 <h1>📖 Reading History</h1>
+
 
 <div id="historyContainer"></div>
 
 <script>
+
 const userId = localStorage.getItem("userId");
 
-fetch(`http://localhost:5000/reading-history/${userId}`)
-.then(res=>res.json())
+let rememberLastPageEnabled = true;
 
-.then(data=>{
+async function loadHistory() {
 
-    const container =
-    document.getElementById(
-        "historyContainer"
-    );
+    try {
 
-    data.forEach(item=>{
+        // Load settings first
+        const settingsRes =
+        await fetch(
+            `http://localhost:5000/get-settings/${userId}`
+        );
 
-        container.innerHTML += `
+        const settings =
+        await settingsRes.json();
 
-        <div class="card">
+        rememberLastPageEnabled =
+        settings.remember_last_page == 1;
 
-            <h3>${item.title}</h3>
+        // Load history
+        const historyRes =
+        await fetch(
+            `http://localhost:5000/reading-history/${userId}`
+        );
 
- <p>📄 Last Page: ${item.last_page}</p>
+        const data =
+        await historyRes.json();
 
-    <p>📊 Progress: ${item.progress}%</p>
+        const container =
+        document.getElementById(
+            "historyContainer"
+        );
 
-<p class="date">
-    📅 Last Read:
-    ${new Date(item.last_read).toLocaleString()}
-</p>
+        container.innerHTML = "";
 
-<button onclick="resume(
-    ${item.pdf_id},
-    '${item.pdf_link}',
-    ${item.last_page}
-)">
-    ▶ Resume Reading
-</button>
+        if(data.length === 0){
+
+            container.innerHTML = `
+<div style="
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:80px 20px;
+">
+
+    <div style="
+        font-size:70px;
+        margin-bottom:20px;
+    ">
+        📚
+    </div>
+
+    <h2 style="
+        margin-bottom:12px;
+        color:white;
+    ">
+        No Reading History Yet
+    </h2>
+
+    <p style="
+        color:#9ca3af;
+        max-width:450px;
+        line-height:1.7;
+        margin-bottom:25px;
+    ">
+        Start reading any PDF from the library.
+        Your reading progress and history will automatically appear here.
+    </p>
+
+    <button
+        onclick="window.location.href='home.html'"
+        class="resume-btn">
+
+        Browse PDFs
+
+    </button>
+
+</div>
+`;
+
+            return;
+        }
+data.forEach(item => {
+
+    container.innerHTML += `
+
+<div class="card">
+
+    <div class="history-left">
+
+        <div class="pdf-icon">
+            📄
+        </div>
+
+    </div>
+
+    <div class="history-right">
+
+        <h3>${item.title}</h3>
+
+        <p>
+            📖 Page ${item.last_page} of ${item.total_pages}
+        </p>
+
+        <div style="margin:12px 0;">
+
+            <div style="
+                display:flex;
+                justify-content:space-between;
+                margin-bottom:6px;
+                font-size:14px;
+            ">
+                <span>📊 Progress</span>
+                <span>${item.progress}%</span>
+            </div>
+
+            <div class="progress-bg">
+
+                <div
+                    class="progress-fill"
+                    style="width:${item.progress}%;">
+                </div>
+
+            </div>
 
         </div>
 
-        `;
+        <p class="date">
+            📅 Last Read:
+            ${new Date(item.last_read).toLocaleDateString(
+                "en-GB",
+                {
+                    day:"numeric",
+                    month:"short",
+                    year:"numeric"
+                }
+            )}
+        </p>
 
-    });
+        <button
+            class="resume-btn"
+            onclick="resume(
+                ${item.pdf_id},
+                '${item.pdf_link}',
+                ${item.last_page}
+            )">
+
+            📖 Continue Reading →
+
+        </button>
+
+    </div>
+
+</div>
+
+`;
 
 });
+    }
+    catch(error){
+
+        console.error(error);
+
+    }
+
+}
 
 function resume(pdf_id, file, last_page){
 
+    const pageToOpen =
+    rememberLastPageEnabled
+    ? last_page
+    : 1;
+
+    localStorage.setItem(
+        "returnPage",
+        window.location.href
+    );
+
     window.location.href =
-        `reader.html?pdf_id=${pdf_id}&file=${file}&page=${last_page}`;
+    `reader.html?pdf_id=${pdf_id}&file=${encodeURIComponent(file)}&page=${pageToOpen}`;
+
 }
+loadHistory();
+function goHome(){
+
+    window.location.href = "home.html";
+
+}
+
 </script>
 <script src="notifications-popup.js"></script>
+<script src="theme.js"></script>
 </body>
 </html>

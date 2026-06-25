@@ -15,12 +15,12 @@ body {
 
 .topbar {
     height: 55px;
-    background: #161616;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
     padding: 0 15px;
     justify-content: space-between;
-    border-bottom: 1px solid #333;
     
 }
 
@@ -47,15 +47,38 @@ iframe {
     <button class="back-btn" onclick="goBack()">← Back</button>
     <div id="title">PDF Reader</div>
 
-    <button id="bookmarkBtn" onclick="saveBookmark()" style="
-    background:#f5c542;
-    border:none;
-    padding:6px 10px;
-    border-radius:4px;
-    cursor:pointer;
-    font-weight:bold;
-">
-⭐ Bookmark
+<div style="display:flex; gap:10px; align-items:center;">
+
+    <button
+        id="downloadBtn"
+        onclick="downloadPDF()"
+        style="
+            background:#2563eb;
+            border:none;
+            padding:6px 10px;
+            border-radius:4px;
+            color:white;
+            cursor:pointer;
+            font-weight:bold;
+        ">
+        ⬇ Download
+    </button>
+
+    <button
+        id="bookmarkBtn"
+        onclick="saveBookmark()"
+        style="
+            background:#f5c542;
+            border:none;
+            padding:6px 10px;
+            border-radius:4px;
+            cursor:pointer;
+            font-weight:bold;
+        ">
+        ⭐ Bookmark
+    </button>
+
+</div>
 </button>
     <div id="progress">Page 1</div>
 </div>
@@ -124,9 +147,8 @@ fetch("http://localhost:5000/reading-history", {
 fetch("http://localhost:5000/get-settings/" + userId)
 .then(res => res.json())
 .then(data => {
-
-    enableBookmark = data.enable_bookmark == 1;
-
+enableBookmark = data.enable_bookmarks == 1;
+    
     const btn = document.getElementById("bookmarkBtn");
 
     if (enableBookmark) {
@@ -150,28 +172,38 @@ fetch("http://localhost:5000/get-settings/" + userId)
 
 let currentPage = page;
 
-function saveProgress() {
+async function saveProgress() {
+
+    const settingsRes =
+    await fetch(
+        `http://localhost:5000/get-settings/${userId}`
+    );
+
+    const settings =
+    await settingsRes.json();
+
+    if(settings.auto_save_progress != 1){
+        return;
+    }
 
     fetch(
         "http://localhost:5000/api/progress/update",
         {
-            method: "POST",
+            method:"POST",
 
-            headers: {
+            headers:{
                 "Content-Type":"application/json"
             },
 
-            body: JSON.stringify({
+            body:JSON.stringify({
 
-                user_id: userId,
-
-                pdf_id: pdfId,
-
-                last_page: currentPage,
-
-                total_pages: totalPages
+                user_id:userId,
+                pdf_id:pdfId,
+                last_page:currentPage,
+                total_pages:totalPages
 
             })
+
         }
     );
 
@@ -179,35 +211,58 @@ function saveProgress() {
 
 function loadSavedPage() {
 
-    let savedBookmark =
-    localStorage.getItem(
-        "bookmark_pdf_" + pdfId
-    );
-
-    if(savedBookmark){
-
-        currentPage =
-        parseInt(savedBookmark);
-
-        document.getElementById("progress").innerText =
-        "⭐ Bookmark Page " + currentPage;
-
-        return;
-    }
-
     fetch(
-        `http://localhost:5000/api/progress/${userId}/${pdfId}`
+        `http://localhost:5000/get-settings/${userId}`
     )
     .then(res => res.json())
-    .then(data => {
+    .then(settings => {
 
-        if(data.last_page){
+        // If bookmarks enabled check bookmark first
+        if(settings.enable_bookmarks == 1){
 
-            currentPage =
-            data.last_page;
+            let savedBookmark =
+            localStorage.getItem(
+                "bookmark_pdf_" + pdfId
+            );
 
-            document.getElementById("progress").innerText =
-            "📌 Resumed Page " + currentPage;
+            if(savedBookmark){
+
+                currentPage =
+                parseInt(savedBookmark);
+
+                document.getElementById("progress").innerText =
+                "⭐ Bookmark Page " + currentPage;
+
+                return;
+            }
+
+        }
+
+        // If remember last page enabled
+        if(settings.remember_last_page == 1){
+
+            fetch(
+                `http://localhost:5000/api/progress/${userId}/${pdfId}`
+            )
+            .then(res => res.json())
+            .then(data => {
+
+                if(data.last_page){
+
+                    currentPage =
+                    data.last_page;
+
+                    document.getElementById("progress").innerText =
+                    "📌 Resumed Page " + currentPage;
+
+                }
+
+            });
+
+        }
+        else{
+
+            currentPage = 1;
 
         }
 
@@ -215,14 +270,20 @@ function loadSavedPage() {
     .catch(err => console.log(err));
 
 }
-
 function goBack() {
 
-    if (window.history.length > 1) {
-        window.history.back();
-    } else {
-        window.location.href = "home.html";
+    const returnPage =
+    localStorage.getItem("returnPage");
+
+    if(returnPage){
+
+        window.location.href =
+        returnPage;
+
+        return;
     }
+
+    history.back();
 
 }
 
@@ -251,6 +312,27 @@ document.getElementById("pdfCanvas");
 
 const ctx =
 canvas.getContext("2d");
+async function downloadPDF() {
+
+    try {
+
+        await fetch(
+            `http://localhost:5000/pdfs/${pdfId}/download`,
+            {
+                method: "POST"
+            }
+        );
+
+    } catch(err) {
+
+        console.log(err);
+
+    }
+
+    window.location.href =
+        `http://localhost:5000/download/${encodeURI(pdfFile)}`;
+
+}
 
 async function loadPDF() {
 
@@ -330,5 +412,6 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 <script>
   loadPDF();
 </script>
+<script src="theme.js"></script>
 </body>
 </html>

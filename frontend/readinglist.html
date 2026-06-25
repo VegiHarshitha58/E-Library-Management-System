@@ -6,6 +6,8 @@
 <title>My Reading List</title>
 
 <link rel="stylesheet" href="readinglist.css">
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 
 <body>
@@ -138,18 +140,24 @@ async function loadReadingList(){
         if(data.length === 0){
 
             container.innerHTML = `
-                <div style="
-                    text-align:center;
-                    width:100%;
-                    margin-top:40px;
-                ">
-                    <h2>📚</h2>
-                    <h2>Your Reading List is Empty</h2>
-                    <p>
-                        Save PDFs to read later
-                    </p>
-                </div>
-            `;
+<div class="empty-state">
+
+    <div class="empty-icon">
+        <i class="fa-regular fa-bookmark"></i>
+    </div>
+
+    <h2>Your Reading List is Empty</h2>
+
+    <p>
+        Bookmark PDFs to read later.
+    </p>
+
+    <a href="academic_collection.html" class="browse-btn">
+        Browse PDFs
+    </a>
+
+</div>
+`;
 
             return;
         }
@@ -160,39 +168,34 @@ async function loadReadingList(){
 
             container.innerHTML += `
 
-            <div class="book-card">
-
-                <button
-                class="remove-btn"
-                onclick="removeFromReadingList(${pdf.id})">
-
-                    ✕
-
-                </button>
-
-                <div class="pdf-icon">
-                    PDF
-                </div>
-
-                <h3>
-                    ${pdf.title}
-                </h3>
-
-                <p>
-                    ${pdf.contributor}
-                </p>
-
-                <button
-class="open-btn"
+<div
+class="book-card"
 onclick="openPdf(${pdf.id}, '${pdf.pdf_link}')">
 
-    Open PDF
+    <button
+    class="remove-btn"
+    onclick="
+    event.stopPropagation();
+    removeFromReadingList(${pdf.id});
+    ">
+        ✕
+    </button>
 
-</button>
+    <div class="pdf-icon">
+        PDF
+    </div>
 
-            </div>
+    <h3>
+        ${pdf.title}
+    </h3>
 
-            `;
+    <p>
+        ${pdf.contributor}
+    </p>
+
+</div>
+
+`;
 
         });
 
@@ -258,16 +261,19 @@ async function removeFromReadingList(pdfId){
 
 function openPdf(pdfId, pdfLink){
 
-    window.open(
-        `reader.html?pdf_id=${pdfId}&file=${pdfLink}&page=1`,
-        "_blank"
-    );
+    localStorage.setItem(
+    "returnPage",
+    window.location.href
+);
 
+window.location.href =
+`reader.html?pdf_id=${pdfId}&file=${pdfLink}&page=1`;
 }
 
 loadReadingList();
 
 </script>
 <script src="notifications-popup.js"></script>
+<script src="theme.js"></script>
 </body>
 </html>

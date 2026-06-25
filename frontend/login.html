@@ -214,15 +214,16 @@ body{
 
 <h1>Welcome Back</h1>
 
-<p>Sign in to continue your digital library journey</p>
+<p>Access your PDFs, favorites and reading history.</p>
 
 <form id="loginForm">
 
 <div class="input-group">
 <input
-type="text"
+type="email"
 id="username"
-placeholder="Organization Email Address"
+autocomplete="email"
+placeholder="Enter your @steelplant.in email"
 required>
 
 </div>
@@ -232,6 +233,7 @@ required>
 <input
 type="password"
 id="password"
+autocomplete="current-password"
 placeholder="Password"
 required>
 
@@ -425,14 +427,17 @@ document.getElementById("loginForm")
         }
         else{
 
-            message.style.color =
-            "#ff7b7b";
+    message.style.color =
+    "#ff7b7b";
 
-            message.innerText =
-            data.message;
+    message.innerText =
+    data.message;
 
-        }
+    document.getElementById(
+        "password"
+    ).value = "";
 
+}
     }
     catch(error){
 

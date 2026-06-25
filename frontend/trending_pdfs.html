@@ -52,7 +52,7 @@
 <!-- HERO — shows #1 trending PDF -->
 <section class="hero" id="heroSection">
   <div class="hero-content" id="heroContent">
-    <span class="tag">🔥 TRENDING PDF OF THE WEEK</span>
+    <span class="tag">⭐ Library's Most Popular PDF</span>
     <h1 id="heroTitle">Loading...</h1>
     <p id="heroDesc">Fetching the most viewed PDF...</p>
     <div class="stats" id="heroStats"></div>
@@ -67,14 +67,14 @@
   <div class="row-wrapper">
 
 <button class="arrow left"
-onclick="scrollRow('mostViewedRow',-800)">
+onclick="scrollRow('mostViewedRow')">
 ‹
 </button>
     <div class="pdf-row" id="mostViewedRow">
       <p class="loading">Loading...</p>
     </div>
 <button class="arrow right"
-onclick="scrollRow('mostViewedRow',800)">
+onclick="scrollRow('mostViewedRow')">
 ›
 </button>
     
@@ -87,18 +87,15 @@ onclick="scrollRow('mostViewedRow',800)">
   <h2>📈 Top 10 Trending This Week</h2>
 
   <div class="row-wrapper">
-
-<button class="arrow left"
-onclick="scrollRow('mostViewedRow',-800)">
+    <button class="arrow left"
+onclick="scrollRow('top10Row')">
 ‹
 </button>
-
     <div class="pdf-row" id="top10Row">
       <p class="loading">Loading...</p>
     </div>
-
-  <button class="arrow right"
-onclick="scrollRow('mostViewedRow',800)">
+<button class="arrow right"
+onclick="scrollRow('top10Row')">
 ›
 </button>
 
@@ -108,7 +105,9 @@ onclick="scrollRow('mostViewedRow',800)">
 
 
 <script>
-const API = "http://127.0.0.1:5000";
+const favoriteIds = new Set();
+const readingListIds = new Set();
+ const API = "http://127.0.0.1:5000";
 
 // ─── OPEN PDF & INCREMENT VIEW COUNT ─────────────────────────────────────────
 async function openPDF(pdfId, fileUrl, title) {
@@ -136,10 +135,13 @@ async function openPDF(pdfId, fileUrl, title) {
 
     } catch(e) {}
 
-    window.open(
-`reader.html?pdf_id=${pdfId}&file=${fileUrl}&page=1`,
-"_blank"
+   localStorage.setItem(
+    "returnPage",
+    window.location.href
 );
+
+window.location.href =
+`reader.html?pdf_id=${pdfId}&file=${fileUrl}&page=1`;
   } else {
 
     alert(`"${title}" — PDF file not available yet`);
@@ -181,25 +183,199 @@ async function downloadPDF(pdfId, fileUrl, title) {
     document.body.removeChild(a);
 
 }
+const userId = localStorage.getItem("userId");
 
+async function toggleFavorite(pdfId, btn) {
+
+    try {
+
+        if (favoriteIds.has(pdfId)) {
+
+            await fetch(
+                `${API}/favorites/user/${userId}/pdf/${pdfId}`,
+                {
+                    method: "DELETE"
+                }
+            );
+
+            favoriteIds.delete(pdfId);
+
+const icon = btn.querySelector("i");
+
+icon.classList.remove("fa-solid");
+icon.classList.add("fa-regular");
+
+        } else {
+
+            await fetch(`${API}/favorites`, {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+
+                    user_id: userId,
+                    pdf_id: pdfId
+
+                })
+
+            });
+
+            favoriteIds.add(pdfId);
+
+const icon = btn.querySelector("i");
+
+icon.classList.remove("fa-regular");
+icon.classList.add("fa-solid");
+        }
+
+    } catch (err) {
+
+        console.log(err);
+
+    }
+
+}
+async function toggleReadingList(pdfId, btn){
+
+    try{
+
+        const icon =
+        btn.querySelector("i");
+
+        if(readingListIds.has(pdfId)){
+
+            await fetch(
+
+                `${API}/reading-list/${userId}/${pdfId}`,
+
+                {
+                    method:"DELETE"
+                }
+
+            );
+
+            readingListIds.delete(pdfId);
+
+            icon.classList.remove("fa-solid");
+            icon.classList.add("fa-regular");
+
+        }else{
+
+            await fetch(
+
+                `${API}/readinglist`,
+
+                {
+
+                    method:"POST",
+
+                    headers:{
+                        "Content-Type":"application/json"
+                    },
+
+                    body:JSON.stringify({
+
+                        user_id:userId,
+                        pdf_id:pdfId
+
+                    })
+
+                }
+
+            );
+
+            readingListIds.add(pdfId);
+
+            icon.classList.remove("fa-regular");
+            icon.classList.add("fa-solid");
+
+        }
+
+    }catch(err){
+
+        console.log(err);
+
+    }
+
+}
 // ─── MAKE PDF CARD ────────────────────────────────────────────────────────────
 function makeCard(pdf, rank) {
-  const card = document.createElement('div');
-  card.className = 'pdf-card';
-  card.innerHTML = `
-    ${rank ? `<div class="rank-badge">#${rank}</div>` : ''}
-    <div class="pdf-icon">PDF</div>
-    <div>
-      <span class="views-badge">👁 ${pdf.views || 0} views</span>
-      <h3>${pdf.title}</h3>
-      <p style="font-size:0.8rem;color:#aaa;margin-top:4px;">${pdf.contributor || 'Unknown'}</p>
-    </div>
-    <div class="pdf-card-btns">
-      <button class="btn-read" onclick="openPDF(${pdf.id}, '${pdf.pdf_link}', '${pdf.title}')">Read</button>
-      <button class="btn-download" onclick="downloadPDF(${pdf.id}, '${pdf.pdf_link}', '${pdf.title}')">Download</button>
-    </div>
-  `;
-  return card;
+
+    const card =
+    document.createElement("div");
+
+    card.className =
+    "pdf-card";
+
+    card.innerHTML = `
+
+        ${rank ?
+        `<div class="rank-badge">#${rank}</div>`
+        : ""}
+<button
+class="fav-btn"
+onclick="
+event.stopPropagation();
+toggleFavorite(${pdf.id}, this);
+">
+<i class="${favoriteIds.has(pdf.id)
+    ? 'fa-solid fa-heart'
+    : 'fa-regular fa-heart'}"></i>
+</button>
+
+        <div class="pdf-icon">
+            PDF
+        </div>
+
+        <div>
+
+            <span class="views-badge">
+                👁 ${pdf.views || 0} views
+            </span>
+
+            <h3>
+                ${pdf.title}
+            </h3>
+
+            <p style="
+                font-size:0.8rem;
+                color:#aaa;
+                margin-top:4px;
+            ">
+                ${pdf.contributor || "Unknown"}
+            </p>
+
+        </div>
+        <button
+class="list-btn"
+onclick="
+event.stopPropagation();
+toggleReadingList(${pdf.id}, this);
+">
+<i class="${
+readingListIds.has(pdf.id)
+? 'fa-solid fa-bookmark'
+: 'fa-regular fa-bookmark'
+}"></i>
+</button>
+    `;
+
+    card.onclick = () => {
+
+        openPDF(
+            pdf.id,
+            pdf.pdf_link,
+            pdf.title
+        );
+
+    };
+
+    return card;
+
 }
 
 // ─── LOAD HERO (TOP TRENDING PDF) ─────────────────────────────────────────────
@@ -217,41 +393,93 @@ function loadHero(topPDF) {
     onclick="openPDF(${topPDF.id}, '${topPDF.pdf_link}', '${topPDF.title}')">
         Read PDF
     </button>
-
-    <button class="download-btn"
-    onclick="downloadPDF(${topPDF.id}, '${topPDF.pdf_link}', '${topPDF.title}')">
-        Download
-    </button>
 `;
+}
+async function loadFavoriteIds() {
+
+    try {
+
+        const response = await fetch(`${API}/favorites/${userId}`);
+
+        const favorites = await response.json();
+
+        favoriteIds.clear();
+
+        favorites.forEach(item => {
+
+            favoriteIds.add(item.pdf_id);
+
+        });
+
+    } catch (err) {
+
+        console.log(err);
+
+    }
+
+}
+async function loadReadingListIds(){
+
+    try{
+
+        const response =
+        await fetch(`${API}/reading-list/${userId}`);
+
+        const data =
+        await response.json();
+
+        readingListIds.clear();
+
+        data.forEach(pdf=>{
+
+            readingListIds.add(pdf.id);
+
+        });
+
+    }catch(err){
+
+        console.log(err);
+
+    }
+
 }
 
 // ─── LOAD ALL TRENDING DATA ────────────────────────────────────────────────────
 async function loadTrending() {
   try {
-    const res = await fetch(`${API}/trending`);
-    const pdfs = await res.json();
+    const mostViewedRes =
+await fetch(`${API}/trending`);
 
-    if (pdfs.length === 0) {
-      document.getElementById('mostViewedRow').innerHTML = '<p class="loading">No trending PDFs yet.</p>';
-      return;
-    }
+const mostViewed =
+await mostViewedRes.json();
+
+const weeklyRes =
+await fetch(`${API}/trending-week`);
+
+const weekly =
+await weeklyRes.json();
+
+    if (mostViewed.length === 0) {
+    document.getElementById("mostViewedRow").innerHTML =
+        '<p class="loading">No trending PDFs yet.</p>';
+    return;
+}
 
     // Hero = #1 most viewed
-    loadHero(pdfs[0]);
+    loadHero(mostViewed[0]);
 
     // Most Viewed row — top 8
     const mostViewedRow = document.getElementById('mostViewedRow');
     mostViewedRow.innerHTML = '';
-    pdfs.slice(0, 8).forEach((pdf, i) => {
-      mostViewedRow.appendChild(makeCard(pdf, i + 1));
-    });
-
+   mostViewed.slice(1, 9).forEach((pdf, i) => {
+    mostViewedRow.appendChild(makeCard(pdf, i + 2));
+});
     // Top 10 row — next 10
     const top10Row = document.getElementById('top10Row');
     top10Row.innerHTML = '';
-    pdfs.slice(0, 10).forEach((pdf, i) => {
-      top10Row.appendChild(makeCard(pdf, i + 1));
-    });
+    weekly.forEach((pdf, i) => {
+    top10Row.appendChild(makeCard(pdf, i + 1));
+});
 
   } catch (err) {
     document.getElementById('mostViewedRow').innerHTML =
@@ -262,19 +490,30 @@ async function loadTrending() {
 }
 
 
-function scrollRow(id, amount){
 
-  document.getElementById(id).scrollBy({
 
-    left: amount,
+function scrollRow(id){
 
-    behavior: "smooth"
+    const row = document.getElementById(id);
 
-  });
+    row.scrollBy({
+
+        left: row.clientWidth,
+
+        behavior:"smooth"
+
+    });
 
 }
-loadTrending();
+(async () => {
+
+    await loadFavoriteIds();
+await loadReadingListIds();
+   await loadTrending();
+
+})();
 </script>
 <script src="notifications-popup.js"></script>
+<script src="theme.js"></script>
 </body>
 </html>

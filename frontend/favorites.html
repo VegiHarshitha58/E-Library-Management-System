@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>My Favorites</title>
@@ -17,7 +19,46 @@
 body{
     background:#0d0d0d;
     color:white;
+}
+/* NAVBAR */
+
+.navbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:20px 40px;
+    background:black;
+}
+
+.logo{
+    font-size:28px;
+    font-weight:bold;
+    color:#00c8ff;
+}
+
+.nav-links a{
+    text-decoration:none;
+    color:white;
+    margin:0 15px;
+    transition:.3s;
+}
+
+.nav-links a:hover{
+    color:#00c8ff;
+}
+
+/* PAGE */
+
+.container{
     padding:30px;
+}
+
+.header{
+    margin-bottom:30px;
+}
+
+.header h1{
+    font-size:55px;
 }
 
 h1{
@@ -32,13 +73,34 @@ h1{
 }
 
 .card{
+
     background:#181818;
+
     border-radius:15px;
+
     padding:20px;
+
     position:relative;
-    text-align:center;
+
+    cursor:pointer;
+
+    transition:.3s;
+
+    height:240px;
+
+    display:flex;
+
+    flex-direction:column;
+
 }
 
+.card:hover{
+
+    transform:translateY(-5px);
+
+    box-shadow:0 0 15px rgba(255,255,255,0.1);
+
+}
 .pdf-icon{
     width:70px;
     height:70px;
@@ -53,14 +115,32 @@ h1{
 }
 
 .card h3{
-    margin-bottom:10px;
+
+    font-size:20px;
+
+    line-height:1.4;
+
+    display:-webkit-box;
+
+    -webkit-box-orient:vertical;
+
+    -webkit-line-clamp:2;
+
+    overflow:hidden;
+
+    min-height:56px;
+
+    margin-bottom:8px;
+
 }
 
 .card p{
-    color:#999;
-    margin-bottom:20px;
-}
 
+    color:#9a9a9a;
+
+    margin-top:0;
+
+}
 .remove{
     position:absolute;
     top:12px;
@@ -82,20 +162,110 @@ h1{
 .remove:hover{
     background:rgba(255,255,255,0.2);
 }
+.empty-state{
 
+    width:100%;
+
+    text-align:center;
+
+    padding:80px 20px;
+
+    grid-column:1/-1;
+
+}
+
+.empty-icon{
+
+    font-size:70px;
+
+    color:#e53935;
+
+    margin-bottom:25px;
+
+}
+
+.empty-state h2{
+
+    font-size:34px;
+
+    margin-bottom:12px;
+
+}
+
+.empty-state p{
+
+    color:#9a9a9a;
+
+    font-size:18px;
+
+    margin-bottom:30px;
+
+}
+
+.browse-btn{
+
+    display:inline-block;
+
+    padding:12px 28px;
+
+    border-radius:30px;
+
+    background:#00c8ff;
+
+    color:black;
+
+    text-decoration:none;
+
+    font-weight:bold;
+
+    transition:.3s;
+
+}
+
+.browse-btn:hover{
+
+    transform:scale(1.05);
+
+}
 </style>
 
 </head>
-
 <body>
 
-<h1>❤️ My Favorites</h1>
+<nav class="navbar">
 
-<div
-class="grid"
-id="favGrid">
+    <div class="logo">
+        📚 E-Library
+    </div>
+
+    <div class="nav-links">
+
+        <a href="home.html">Home</a>
+        <a href="trending_pdfs.html">Trending PDFs</a>
+        <a href="new_releases.html">New Releases</a>
+        <a href="categories.html">Categories</a>
+        <a href="contributors.html">Contributors</a>
+
+    </div>
+
+</nav>
+
+<div class="container">
+
+    <div class="header">
+
+        <h1 id="favoritesTitle">
+            ❤️ My Favorites
+        </h1>
+
+    </div>
+
+    <div
+    class="grid"
+    id="favGrid">
+    </div>
+
 </div>
-
 <script>
 
 const userId =
@@ -103,6 +273,63 @@ localStorage.getItem("userId");
 
 const grid =
 document.getElementById("favGrid");
+const title =
+document.getElementById("favoritesTitle");
+let toastTimer;
+function showToast(msg){
+
+    let toast =
+    document.getElementById("toast");
+
+    if(!toast){
+
+        toast =
+        document.createElement("div");
+
+        toast.id = "toast";
+
+        toast.style.position = "fixed";
+        toast.style.bottom = "20px";
+        toast.style.right = "20px";
+
+        toast.style.background =
+        "#22c55e";
+
+        toast.style.color =
+        "white";
+
+        toast.style.padding =
+        "12px 18px";
+
+        toast.style.borderRadius =
+        "10px";
+
+        toast.style.fontWeight =
+        "600";
+
+        toast.style.zIndex =
+        "9999";
+
+        toast.style.boxShadow =
+        "0 4px 12px rgba(0,0,0,0.3)";
+
+        document.body.appendChild(toast);
+
+    }
+
+    toast.innerText = msg;
+
+    toast.style.display = "block";
+
+    clearTimeout(toastTimer);
+
+    toastTimer = setTimeout(() => {
+
+        toast.style.display = "none";
+
+    },2500);
+
+}
 
 async function loadFavorites(){
 
@@ -110,36 +337,63 @@ async function loadFavorites(){
 
         const response =
         await fetch(
-        "http://localhost:5000/favorites"
-        );
+`http://localhost:5000/favorites/${userId}`
+);
 
         const data =
         await response.json();
 
-        const userFavorites =
-        data.filter(
-        item => item.user_id == userId
-        );
+        
+title.innerText =
+`❤️ My Favorites (${data.length})`;
+        if(data.length === 0){
 
-        if(userFavorites.length === 0){
+    grid.innerHTML = `
 
-            grid.innerHTML =
-            "<p>No Favorites Yet ❤️</p>";
+    <div class="empty-state">
 
-            return;
-        }
+        <div class="empty-icon">
+            <i class="fa-regular fa-heart"></i>
+        </div>
+
+        <h2>No Favorites Yet</h2>
+
+        <p>
+            Save your favorite PDFs and they'll appear here.
+        </p>
+
+        <a
+        href="academic_collection.html"
+        class="browse-btn">
+
+            Browse PDFs
+
+        </a>
+
+    </div>
+
+    `;
+
+    return;
+
+}
 
         grid.innerHTML = "";
 
-        userFavorites.forEach(pdf => {
+        data.forEach(pdf => {
 
             grid.innerHTML += `
 
-            <div class="card">
+           <div
+class="card"
+onclick="openPdf(${pdf.pdf_id}, '${pdf.pdf_link}')">
 
-                <button
-                class="remove"
-                onclick="removeFavorite(${pdf.id})">
+               <button
+class="remove"
+onclick="
+event.stopPropagation();
+removeFavorite(${pdf.id});
+">
 
                     ✕
 
@@ -197,9 +451,9 @@ async function removeFavorite(id){
 
         );
 
-        alert(
-        "Favorite Removed"
-        );
+       showToast(
+    "Favorite Removed ❤️"
+);
 
         loadFavorites();
 
@@ -213,8 +467,20 @@ async function removeFavorite(id){
 }
 
 loadFavorites();
+function openPdf(pdfId, pdfLink){
+
+    localStorage.setItem(
+        "returnPage",
+        window.location.href
+    );
+
+    window.location.href =
+    `reader.html?pdf_id=${pdfId}&file=${pdfLink}&page=1`;
+
+}
 
 </script>
 <script src="notifications-popup.js"></script>
+<script src="theme.js"></script>
 </body>
 </html>

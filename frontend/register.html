@@ -61,11 +61,13 @@
                 <input type="text"
                        id="name"
                        placeholder="Full Name"
+                       autocomplete="name"
                        required>
 
                 <input type="email"
                        id="email"
-                       placeholder="Organization Email Address"
+                       placeholder="Enter your @steelplant.in email"
+                       autocomplete="email"
                        required>
 
                 <p id="emailStatus"></p>
@@ -74,10 +76,12 @@
 
                 <div class="password-box">
 
-                    <input type="password"
-                           id="password"
-                           placeholder="Password"
-                           required>
+                    
+                        <input type="password"
+       id="password"
+       placeholder="Password"
+       autocomplete="new-password"
+       required>
 
                     <i class="fa-solid fa-eye-slash toggle-password"
                        onclick="togglePassword('password', this)"></i>
@@ -86,10 +90,11 @@
 
                 <div class="password-box">
 
-                    <input type="password"
-                           id="confirmPassword"
-                           placeholder="Confirm Password"
-                           required>
+                   <input type="password"
+       id="confirmPassword"
+       placeholder="Confirm Password"
+       autocomplete="new-password"
+       required>
 
                     <i class="fa-solid fa-eye-slash toggle-password"
                        onclick="togglePassword('confirmPassword', this)"></i>

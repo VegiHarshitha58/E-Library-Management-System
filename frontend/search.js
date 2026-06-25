@@ -96,15 +96,40 @@ function hl(text, q) {
 }
 
 async function openSearchPDF(id, url, title) {
-  if (url && url !== 'null' && url !== 'undefined') {
-    try { await fetch(`${window.API}/pdfs/${id}/view`, { method: 'POST' }); } catch(e) {}
-   window.open(
-`reader.html?pdf_id=${pdf.id}&file=${pdf.pdf_link}&page=1`,
-"_blank"
-);
-  } else {
-    alert(`"${title}" — not available yet`);
-  }
+
+    const userId = localStorage.getItem("userId");
+
+    if (url && url !== "null" && url !== "undefined") {
+
+        try {
+
+            await fetch(`${window.API}/pdfs/${id}/view`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    userId: userId
+                })
+            });
+
+        } catch (e) {
+            console.log(e);
+        }
+
+        localStorage.setItem(
+            "returnPage",
+            window.location.href
+        );
+
+        window.location.href =
+            `reader.html?pdf_id=${id}&file=${encodeURIComponent(url)}&page=1`;
+
+    } else {
+
+        alert(`"${title}" — not available yet`);
+
+    }
 }
 
 async function addSearchFav(id, title) {
@@ -129,46 +154,108 @@ function showResults(pdfs, q, section) {
   const grid = document.getElementById('searchGrid');
 
   pdfs.forEach((pdf, i) => {
-    const card = document.createElement('div');
-    card.className = 'search-card' + (i === 0 ? ' best' : '');
 
-    const icon = document.createElement('div');
-    icon.className = 'search-card-icon';
-    icon.textContent = '📄';
+    const card = document.createElement("div");
+    card.className = "book-card card-wide";
 
-    const title = document.createElement('div');
-    title.className = 'search-card-title';
-    title.innerHTML = hl(pdf.title, q);
+    const ph = document.createElement("div");
+    ph.className = "book-placeholder";
+    ph.style.background =
+        "linear-gradient(145deg,#1a0a2e,#3d1a6e)";
+    ph.innerHTML = `
+        <div style="
+            flex:1;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            padding:.5rem;
+            text-align:center;
+            font-size:.72rem;
+            font-weight:700;
+            line-height:1.3;
+        ">
+            ${pdf.title}
+        </div>
 
-    const meta = document.createElement('div');
-    meta.className = 'search-card-meta';
-    meta.textContent = `${pdf.contributor || 'Unknown'} · 👁 ${pdf.views || 0}`;
+        <div style="
+            font-size:.55rem;
+            color:rgba(255,255,255,.55);
+            padding:0 .4rem .3rem;
+        ">
+            ${pdf.contributor || "Admin"}
+        </div>
+    `;
 
-    const btns = document.createElement('div');
-    btns.className = 'search-card-btns';
+    card.appendChild(ph);
 
-    const readBtn = document.createElement('button');
-    readBtn.className = 'btn-read';
-    readBtn.textContent = 'Read';
-    readBtn.addEventListener('click', function() {
-      openSearchPDF(pdf.id, pdf.pdf_link, pdf.title);
-    });
+    // ❤️ Favorite
+    const favBtn = document.createElement("button");
+favBtn.className = "fav-btn";
+    favBtn.innerHTML =
+        favoriteIds.includes(Number(pdf.id))
+        ? "♥"
+        : "♡";
+    favBtn.style.color =
+        favoriteIds.includes(Number(pdf.id))
+        ? "#ff1744"
+        : "white";
 
-    const favBtn = document.createElement('button');
-    favBtn.className = 'btn-fav';
-    favBtn.textContent = '♡ Fav';
-    favBtn.addEventListener('click', function() {
-      addSearchFav(pdf.id, pdf.title);
-    });
+    favBtn.onclick = async (e)=>{
 
-    btns.appendChild(readBtn);
-    btns.appendChild(favBtn);
-    card.appendChild(icon);
-    card.appendChild(title);
-    card.appendChild(meta);
-    card.appendChild(btns);
+        e.stopPropagation();
+
+        if(favoriteIds.includes(Number(pdf.id))){
+
+            await removeFavoriteByPdf(pdf.id);
+
+            favoriteIds =
+            favoriteIds.filter(
+                x=>x!==Number(pdf.id)
+            );
+
+            favBtn.innerHTML="♡";
+            favBtn.style.color="white";
+
+        }else{
+
+            await addToFavorites({
+                id:pdf.id,
+                title:pdf.title
+            });
+
+            favoriteIds.push(Number(pdf.id));
+
+            favBtn.innerHTML="♥";
+            favBtn.style.color="#ff1744";
+
+        }
+
+    };
+
+    card.appendChild(favBtn);
+
+    // 🔖 Reading List
+    if(bookmarksEnabled){
+
+        card.appendChild(
+            createReadingListButton(pdf.id)
+        );
+
+    }
+
+    card.onclick=()=>{
+
+        openSearchPDF(
+            pdf.id,
+            pdf.pdf_link,
+            pdf.title
+        );
+
+    };
+
     grid.appendChild(card);
-  });
+
+});
 
   section.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }

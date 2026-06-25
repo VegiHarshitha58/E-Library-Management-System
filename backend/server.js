@@ -59,12 +59,7 @@ const storage = multer.diskStorage({
 const upload = multer({
     storage: storage
 });
-// REGISTER API
-
-
-
-            
-
+// REGISTER API        
 app.post("/register", async (req,res)=>{
 
     const {name,email,password} = req.body;
@@ -126,7 +121,52 @@ app.post("/register", async (req,res)=>{
 
                     }
 
-                    // 🔔 Welcome Notification
+                    const newUserId =
+                    userResult.insertId;
+
+                    // Create Default Settings
+
+                    db.query(
+
+                        `INSERT INTO settings
+                        (
+                            user_id,
+                            dark_mode,
+                            auto_save_progress,
+                            remember_last_page,
+                            continuous_scrolling,
+                            enable_bookmarks,
+                            reading_progress_bar
+                        )
+                        VALUES
+                        (
+                            ?,
+                            0,
+                            1,
+                            1,
+                            0,
+                            0,
+                            1
+                        )`,
+
+                        [newUserId],
+
+                        (settingsErr)=>{
+
+                            if(settingsErr){
+
+                                console.log(
+                                    "Settings Error:",
+                                    settingsErr
+                                );
+
+                            }
+
+                        }
+
+                    );
+
+                    // Welcome Notification
 
                     db.query(
 
@@ -139,7 +179,7 @@ app.post("/register", async (req,res)=>{
                         VALUES(?,?,?)`,
 
                         [
-                            userResult.insertId,
+                            newUserId,
 
                             "🎉 Welcome to E-Library! Start exploring PDFs and build your reading journey.",
 
@@ -174,7 +214,6 @@ app.post("/register", async (req,res)=>{
     );
 
 });
-
 
 // LOGIN API
 
@@ -248,6 +287,248 @@ if(match) {
     );
 
 });
+app.post("/reset-password",async (req,res)=>{
+
+const {email,password}=req.body;
+
+const sql =
+"UPDATE users SET password=? WHERE email=?";
+
+const hashedPassword =
+await bcrypt.hash(password,10);
+
+db.query(
+sql,
+[hashedPassword,email],
+(err,result)=>{
+
+if(err){
+
+res.send("Database Error");
+
+}
+else if(result.affectedRows === 0){
+
+        res.send("Email Not Found");
+
+    }
+
+else{
+
+res.json({
+success:true,
+message:"Password Updated"
+});
+}
+
+});
+
+});
+
+app.post("/check-email", (req,res)=>{
+
+    const {email} = req.body;
+
+    const sql =
+    "SELECT * FROM users WHERE email=?";
+
+    db.query(sql,[email],(err,result)=>{
+
+        if(err){
+
+            return res.json({
+                exists:false
+            });
+
+        }
+
+        if(result.length > 0){
+
+            res.json({
+                exists:true
+            });
+
+        }else{
+
+            res.json({
+                exists:false
+            });
+
+        }
+
+    });
+
+});
+
+app.post("/check-reset-email",(req,res)=>{
+
+    const { email } = req.body;
+
+    db.query(
+        "SELECT * FROM users WHERE email=?",
+        [email],
+        (err,result)=>{
+
+            if(err){
+
+                return res.json({
+                    success:false
+                });
+
+            }
+
+            if(result.length > 0){
+
+                res.json({
+                    success:true
+                });
+
+            }
+            else{
+
+                res.json({
+                    success:false
+                });
+
+            }
+
+        }
+    );
+
+});
+app.get("/search", (req, res) => {
+
+    const keyword = req.query.keyword;
+
+    db.query(
+
+        `SELECT *
+         FROM pdfs
+         WHERE title LIKE ?
+         OR contributor LIKE ?
+         OR description LIKE ?`,
+
+        [
+            `%${keyword}%`,
+            `%${keyword}%`,
+            `%${keyword}%`
+        ],
+
+        (err, result) => {
+
+            if(err){
+                return res.status(500)
+                .send("Database Error");
+            }
+
+            res.json(result);
+
+        }
+
+    );
+
+});
+app.get("/api/progress/continue/:userId", (req, res) => {
+
+    const userId = req.params.userId;
+
+    db.query(
+
+        `SELECT
+            rh.pdf_id,
+            rh.last_page,
+            rh.total_pages,
+            rh.progress,
+            rh.last_read,
+            p.title,
+            p.pdf_link
+         FROM reading_history rh
+         JOIN pdfs p
+            ON rh.pdf_id = p.id
+         WHERE rh.user_id = ?
+         ORDER BY rh.last_read DESC LIMIT 3`,
+
+        [userId],
+
+        (err, result) => {
+
+            if(err){
+                console.log(err);
+                return res.status(500).json(err);
+            }
+
+            res.json(result);
+
+        }
+
+    );
+
+});
+app.get("/notifications/:userId",(req,res)=>{
+
+    const userId = req.params.userId;
+
+    db.query(
+
+        `
+        SELECT
+            n.*,
+            p.pdf_link
+        FROM notifications n
+        LEFT JOIN pdfs p
+            ON n.pdf_id = p.id
+        WHERE n.user_id = ?
+        ORDER BY n.created_at DESC
+        `,
+
+        [userId],
+
+        (err,result)=>{
+
+            if(err){
+                return res.status(500).json(err);
+            }
+
+            res.json(result);
+
+        }
+
+    );
+
+});
+app.get("/notifications/recent/:userId",(req,res)=>{
+
+    const userId = req.params.userId;
+
+    db.query(
+
+        `
+        SELECT
+            n.*,
+            p.pdf_link
+        FROM notifications n
+        LEFT JOIN pdfs p
+            ON n.pdf_id = p.id
+        WHERE n.user_id = ?
+        ORDER BY n.created_at DESC
+        LIMIT 5
+        `,
+
+        [userId],
+
+        (err,result)=>{
+
+            if(err){
+                return res.status(500).json(err);
+            }
+
+            res.json(result);
+
+        }
+
+    );
+
+});
 app.get("/home-trending", (req,res)=>{
 
     db.query(
@@ -279,56 +560,62 @@ app.get("/home-academic", (req,res)=>{
     );
 
 });
-app.get("/categories", (req, res) => {
-
-    db.query(
-        "SELECT * FROM categories",
-        (err, result) => {
-
-            if(err){
-                console.log(err);
-                return res.status(500).send("Database Error");
-            }
-
-            res.json(result);
-
-        }
-    );
-
-});
-
-app.get("/categories/:id/pdfs", (req, res) => {
-
-    const categoryId = req.params.id;
+app.get("/hero-pdf",(req,res)=>{
 
     db.query(
 
-        `SELECT *
-         FROM pdfs
-         WHERE category_id = ?`,
+        `
+        SELECT
+            id,
+            title,
+            contributor,
+            description,
+            views,
+            pdf_link
+        FROM pdfs
+        ORDER BY views DESC
+        LIMIT 1
+        `,
 
-        [categoryId],
-
-        (err, result) => {
+        (err,result)=>{
 
             if(err){
-
-                console.log(err);
-
-                return res.status(500).send(
-                    "Database Error"
-                );
-
+                return res.status(500).json(err);
             }
 
-            res.json(result);
+            res.json(result[0] || null);
 
         }
 
     );
 
 });
+app.get("/browse-books", async (req, res) => {
 
+    const keyword = req.query.keyword;
+
+    try {
+
+        const response = await fetch(
+            `https://openlibrary.org/search.json?q=${keyword}`
+        );
+
+        const data = await response.json();
+
+        res.json(data.docs || []);
+
+    }
+    catch(error){
+
+        console.log(error);
+
+        res.status(500).json({
+            message:"Failed"
+        });
+
+    }
+
+});
 app.get("/contributors", (req, res) => {
 
     db.query(
@@ -345,138 +632,6 @@ app.get("/contributors", (req, res) => {
         }
     );
 
-});
-app.get("/trending", (req, res) => {
-
-    db.query(
-
-        `SELECT *
-         FROM pdfs
-         ORDER BY views DESC`,
-
-        (err, result) => {
-
-            if(err){
-                return res.status(500).send("Database Error");
-            }
-
-            res.json(result);
-
-        }
-
-    );
-
-});
-app.get("/new-releases", (req, res) => {
-
-    db.query(
-
-        `SELECT *
-         FROM pdfs
-         ORDER BY upload_date DESC`,
-
-        (err, result) => {
-
-            if(err){
-
-                return res.status(500).send(
-                    "Database Error"
-                );
-
-            }
-
-            res.json(result);
-
-        }
-
-    );
-
-});
-
-
-// Get Reading List
-app.get("/readinglist", (req, res) => {
-    db.query(
-        "SELECT * FROM reading_list",
-        (err, result) => {
-            if (err) {
-                res.status(500).json(err);
-            } else {
-                res.json(result);
-            }
-        }
-    );
-});
-
-// Add to Reading List
-app.post("/readinglist", (req, res) => {
-
-    const { user_id, pdf_id } = req.body;
-
-    const checkSql = `
-        SELECT *
-        FROM reading_list
-        WHERE user_id = ?
-        AND pdf_id = ?
-    `;
-
-    db.query(
-        checkSql,
-        [user_id, pdf_id],
-        (err, result) => {
-
-            if(err){
-
-                return res.status(500).json(err);
-
-            }
-
-            if(result.length > 0){
-
-                return res.json({
-                    success:false,
-                    message:"Already in Reading List"
-                });
-
-            }
-
-            db.query(
-                "INSERT INTO reading_list(user_id, pdf_id) VALUES (?, ?)",
-                [user_id, pdf_id],
-                (err2, result2) => {
-
-                    if(err2){
-
-                        return res.status(500).json(err2);
-
-                    }
-
-                    res.json({
-                        success:true,
-                        message:"Added to Reading List"
-                    });
-
-                }
-            );
-
-        }
-    );
-
-});
-// Remove from Reading List
-app.delete("/readinglist/:id", (req, res) => {
-
-    db.query(
-        "DELETE FROM reading_list WHERE id = ?",
-        [req.params.id],
-        (err, result) => {
-            if (err) {
-                res.status(500).json(err);
-            } else {
-                res.json({ message: "Removed Successfully" });
-            }
-        }
-    );
 });
 app.get("/api/profile/:id", (req, res) => {
    const userId = req.params.id;
@@ -583,12 +738,15 @@ app.delete("/api/profile/avatar/:userId", (req, res) => {
 
 });
 app.post("/reading-history", (req, res) => {
+
     const { userId, pdfId } = req.body;
 
     db.query(
 
-        `SELECT * FROM reading_history
-         WHERE user_id=? AND pdf_id=?`,
+        `SELECT *
+         FROM reading_history
+         WHERE user_id = ?
+         AND pdf_id = ?`,
 
         [userId, pdfId],
 
@@ -598,23 +756,51 @@ app.post("/reading-history", (req, res) => {
                 return res.status(500).send("Database Error");
             }
 
+            const markReminderRead = () => {
+
+                db.query(
+
+                    `UPDATE notifications
+                     SET is_read = 1
+                     WHERE user_id = ?
+                     AND pdf_id = ?
+                     AND type = 'reading_list_reminder'`,
+
+                    [userId, pdfId],
+
+                    (err2) => {
+
+                        if(err2){
+                            console.log("Reminder Update Error:", err2);
+                        }
+
+                    }
+
+                );
+
+            };
+
             if(result.length > 0){
 
                 db.query(
 
                     `UPDATE reading_history
                      SET last_read = CURRENT_TIMESTAMP
-                     WHERE user_id=? AND pdf_id=?`,
+                     WHERE user_id = ?
+                     AND pdf_id = ?`,
 
                     [userId, pdfId],
 
-                    (err) => {
+                    (err3) => {
 
-                        if(err){
+                        if(err3){
                             return res.status(500).send("Database Error");
                         }
 
+                        markReminderRead();
+
                         res.send("History Updated");
+
                     }
 
                 );
@@ -629,13 +815,16 @@ app.post("/reading-history", (req, res) => {
 
                     [userId, pdfId],
 
-                    (err) => {
+                    (err4) => {
 
-                        if(err){
+                        if(err4){
                             return res.status(500).send("Database Error");
                         }
 
+                        markReminderRead();
+
                         res.send("History Saved");
+
                     }
 
                 );
@@ -645,6 +834,26 @@ app.post("/reading-history", (req, res) => {
         }
 
     );
+
+});
+app.get(/^\/download\/(.+)/, (req, res) => {
+
+    const file = decodeURIComponent(req.params[0]);
+
+    const filePath = path.join(
+        __dirname,
+        "pdf_library",
+        file
+    );
+
+    res.download(filePath, err => {
+
+        if (err) {
+            console.log(err);
+            res.status(404).send("File not found");
+        }
+
+    });
 
 });
 app.get("/reading-history/:userId", (req, res) => {
@@ -678,7 +887,6 @@ app.get("/reading-history/:userId", (req, res) => {
     );
 
 });
-
 app.post("/api/progress/update", (req, res) => {
 
     const {
@@ -713,6 +921,95 @@ app.post("/api/progress/update", (req, res) => {
                 return res.status(500).send("Database Error");
             }
 
+            const saveNotificationLogic = () => {
+
+                // Create Continue Reading notification
+                if(progress > 0 && progress < 100){
+
+                    db.query(
+                        `
+                        SELECT title
+                        FROM pdfs
+                        WHERE id = ?
+                        `,
+                        [pdf_id],
+                        (errTitle, titleResult)=>{
+
+                            if(!errTitle && titleResult.length > 0){
+
+                                const title =
+                                titleResult[0].title;
+
+                                db.query(
+                                    `
+                                    SELECT id
+                                    FROM notifications
+                                    WHERE user_id = ?
+                                    AND pdf_id = ?
+                                    AND type = 'reading_reminder'
+                                    AND is_read = 0
+                                    `,
+                                    [user_id,pdf_id],
+                                    (errCheck, existing)=>{
+
+                                        if(existing.length === 0){
+
+                                            db.query(
+                                                `
+                                                INSERT INTO notifications
+                                                (
+                                                    user_id,
+                                                    message,
+                                                    type,
+                                                    pdf_id,
+                                                    is_read
+                                                )
+                                                VALUES
+                                                (
+                                                    ?,
+                                                    ?,
+                                                    'reading_reminder',
+                                                    ?,
+                                                    0
+                                                )
+                                                `,
+                                                [
+                                                    user_id,
+                                                    `Continue reading "${title}" 📖 You stopped at page ${last_page} (${progress}% completed).`,
+                                                    pdf_id
+                                                ]
+                                            );
+
+                                        }
+
+                                    }
+                                );
+
+                            }
+
+                        }
+                    );
+
+                }
+
+                // If completed, mark reminder as read
+                if(progress >= 100){
+
+                    db.query(
+                        `
+                        UPDATE notifications
+                        SET is_read = 1
+                        WHERE user_id = ?
+                        AND pdf_id = ?
+                        AND type = 'reading_reminder'
+                        `,
+                        [user_id, pdf_id]
+                    );
+
+                }
+
+            };
+
             if(result.length > 0){
 
                 db.query(
@@ -740,6 +1037,8 @@ app.post("/api/progress/update", (req, res) => {
                             console.log(err2);
                             return res.status(500).send("Database Error");
                         }
+
+                        saveNotificationLogic();
 
                         res.send("Progress Updated");
 
@@ -777,6 +1076,8 @@ app.post("/api/progress/update", (req, res) => {
                             return res.status(500).send("Database Error");
                         }
 
+                        saveNotificationLogic();
+
                         res.send("Progress Created");
 
                     }
@@ -784,43 +1085,6 @@ app.post("/api/progress/update", (req, res) => {
                 );
 
             }
-
-        }
-
-    );
-
-});
-
-app.get("/api/progress/continue/:userId", (req, res) => {
-
-    const userId = req.params.userId;
-
-    db.query(
-
-        `SELECT
-            rh.pdf_id,
-            rh.last_page,
-            rh.total_pages,
-            rh.progress,
-            rh.last_read,
-            p.title,
-            p.pdf_link
-         FROM reading_history rh
-         JOIN pdfs p
-            ON rh.pdf_id = p.id
-         WHERE rh.user_id = ?
-         ORDER BY rh.last_read DESC`,
-
-        [userId],
-
-        (err, result) => {
-
-            if(err){
-                console.log(err);
-                return res.status(500).json(err);
-            }
-
-            res.json(result);
 
         }
 
@@ -858,7 +1122,649 @@ app.get("/api/progress/:userId/:pdfId", (req,res)=>{
     );
 
 });
+app.post("/pdfs/:id/download", (req, res) => {
 
+    const pdfId = req.params.id;
+
+    db.query(
+
+        `UPDATE pdfs
+         SET downloads = downloads + 1
+         WHERE id = ?`,
+
+        [pdfId],
+
+        (err) => {
+
+            if(err){
+
+                console.log(err);
+
+                return res.status(500).send(
+                    "Database Error"
+                );
+
+            }
+
+            res.send(
+                "Download Count Updated"
+            );
+
+        }
+
+    );
+
+});
+app.get("/pdfs", (req, res) => {
+
+    db.query(
+        "SELECT * FROM pdfs",
+        (err, result) => {
+
+            if(err){
+                console.log(err);
+
+                return res.status(500).json({
+                    message: "Database Error"
+                });
+            }
+
+            res.json(result);
+
+        }
+    );
+
+});
+app.get("/pdfs/:id",(req,res)=>{
+
+    const pdfId = req.params.id;
+
+    db.query(
+
+        "SELECT * FROM pdfs WHERE id = ?",
+
+        [pdfId],
+
+        (err,result)=>{
+
+            if(err){
+                console.log(err);
+                return res.status(500).json(err);
+            }
+
+            if(result.length === 0){
+                return res.status(404).send("PDF Not Found");
+            }
+
+            res.json(result[0]);
+
+        }
+
+    );
+
+});
+
+ app.post("/pdfs/:id/view", (req, res) => {
+
+    const pdfId = req.params.id;
+
+    const { userId } = req.body;
+
+    db.query(
+
+        `SELECT * FROM pdf_views
+         WHERE pdf_id = ?
+         AND user_id = ?`,
+
+        [pdfId, userId],
+
+        (err, result) => {
+
+            if(err){
+
+                console.log(err);
+
+                return res.status(500).json({
+                    message: "Database Error"
+                });
+
+            }
+
+            if(result.length > 0){
+
+                return res.json({
+                    message: "Already Viewed"
+                });
+
+            }
+
+            db.query(
+
+                `INSERT INTO pdf_views
+                (pdf_id, user_id)
+                VALUES (?, ?)`,
+
+                [pdfId, userId],
+
+                (err) => {
+
+                    if(err){
+
+                        console.log(err);
+
+                        return res.status(500).json({
+                            message: "Database Error"
+                        });
+
+                    }
+
+                    db.query(
+
+                        `UPDATE pdfs
+                         SET views = views + 1
+                         WHERE id = ?`,
+
+                        [pdfId],
+
+                        (err) => {
+
+                            if(err){
+
+                                console.log(err);
+
+                                return res.status(500).json({
+                                    message: "Database Error"
+                                });
+
+                            }
+
+                            res.json({
+                                message: "View Count Updated"
+                            });
+
+                        }
+
+                    );
+
+                }
+
+            );
+
+        }
+
+    );
+
+});
+app.get("/trending", (req, res) => {
+
+    db.query(
+
+        `SELECT *
+         FROM pdfs
+         ORDER BY views DESC`,
+
+        (err, result) => {
+
+            if(err){
+                return res.status(500).send("Database Error");
+            }
+
+            res.json(result);
+
+        }
+
+    );
+
+});
+app.get("/trending-week", (req, res) => {
+
+    db.query(
+
+        `
+        SELECT
+            p.*,
+            COUNT(v.id) AS weekly_views
+        FROM pdfs p
+        JOIN pdf_views v
+            ON p.id = v.pdf_id
+        WHERE v.viewed_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        GROUP BY p.id
+        ORDER BY weekly_views DESC
+        LIMIT 10
+        `,
+
+        (err, result) => {
+
+            if(err){
+                console.log(err);
+                return res.status(500).send("Database Error");
+            }
+
+            res.json(result);
+
+        }
+
+    );
+
+});
+app.post("/favorites", (req,res)=>{
+
+    const { user_id, pdf_id } = req.body;
+
+    db.query(
+
+        `SELECT *
+         FROM favorites
+         WHERE user_id = ?
+         AND pdf_id = ?`,
+
+        [user_id,pdf_id],
+
+        (err,result)=>{
+
+            if(err){
+                return res.status(500).send("Database Error");
+            }
+
+            if(result.length > 0){
+                return res.send("Already in Favorites ❤️");
+            }
+
+            db.query(
+
+                `INSERT INTO favorites
+                 (user_id,pdf_id)
+                 VALUES (?,?)`,
+
+                [user_id,pdf_id],
+
+                (err2)=>{
+
+                    if(err2){
+                        return res.status(500).send("Database Error");
+                    }
+
+                    res.send("Added to Favorites ❤️");
+
+                }
+
+            );
+
+        }
+
+    );
+
+});
+app.get("/favorites/:userId",(req,res)=>{
+
+    const userId = req.params.userId;
+
+    db.query(
+
+        `SELECT
+            f.id,
+            f.user_id,
+            f.pdf_id,
+            p.title,
+            p.contributor,
+            p.pdf_link
+         FROM favorites f
+         JOIN pdfs p
+            ON f.pdf_id = p.id
+         WHERE f.user_id = ?`,
+
+        [userId],
+
+        (err,result)=>{
+
+            if(err){
+                return res.status(500).json(err);
+            }
+
+            res.json(result);
+
+        }
+
+    );
+
+});
+app.delete("/favorites/:id",(req,res)=>{
+
+    db.query(
+
+        `DELETE FROM favorites
+         WHERE id = ?`,
+
+        [req.params.id],
+
+        (err)=>{
+
+            if(err){
+                return res.status(500).send("Database Error");
+            }
+
+            res.send("Favorite Removed");
+
+        }
+
+    );
+
+});
+app.delete("/favorites/user/:userId/pdf/:pdfId", (req, res) => {
+
+    const { userId, pdfId } = req.params;
+
+    db.query(
+
+        `DELETE FROM favorites
+         WHERE user_id = ?
+         AND pdf_id = ?`,
+
+        [userId, pdfId],
+
+        (err, result) => {
+
+            if (err) {
+                return res.status(500).send("Database Error");
+            }
+
+            if (result.affectedRows === 0) {
+                return res.status(404).send("Favorite not found");
+            }
+
+            res.send("Favorite Removed ❤️");
+
+        }
+
+    );
+
+});
+app.get("/reading-list/:userId", (req, res) => {
+
+    const userId = req.params.userId;
+
+    const sql = `
+        SELECT
+            pdfs.id,
+            pdfs.title,
+            pdfs.contributor,
+            pdfs.pdf_link
+        FROM reading_list
+        JOIN pdfs
+        ON reading_list.pdf_id = pdfs.id
+        WHERE reading_list.user_id = ?
+    `;
+
+    db.query(sql, [userId], (err, result) => {
+
+        if(err){
+
+            console.log(err);
+
+            return res.status(500).json({
+                error:"Database Error"
+            });
+
+        }
+
+        res.json(result);
+
+    });
+
+});
+app.delete("/reading-list/:userId/:pdfId", (req, res) => {
+
+    const userId = req.params.userId;
+    const pdfId = req.params.pdfId;
+
+    const sql = `
+        DELETE FROM reading_list
+        WHERE user_id = ?
+        AND pdf_id = ?
+    `;
+
+    db.query(
+        sql,
+        [userId, pdfId],
+        (err, result) => {
+
+            if(err){
+
+                console.log(err);
+
+                return res.status(500).json({
+                    error:"Database Error"
+                });
+
+            }
+
+            res.json({
+                message:"Removed Successfully"
+            });
+
+        }
+    );
+
+});
+// Add to Reading List
+app.post("/readinglist", (req, res) => {
+
+    const { user_id, pdf_id } = req.body;
+
+    const checkSql = `
+        SELECT *
+        FROM reading_list
+        WHERE user_id = ?
+        AND pdf_id = ?
+    `;
+
+    db.query(
+        checkSql,
+        [user_id, pdf_id],
+        (err, result) => {
+
+            if(err){
+                return res.status(500).json(err);
+            }
+
+            if(result.length > 0){
+                return res.json({
+                    success: false,
+                    message: "Already in Reading List"
+                });
+            }
+
+            db.query(
+                `
+                INSERT INTO reading_list
+                (user_id, pdf_id)
+                VALUES (?, ?)
+                `,
+                [user_id, pdf_id],
+                (err2, result2) => {
+
+                    if(err2){
+                        return res.status(500).json(err2);
+                    }
+
+                    // Get PDF title
+                    db.query(
+                        `
+                        SELECT title
+                        FROM pdfs
+                        WHERE id = ?
+                        `,
+                        [pdf_id],
+                        (err3, pdfResult) => {
+
+                            if(!err3 && pdfResult.length > 0){
+
+                                const title =
+                                pdfResult[0].title;
+
+                                db.query(
+                                    `
+                                    INSERT INTO notifications
+                                    (
+                                        user_id,
+                                        message,
+                                        type,
+                                        pdf_id,
+                                        is_read
+                                    )
+                                    VALUES
+                                    (
+                                        ?,
+                                        ?,
+                                        'reading_list',
+                                        ?,
+                                        0
+                                    )
+                                    `,
+                                    [
+                                        user_id,
+                                        `Added "${title}" to your Reading List 📚`,
+                                        pdf_id
+                                    ],
+                                    (err4) => {
+
+                                        if(err4){
+                                            console.log(
+                                                "Notification Error:",
+                                                err4
+                                            );
+                                        }
+
+                                    }
+                                );
+
+                            }
+
+                            res.json({
+                                success: true,
+                                message: "Added to Reading List"
+                            });
+
+                        }
+                    );
+
+                }
+            );
+
+        }
+    );
+
+});
+app.get("/new-releases", (req, res) => {
+
+    db.query(
+
+        `SELECT *
+         FROM pdfs
+         ORDER BY upload_date DESC`,
+
+        (err, result) => {
+
+            if(err){
+
+                return res.status(500).send(
+                    "Database Error"
+                );
+
+            }
+
+            res.json(result);
+
+        }
+
+    );
+
+});
+app.get("/popular-new-releases", (req, res) => {
+
+    const sql = `
+        SELECT *
+        FROM pdfs
+        ORDER BY upload_date DESC, views DESC
+        LIMIT 10
+    `;
+
+    db.query(sql, (err, result) => {
+
+        if(err){
+
+            return res.status(500).send("Database Error");
+
+        }
+
+        res.json(result);
+
+    });
+
+});
+app.get("/categories", (req, res) => {
+
+    const sql = `
+        SELECT
+            c.id,
+            c.category_name,
+            COUNT(p.id) AS total_pdfs
+        FROM categories c
+        LEFT JOIN pdfs p
+            ON c.id = p.category_id
+        GROUP BY
+            c.id,
+            c.category_name
+        ORDER BY
+            c.category_name ASC
+    `;
+
+    db.query(sql, (err, result) => {
+
+        if (err) {
+
+            console.log(err);
+
+            return res.status(500).send("Database Error");
+
+        }
+
+        res.json(result);
+
+    });
+
+});
+app.get("/categories/:id/pdfs", (req, res) => {
+
+    const categoryId = req.params.id;
+
+    db.query(
+
+        `SELECT *
+         FROM pdfs
+         WHERE category_id = ?`,
+
+        [categoryId],
+
+        (err, result) => {
+
+            if(err){
+
+                console.log(err);
+
+                return res.status(500).send(
+                    "Database Error"
+                );
+
+            }
+
+            res.json(result);
+
+        }
+
+    );
+
+});
 app.get("/recommended/:userId", (req, res) => {
 
     const userId = req.params.userId;
@@ -1105,20 +2011,61 @@ app.get("/get-settings/:id", (req, res) => {
 
             if(result.length === 0){
 
-                return res.status(404).json({
-                    message: "Settings Not Found"
-                });
+                db.query(
 
+                    `INSERT INTO settings
+                    (
+                        user_id,
+                        dark_mode,
+                        auto_save_progress,
+                        remember_last_page,
+                        continuous_scrolling,
+                        enable_bookmarks,
+                        reading_progress_bar
+                    )
+                    VALUES
+                    (
+                        ?,
+                        0,
+                        1,
+                        1,
+                        0,
+                        0,
+                        1
+                    )`,
+
+                    [userId],
+
+                    (err2)=>{
+
+                        if(err2){
+                            return res.status(500).json(err2);
+                        }
+
+                        return res.json({
+                            user_id: userId,
+                            dark_mode: 0,
+                            auto_save_progress: 1,
+                            remember_last_page: 1,
+                            continuous_scrolling: 0,
+                            enable_bookmarks: 0,
+                            reading_progress_bar: 1
+                        });
+
+                    }
+
+                );
+
+                return;
             }
 
+            // Existing settings found
             res.json(result[0]);
 
         }
     );
 
 });
-
-
 // SAVE SETTINGS
 
 app.post("/save-settings", (req, res) => {
@@ -1133,7 +2080,7 @@ app.post("/save-settings", (req, res) => {
         auto_save_progress = ?,
         remember_last_page = ?,
         continuous_scrolling = ?,
-        fullscreen_reader = ?,
+       enable_bookmarks = ?,
         reading_progress_bar = ?
 
         WHERE user_id = ?`,
@@ -1144,7 +2091,7 @@ app.post("/save-settings", (req, res) => {
             data.auto_save_progress,
             data.remember_last_page,
             data.continuous_scrolling,
-            data.fullscreen_reader,
+            data.enable_bookmarks,
             data.reading_progress_bar,
 
             data.user_id
@@ -1177,351 +2124,6 @@ app.post("/save-settings", (req, res) => {
     );
 
 });            
-app.get("/notifications", (req,res)=>{
-
-    db.query(
-        "SELECT * FROM notifications ORDER BY created_at DESC",
-        (err,result)=>{
-
-            if(err){
-                return res.status(500).json(err);
-            }
-
-            res.json(result);
-
-        }
-    );
-
-});            
-app.get("/notifications/:userId", (req,res)=>{
-
-    const userId = req.params.userId;
-
-    db.query(
-
-        `SELECT
-            n.*,
-            p.pdf_link
-         FROM notifications n
-         LEFT JOIN pdfs p
-         ON n.pdf_id = p.id
-         WHERE n.user_id = ?
-         OR n.user_id IS NULL
-         ORDER BY n.created_at DESC`,
-
-        [userId],
-
-        (err,result)=>{
-
-            if(err){
-                return res.status(500).json(err);
-            }
-
-            res.json(result);
-
-        }
-
-    );
-
-});
-app.get(
-"/notifications/unread-count/:userId",
-(req,res)=>{
-
-    const userId =
-    req.params.userId;
-
-    db.query(
-
-        `SELECT COUNT(*) AS count
-         FROM notifications
-         WHERE
-         (user_id = ?
-         OR user_id IS NULL)
-         AND is_read = 0`,
-
-        [userId],
-
-        (err,result)=>{
-
-            if(err){
-
-                console.log(err);
-
-                return res.status(500).json(err);
-
-            }
-
-            res.json(result[0]);
-
-        }
-
-    );
-
-});
-app.post("/notifications/continue-reading", (req,res)=>{
-
-    const {
-        userId,
-        pdfId,
-        title
-    } = req.body;
-
-    db.query(
-
-        `INSERT INTO notifications
-        (
-            user_id,
-            message,
-            type,
-            pdf_id
-        )
-        VALUES(?,?,?,?)`,
-
-        [
-            userId,
-
-            `📚 Continue Reading: ${title}`,
-
-            "reading_reminder",
-
-            pdfId
-        ],
-
-        (err)=>{
-
-            if(err){
-
-                console.log(err);
-
-                return res.status(500).send(
-                    "Notification Failed"
-                );
-
-            }
-
-            res.send(
-                "Reminder Created"
-            );
-
-        }
-
-    );
-
-});
-
-            app.get("/notifications/check-reading/:userId", (req,res)=>{
-
-    const userId = req.params.userId;
-
-    db.query(
-
-        `SELECT
-            rh.pdf_id,
-            rh.last_page,
-            rh.progress,
-            rh.last_read,
-            p.title
-        FROM reading_history rh
-        JOIN pdfs p
-        ON rh.pdf_id = p.id
-        WHERE rh.user_id = ?
-        AND rh.progress < 100`,
-
-        [userId],
-
-        (err,result)=>{
-
-            if(err){
-                console.log(err);
-                return res.status(500).json(err);
-            }
-
-            const now = new Date();
-
-            result.forEach(item=>{
-
-                const lastRead =
-                new Date(item.last_read);
-
-                const diffDays =
-                Math.floor(
-                    (now - lastRead)
-                    /(1000*60*60*24)
-                );
-
-                if(diffDays >= 3){
-
-                    db.query(
-
-                        `SELECT id
-                         FROM notifications
-                         WHERE user_id = ?
-                         AND pdf_id = ?
-                         AND type = 'reading_reminder'`,
-
-                        [
-                            userId,
-                            item.pdf_id
-                        ],
-
-                        (err2, existing)=>{
-
-                            if(err2){
-                                console.log(err2);
-                                return;
-                            }
-
-                            if(existing.length > 0){
-                                return;
-                            }
-
-                            db.query(
-
-                                `INSERT INTO notifications
-                                (
-                                    user_id,
-                                    message,
-                                    type,
-                                    pdf_id
-                                )
-                                VALUES(?,?,?,?)`,
-
-                                [
-                                    userId,
-
-                                    `You stopped reading "${item.title}" at page ${item.last_page}. Continue where you left off.`,
-
-                                    "reading_reminder",
-
-                                    item.pdf_id
-                                ],
-
-                                (err3)=>{
-
-                                    if(err3){
-                                        console.log(err3);
-                                    }
-
-                                }
-
-                            );
-
-                        }
-
-                    );
-
-                }
-
-            });
-
-            res.send("Checked");
-
-        }
-
-    );
-
-});
-
-
-            app.get("/notifications/check-return/:userId",(req,res)=>{
-
-    const userId = req.params.userId;
-
-    db.query(
-
-        `SELECT last_visit
-         FROM user_activity
-         WHERE user_id = ?`,
-
-        [userId],
-
-        (err,result)=>{
-
-            if(err){
-                console.log(err);
-                return res.status(500).send("Error");
-            }
-
-            if(result.length === 0){
-                return res.send("No Activity");
-            }
-
-            const lastVisit =
-            new Date(result[0].last_visit);
-
-            const now =
-            new Date();
-
-            const diffDays =
-            Math.floor(
-                (now - lastVisit)
-                /(1000*60*60*24)
-            );
-
-            if(diffDays >= 7){
-
-                db.query(
-
-                    `SELECT id
-                     FROM notifications
-                     WHERE user_id = ?
-                     AND type = 'welcome_back'`,
-
-                    [userId],
-
-                    (err2, existing)=>{
-
-                        if(err2){
-                            console.log(err2);
-                            return;
-                        }
-
-                        if(existing.length > 0){
-                            return;
-                        }
-
-                        db.query(
-
-                            `INSERT INTO notifications
-                            (
-                                user_id,
-                                message,
-                                type
-                            )
-                            VALUES(?,?,?)`,
-
-                            [
-                                userId,
-
-                                "🌷 Welcome back! It's been a while since your last visit. Discover something new today.",
-
-                                "welcome_back"
-                            ],
-
-                            (err3)=>{
-
-                                if(err3){
-                                    console.log(err3);
-                                }
-
-                            }
-
-                        );
-
-                    }
-
-                );
-
-            }
-
-            res.send("Checked");
-
-        }
-
-    );
-
-});
 app.post("/notifications/read/:id",(req,res)=>{
 
     const id = req.params.id;
@@ -1537,444 +2139,144 @@ app.post("/notifications/read/:id",(req,res)=>{
         (err)=>{
 
             if(err){
-
                 console.log(err);
-
-                return res.status(500).send(
-                    "Database Error"
-                );
-
+                return res.status(500).send("Error");
             }
 
-            res.send(
-                "Notification Read"
-            );
+            res.send("Notification Read");
 
         }
 
     );
 
 });
-app.post("/user-activity", (req,res)=>{
 
-    const { userId } = req.body;
+app.post("/notifications/generate-reading-list-reminders/:userId", (req,res)=>{
+
+    const userId = req.params.userId;
 
     db.query(
 
-        `INSERT INTO user_activity
-        (user_id,last_visit)
-        VALUES(?,CURRENT_TIMESTAMP)
-
-        ON DUPLICATE KEY UPDATE
-        last_visit = CURRENT_TIMESTAMP`,
+        `
+        SELECT
+            rl.pdf_id,
+            p.title
+        FROM reading_list rl
+        JOIN pdfs p
+            ON rl.pdf_id = p.id
+        LEFT JOIN reading_history rh
+            ON rl.user_id = rh.user_id
+            AND rl.pdf_id = rh.pdf_id
+      WHERE rl.user_id = ?
+AND rh.id IS NULL
+AND rl.created_at <= NOW() - INTERVAL 3 DAY
+        `,
 
         [userId],
 
-        (err)=>{
+        (err, result)=>{
 
             if(err){
                 console.log(err);
                 return res.status(500).send("Error");
             }
 
-            res.send("Updated");
+            result.forEach(item=>{
+
+                db.query(
+
+                    `
+                    SELECT id
+                    FROM notifications
+                    WHERE user_id = ?
+                    AND pdf_id = ?
+                    AND type = 'reading_list_reminder'
+                    AND is_read = 0
+                    `,
+
+                    [userId,item.pdf_id],
+
+                    (err2, existing)=>{
+
+                        if(!err2 && existing.length === 0){
+
+                            db.query(
+
+                                `
+                                INSERT INTO notifications
+                                (
+                                    user_id,
+                                    message,
+                                    type,
+                                    pdf_id,
+                                    is_read
+                                )
+                                VALUES
+                                (
+                                    ?,
+                                    ?,
+                                    'reading_list_reminder',
+                                    ?,
+                                    0
+                                )
+                                `,
+
+                                [
+                                    userId,
+                                    `Your Reading List is Waiting! Start reading "${item.title}" 📚`,
+                                    item.pdf_id
+                                ]
+
+                            );
+
+                        }
+
+                    }
+
+                );
+
+            });
+
+            res.send("Reading List Reminders Checked");
 
         }
 
     );
 
 });
+app.get("/settings/bookmarks/:userId",(req,res)=>{
 
-app.post("/reset-password",async (req,res)=>{
-
-const {email,password}=req.body;
-
-const sql =
-"UPDATE users SET password=? WHERE email=?";
-
-const hashedPassword =
-await bcrypt.hash(password,10);
-
-db.query(
-sql,
-[hashedPassword,email],
-(err,result)=>{
-
-if(err){
-
-res.send("Database Error");
-
-}
-else if(result.affectedRows === 0){
-
-        res.send("Email Not Found");
-
-    }
-
-else{
-
-res.send("Password Updated");
-
-}
-
-});
-
-});
-
-app.post("/check-email", (req,res)=>{
-
-    const {email} = req.body;
-
-    const sql =
-    "SELECT * FROM users WHERE email=?";
-
-    db.query(sql,[email],(err,result)=>{
-
-        if(err){
-
-            return res.json({
-                exists:false
-            });
-
-        }
-
-        if(result.length > 0){
-
-            res.json({
-                exists:true
-            });
-
-        }else{
-
-            res.json({
-                exists:false
-            });
-
-        }
-
-    });
-
-});
-
-app.post("/check-reset-email",(req,res)=>{
-
-    const { email } = req.body;
+    const userId = req.params.userId;
 
     db.query(
-        "SELECT * FROM users WHERE email=?",
-        [email],
+        `SELECT enable_bookmarks
+         FROM settings
+         WHERE user_id = ?`,
+        [userId],
         (err,result)=>{
 
             if(err){
+                return res.status(500).json(err);
+            }
 
+            if(result.length === 0){
                 return res.json({
-                    success:false
+                    enable_bookmarks:0
                 });
-
             }
 
-            if(result.length > 0){
-
-                res.json({
-                    success:true
-                });
-
-            }
-            else{
-
-                res.json({
-                    success:false
-                });
-
-            }
+            res.json(result[0]);
 
         }
     );
 
 });
-app.get("/reading-list/:userId", (req, res) => {
-
-    const userId = req.params.userId;
-
-    const sql = `
-        SELECT
-            pdfs.id,
-            pdfs.title,
-            pdfs.contributor,
-            pdfs.pdf_link
-        FROM reading_list
-        JOIN pdfs
-        ON reading_list.pdf_id = pdfs.id
-        WHERE reading_list.user_id = ?
-    `;
-
-    db.query(sql, [userId], (err, result) => {
-
-        if(err){
-
-            console.log(err);
-
-            return res.status(500).json({
-                error:"Database Error"
-            });
-
-        }
-
-        res.json(result);
-
-    });
-
-});
-
-
-app.delete("/reading-list/:userId/:pdfId", (req, res) => {
-
-    const userId = req.params.userId;
-    const pdfId = req.params.pdfId;
-
-    const sql = `
-        DELETE FROM reading_list
-        WHERE user_id = ?
-        AND pdf_id = ?
-    `;
-
-    db.query(
-        sql,
-        [userId, pdfId],
-        (err, result) => {
-
-            if(err){
-
-                console.log(err);
-
-                return res.status(500).json({
-                    error:"Database Error"
-                });
-
-            }
-
-            res.json({
-                message:"Removed Successfully"
-            });
-
-        }
-    );
-
-});
-
 // HOME ROUTE
 
 app.get("/",(req,res)=>{
 
     res.send(
         "E-Library Backend Running"
-    );
-
-});
-
-app.get("/pdfs", (req, res) => {
-
-    db.query(
-        "SELECT * FROM pdfs",
-        (err, result) => {
-
-            if(err){
-                console.log(err);
-
-                return res.status(500).json({
-                    message: "Database Error"
-                });
-            }
-
-            res.json(result);
-
-        }
-    );
-
-});
-app.get("/pdfs/:id",(req,res)=>{
-
-    const pdfId = req.params.id;
-
-    db.query(
-
-        "SELECT * FROM pdfs WHERE id = ?",
-
-        [pdfId],
-
-        (err,result)=>{
-
-            if(err){
-                console.log(err);
-                return res.status(500).json(err);
-            }
-
-            if(result.length === 0){
-                return res.status(404).send("PDF Not Found");
-            }
-
-            res.json(result[0]);
-
-        }
-
-    );
-
-});
-
- app.post("/pdfs/:id/view", (req, res) => {
-
-    const pdfId = req.params.id;
-
-    const { userId } = req.body;
-
-    db.query(
-
-        `SELECT * FROM pdf_views
-         WHERE pdf_id = ?
-         AND user_id = ?`,
-
-        [pdfId, userId],
-
-        (err, result) => {
-
-            if(err){
-
-                console.log(err);
-
-                return res.status(500).json({
-                    message: "Database Error"
-                });
-
-            }
-
-            if(result.length > 0){
-
-                return res.json({
-                    message: "Already Viewed"
-                });
-
-            }
-
-            db.query(
-
-                `INSERT INTO pdf_views
-                (pdf_id, user_id)
-                VALUES (?, ?)`,
-
-                [pdfId, userId],
-
-                (err) => {
-
-                    if(err){
-
-                        console.log(err);
-
-                        return res.status(500).json({
-                            message: "Database Error"
-                        });
-
-                    }
-
-                    db.query(
-
-                        `UPDATE pdfs
-                         SET views = views + 1
-                         WHERE id = ?`,
-
-                        [pdfId],
-
-                        (err) => {
-
-                            if(err){
-
-                                console.log(err);
-
-                                return res.status(500).json({
-                                    message: "Database Error"
-                                });
-
-                            }
-
-                            res.json({
-                                message: "View Count Updated"
-                            });
-
-                        }
-
-                    );
-
-                }
-
-            );
-
-        }
-
-    );
-
-});
-
-app.get("/search", (req, res) => {
-
-    const keyword = req.query.keyword;
-
-    db.query(
-
-        `SELECT *
-         FROM pdfs
-         WHERE title LIKE ?
-         OR contributor LIKE ?
-         OR description LIKE ?`,
-
-        [
-            `%${keyword}%`,
-            `%${keyword}%`,
-            `%${keyword}%`
-        ],
-
-        (err, result) => {
-
-            if(err){
-                return res.status(500)
-                .send("Database Error");
-            }
-
-            res.json(result);
-
-        }
-
-    );
-
-});
-app.post("/pdfs/:id/download", (req, res) => {
-
-    const pdfId = req.params.id;
-
-    db.query(
-
-        `UPDATE pdfs
-         SET downloads = downloads + 1
-         WHERE id = ?`,
-
-        [pdfId],
-
-        (err) => {
-
-            if(err){
-
-                console.log(err);
-
-                return res.status(500).send(
-                    "Database Error"
-                );
-
-            }
-
-            res.send(
-                "Download Count Updated"
-            );
-
-        }
-
     );
 
 });

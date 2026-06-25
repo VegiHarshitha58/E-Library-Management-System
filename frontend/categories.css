@@ -44,7 +44,8 @@ color:#00c8ff;
 /* Hero Section */
 
 .hero{
-height:60vh;
+min-height:280px;
+height:40vh;
 
 background-image:
 linear-gradient(
@@ -186,4 +187,8 @@ font-size:18px;
 padding:30px;
 }
 
+}
+body.light-mode .category-card{
+    background:white;
+    color:black;
 }

@@ -38,10 +38,9 @@
             </div>
 
             <div class="setting-row">
-                <span>Fullscreen Reader</span>
-
+                <span>Enable Bookmarks</span>
                 <label class="switch">
-                    <input type="checkbox" id="fullscreenReader">
+                    <input type="checkbox" id="enableBookmarks">
                     <span class="slider"></span>
                 </label>
             </div>
@@ -101,7 +100,7 @@ function saveSettings() {
 
     const data = {
 
-        user_id: 1,
+        user_id: localStorage.getItem("userId"),
 
         dark_mode:
             document.getElementById("darkMode").checked,
@@ -115,13 +114,15 @@ function saveSettings() {
         continuous_scrolling:
             document.getElementById("continuousScroll").checked,
 
-        fullscreen_reader:
-            document.getElementById("fullscreenReader").checked,
+        
+            enable_bookmarks:
+    document.getElementById("enableBookmarks").checked,
 
         reading_progress_bar:
             document.getElementById("progressBar").checked
 
     };
+    
 
     fetch("http://localhost:5000/save-settings", {
 
@@ -141,7 +142,21 @@ function saveSettings() {
 
         const status =
             document.getElementById("statusMessage");
+if(data.dark_mode){
 
+    localStorage.setItem(
+        "theme",
+        "dark"
+    );
+
+}else{
+
+    localStorage.setItem(
+        "theme",
+        "light"
+    );
+
+}
         status.innerHTML =
             "✓ Settings saved successfully";
 
@@ -177,7 +192,9 @@ function saveSettings() {
 
 window.onload = function() {
 
-    fetch("http://localhost:5000/get-settings/1")
+    const userId = localStorage.getItem("userId");
+
+fetch(`http://localhost:5000/get-settings/${userId}`)
 
     .then(response => response.json())
 
@@ -195,8 +212,8 @@ window.onload = function() {
         document.getElementById("continuousScroll").checked =
             data.continuous_scrolling == 1;
 
-        document.getElementById("fullscreenReader").checked =
-            data.fullscreen_reader == 1;
+        document.getElementById("enableBookmarks").checked =
+    data.enable_bookmarks == 1;
 
         document.getElementById("progressBar").checked =
             data.reading_progress_bar == 1;
@@ -212,6 +229,7 @@ window.onload = function() {
 };
 
 </script>
+<script src="theme.js"></script>
 
 </body>
 </html>                         

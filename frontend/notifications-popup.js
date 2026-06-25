@@ -65,15 +65,45 @@ let isShowingPopup = false;
 let currentPopupPdfId = null;
 
 // ─── MARK NOTIFICATION AS SEEN ────────────────────────────────────────────────
-function markNotifSeen(id) {
+async function markNotifSeen(id) {
+
   try {
-    const seen = JSON.parse(localStorage.getItem('seenNotifIds') || '[]');
+
+    const seen =
+    JSON.parse(
+      localStorage.getItem("seenNotifIds") || "[]"
+    );
+
     const idStr = String(id);
-    if (!seen.includes(idStr)) {
+
+    if(!seen.includes(idStr)){
+
       seen.push(idStr);
-      localStorage.setItem('seenNotifIds', JSON.stringify(seen));
+
+      localStorage.setItem(
+        "seenNotifIds",
+        JSON.stringify(seen)
+      );
+
     }
-  } catch(e) {}
+
+    await fetch(
+
+      `${window.API}/notifications/read/${id}`,
+
+      {
+        method:"POST"
+      }
+
+    );
+
+  }
+  catch(e){
+
+    console.log(e);
+
+  }
+
 }
 
 // ─── SHOW POPUP ───────────────────────────────────────────────────────────────
@@ -121,44 +151,41 @@ function npHidePopup() {
   }, 600);
 }
 
-async function npPopupClick(){
+async function npPopupClick() {
 
-    npHidePopup();
+  npHidePopup();
 
-    if(!currentPopupPdfId)
-        return;
+  if (!currentPopupPdfId) {
+    window.location.href = "home.html";
+    return;
+  }
 
-    try{
+  try {
 
-        const response =
-        await fetch(
-            `${window.API}/pdfs/${currentPopupPdfId}`
-        );
+    const res =
+    await fetch(
+      `${window.API}/pdfs/${currentPopupPdfId}`
+    );
 
-        const pdf =
-        await response.json();
+    const pdf =
+    await res.json();
 
-        console.log(pdf);
+    if(pdf && pdf.pdf_link){
 
-        if(pdf && pdf.pdf_link){
-
-            await fetch(
-                `${window.API}/pdfs/${currentPopupPdfId}/view`,
-                {
-                    method:"POST"
-                }
-            );
-
-            window.location.href =
-            `reader.html?pdf_id=${pdf.id}&file=${pdf.pdf_link}&page=1`;
-
-        }
-
-    }catch(err){
-
-        console.log(err);
+      window.location.href =
+      `reader.html?pdf_id=${pdf.id}&file=${encodeURIComponent(pdf.pdf_link)}&page=1`;
 
     }
+
+  }
+  catch(err){
+
+    console.log(err);
+
+    window.location.href =
+    "home.html";
+
+  }
 
 }
 
@@ -202,20 +229,6 @@ const npMotivational = [
 
 // ─── MAIN INIT ────────────────────────────────────────────────────────────────
 async function npInit() {
-  const userId =
-localStorage.getItem("userId");
-
-if(userId){
-
-    await fetch(
-        `${window.API}/notifications/check-reading/${userId}`
-    );
-
-    await fetch(
-        `${window.API}/notifications/check-return/${userId}`
-    );
-
-}
   if (localStorage.getItem('notifMuted') === 'true') return;
 
   try {
@@ -227,31 +240,14 @@ if(userId){
     const notifications = await notifRes.json();
     const readingList   = await readingRes.json();
 
-    const userId =
-localStorage.getItem("userId");
+    // Get seen IDs
+    const seenIds   = JSON.parse(localStorage.getItem('seenNotifIds') || '[]');
 
-const badgeRes =
-await fetch(
-`${window.API}/notifications/unread-count/${userId}`
-);
+    // Filter unseen notifications
+    const newNotifs = notifications.filter(n => !seenIds.includes(String(n.id)));
 
-const badgeData =
-await badgeRes.json();
-
-npUpdateBadge(
-    badgeData.count
-);
-
-// Keep this for popup logic
-const seenIds =
-JSON.parse(
-    localStorage.getItem('seenNotifIds') || '[]'
-);
-
-const newNotifs =
-notifications.filter(
-    n => !seenIds.includes(String(n.id))
-);
+    // Update bell badge
+    npUpdateBadge(newNotifs.length);
 
     const lastShown = parseInt(localStorage.getItem('lastNotifShown') || '0');
     const now       = Date.now();

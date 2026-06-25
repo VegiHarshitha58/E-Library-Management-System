@@ -7,12 +7,6 @@ window.addEventListener("load", () => {
     document.getElementById("email").value =
         localStorage.getItem("regEmail") || "";
 
-    document.getElementById("password").value =
-        localStorage.getItem("regPassword") || "";
-
-    document.getElementById("confirmPassword").value =
-        localStorage.getItem("regConfirmPassword") || "";
-
 });
 
 // Save while typing
@@ -31,26 +25,6 @@ document.getElementById("email")
 
     localStorage.setItem(
         "regEmail",
-        this.value
-    );
-
-});
-
-document.getElementById("password")
-.addEventListener("input", function() {
-
-    localStorage.setItem(
-        "regPassword",
-        this.value
-    );
-
-});
-
-document.getElementById("confirmPassword")
-.addEventListener("input", function() {
-
-    localStorage.setItem(
-        "regConfirmPassword",
         this.value
     );
 
@@ -144,8 +118,8 @@ document.getElementById("registerForm")
 
     /* DOMAIN VALIDATION */
 
-    const allowedDomain =
-    "@steelplant.in";
+const allowedDomains =
+   "@steelplant.in";
 
     if(!email.toLowerCase().endsWith(allowedDomain)){
 

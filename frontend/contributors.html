@@ -11,6 +11,67 @@
 <link rel="stylesheet"
 href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
+<style>
+.steps-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px 0;
+}
+
+.step-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.step-card {
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left !important;
+  padding: 16px 20px !important;
+}
+
+.step-card:hover {
+  background: #444;
+  transform: translateX(6px);
+}
+
+.step-card.active {
+  background: #00c8ff22;
+  border-left: 4px solid #00c8ff;
+  color: #00c8ff;
+}
+
+.step-detail {
+  display: none;
+  background: #1a1a1a;
+  border-left: 4px solid #00c8ff;
+  padding: 16px 20px;
+  border-radius: 0 0 10px 10px;
+  color: #ccc;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  animation: slideDown 0.3s ease;
+}
+
+.step-detail.show { display: block; }
+
+.step-detail pre {
+  background: #111;
+  padding: 10px 14px;
+  border-radius: 6px;
+  color: #46d369;
+  font-size: 0.85rem;
+  margin-top: 8px;
+  overflow-x: auto;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+</style>
+
 </head>
 
 <body>
@@ -116,26 +177,111 @@ Growing Community
 </section>
 
 <section class="top-section">
-
 <h2>🚀 How To Contribute</h2>
-<div class="top-card">
-Fork Repository
-</div>
 
-<div class="top-card">
-Create Branch
-</div>
+<div class="steps-wrapper">
 
-<div class="top-card">
-Make Changes
-</div>
+  <div class="step-item">
+    <div class="top-card step-card" onclick="toggleStep('fork', this)">
+      🍴 Fork Repository
+    </div>
+    <div class="step-detail" id="step-fork">
+      <p>Create your own copy of the E-Library project by clicking the Fork button 
+on GitHub. Forking creates a personal copy of the repository under your 
+GitHub account, so you can freely experiment and make changes without 
+affecting the original project. Think of it as your own playground! 🎮<br><br>
 
-<div class="top-card">
-Submit Pull Request
-</div>
+Steps:<br>
+1. Go to the E-Library GitHub repository<br>
+2. Click the "Fork" button at the top right corner<br>
+3. GitHub will create a copy under your account<br>
+4. You now have your own version to work on!</p>
+    </div>
+  </div>
+
+  <div class="step-item">
+    <div class="top-card step-card" onclick="toggleStep('branch', this)">
+      🌿 Create Branch
+    </div>
+    <div class="step-detail" id="step-branch">
+      <p>Never work directly on the main branch! Always create a new branch 
+for every feature or bug fix you work on. This keeps your changes 
+organized and makes it easier for maintainers to review your work.<br><br>
+
+
+Steps:<br>
+1. Clone your forked repo to your computer:<br>
+git clone https://github.com/your-username/e-library.git<br>
+<br>
+2. Navigate into the project:<br>
+   cd e-library<br>
+<br>
+3. Create and switch to a new branch:<br>
+   git checkout -b feature/your-feature-name<br>
+<br>
+   Examples:<br>
+   git checkout -b feature/dark-mode<br>
+   git checkout -b fix/search-bug<br>
+   git checkout -b docs/readme-update</p>
+      
+    </div>
+  </div>
+
+  <div class="step-item">
+    <div class="top-card step-card" onclick="toggleStep('changes', this)">
+      💻 Make Changes
+    </div>
+    <div class="step-detail" id="step-changes">
+      <p>Now the fun part — start coding! Implement your feature, fix a bug, 
+improve the UI, or update the documentation. Make sure your changes 
+are clean, well-tested, and follow the project's coding style.<br>
+<br>
+Steps:<br>
+1. Make your changes in VS Code or your preferred editor<br>
+2. Test everything thoroughly before committing<br>
+3. Stage your changes:
+   git add .<br>
+
+4. Commit with a clear message:
+   git commit -m "Add: dark mode toggle feature"<br>
+<br>
+   Good commit message examples:<br>
+   ✅ "Fix: search bar not working on mobile"<br>
+   ✅ "Add: reading progress bar feature"<br>
+   ✅ "Update: improved PDF card design"<br>
+   ❌ "fixed stuff"<br>
+   ❌ "changes"</p>
+    </div>
+  </div>
+
+  <div class="step-item">
+    <div class="top-card step-card" onclick="toggleStep('pr', this)">
+      🚀 Submit Pull Request
+    </div>
+    <div class="step-detail" id="step-pr">
+<p>You're almost there! Push your branch to GitHub and open a Pull Request 
+so the maintainers can review your code and merge it into the project.<br>
+<br>
+Steps:<br>
+1. Push your branch to GitHub:<br>
+   git push origin feature/your-feature-name<br>
+<br>
+2. Go to the original E-Library repository on GitHub<br>
+3. Click "Compare & pull request"<br>
+4. Add a clear title and description of what you changed<br>
+5. Submit the Pull Request!<br>
+<br>
+Tips for a good PR:<br>
+⭐ Describe what you changed and why<br>
+⭐ Add screenshots if you changed the UI<br>
+⭐ Keep it focused — one feature per PR<br>
+⭐ Be patient — maintainers will review and give feedback<br>
+⭐ Respond to comments and make requested changes</p>        
+    
+    </div>
+  </div>
 
 </div>
-
 </section>
 <div id="contributorModal" class="modal">
 
@@ -149,6 +295,21 @@ Submit Pull Request
 </div>
 
 </div>
+
+</div>
+<div id="stepModal" class="modal">
+
+    <div class="modal-content">
+
+        <span class="close-btn"
+        onclick="closeStepModal()">
+        &times;
+        </span>
+
+        <div id="stepBody">
+        </div>
+
+    </div>
 
 </div>
 <script>
@@ -338,6 +499,85 @@ document.getElementById("contributorModal").style.display =
 "block";
 
 }
+const contributionSteps = {
+
+fork: `
+<h2>🍴 Fork Repository</h2>
+
+<p>
+Create your own copy of the project by clicking the
+Fork button on GitHub.
+</p>
+
+<p>
+This allows you to work independently without
+affecting the original repository.
+</p>
+`,
+
+branch: `
+<h2>🌿 Create Branch</h2>
+
+<p>
+Create a new branch before making changes.
+</p>
+
+<p>
+Example:
+</p>
+
+<pre>
+git checkout -b feature-name
+</pre>
+`,
+
+changes: `
+<h2>💻 Make Changes</h2>
+
+<p>
+Implement your feature, fix bugs, improve UI,
+or update documentation.
+</p>
+
+<p>
+Test everything before committing.
+</p>
+`,
+
+pr: `
+<h2>🚀 Submit Pull Request</h2>
+
+<p>
+Push your changes to GitHub and create a Pull Request.
+</p>
+
+<p>
+Project maintainers will review your code and
+merge it if approved.
+</p>
+`
+};
+function toggleStep(step, card) {
+  const detail = document.getElementById('step-' + step);
+  const isOpen = detail.classList.contains('show');
+
+  // Close all steps
+  document.querySelectorAll('.step-detail').forEach(d => d.classList.remove('show'));
+  document.querySelectorAll('.step-card').forEach(c => c.classList.remove('active'));
+
+  // Open clicked one if it was closed
+  if (!isOpen) {
+    detail.classList.add('show');
+    card.classList.add('active');
+  }
+}
+
+function closeStepModal(){
+
+document.getElementById("stepModal").style.display =
+"none";
+
+}
 
 function closeModal(){
 
@@ -347,6 +587,6 @@ document.getElementById("contributorModal").style.display =
 }
 
 </script>
-<script src="notifications-popup.js"></script>
+<script src="theme.js"></script>
 </body>
 </html>
