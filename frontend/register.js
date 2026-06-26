@@ -118,28 +118,34 @@ document.getElementById("registerForm")
 
     /* DOMAIN VALIDATION */
 
-const allowedDomains =
-   "@steelplant.in";
+const emailLower = email.toLowerCase();
 
-    if(!email.toLowerCase().endsWith(allowedDomain)){
+const validDomain =
+    emailLower.endsWith("@gmail.com") ||
+    emailLower.endsWith("@outlook.com") ||
+    emailLower.endsWith("@yahoo.com") ||
+    emailLower.endsWith("@hotmail.com") ||
+    emailLower.endsWith("@icloud.com") ||
+    emailLower.endsWith(".edu") ||
+    emailLower.endsWith(".edu.in") ||
+    emailLower.endsWith(".ac.in");
 
-        message.style.color =
-        "#f59e0b";
+if (!validDomain) {
 
-        message.style.background =
-        "rgba(245,158,11,0.15)";
+    message.style.color = "#f59e0b";
 
-        message.innerText =
-        "Please use an approved organization email address";
+    message.style.background = "rgba(245,158,11,0.15)";
 
-        registerBtn.innerText =
-        "Create Account";
+   
+    message.innerText =
+"Please use a supported personal or educational email address.";
 
-        registerBtn.disabled =
-        false;
+    registerBtn.innerText = "Create Account";
 
-        return;
-    }
+    registerBtn.disabled = false;
+
+    return;
+}
 
     /* PASSWORD MATCH */
 

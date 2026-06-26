@@ -247,11 +247,11 @@ async (err, result) => {
 
             if (result.length === 0) {
 
-                return res.json({
-                    message: "User Not Found"
-                });
+    return res.json({
+        message: "Incorrect email or password"
+    });
 
-            }
+}
 
             const user = result[0];
 
@@ -279,9 +279,8 @@ if(match) {
             }
 
             return res.json({
-                message: "Incorrect Password"
-            });
-
+    message: "Incorrect email or password"
+});
         }
 
     );

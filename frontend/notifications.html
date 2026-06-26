@@ -537,12 +537,12 @@ async function loadNotifications() {
   const container = document.getElementById('notificationsContainer');
 const userId = localStorage.getItem("userId");
 
-await fetch(
+/*await fetch(
   `${API}/notifications/generate-reading-list-reminders/${userId}`,
   {
     method: "POST"
   }
-);
+);*/
   // Check cleared state
   const isCleared   = localStorage.getItem('notifCleared') === 'true';
   const clearedTime = localStorage.getItem('notifClearedTime');
@@ -574,13 +574,8 @@ await fetch(
   }
 
   try {
-    const [notifRes, readingRes] = await Promise.all([
-      fetch(`${API}/notifications`),
-      fetch(`${API}/readinglist`)
-    ]);
-
-    const notifications = await notifRes.json();
-    const readingList   = await readingRes.json();
+  const notifRes = await fetch(`${API}/notifications/${userId}`);
+const notifications = await notifRes.json();
 
     // ── Sort: newest first ────────────────────────────────────────────────
     notifications.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));

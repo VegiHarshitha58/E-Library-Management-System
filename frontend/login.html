@@ -223,7 +223,7 @@ body{
 type="email"
 id="username"
 autocomplete="email"
-placeholder="Enter your @steelplant.in email"
+placeholder="Email Address"
 required>
 
 </div>
@@ -400,23 +400,14 @@ document.getElementById("loginForm")
                     username
                 );
 
-                localStorage.setItem(
-                    "rememberedPassword",
-                    password
-                );
-
             }else{
 
                 localStorage.removeItem(
                     "rememberedEmail"
                 );
 
-                localStorage.removeItem(
-                    "rememberedPassword"
-                );
-
             }
-
+document.getElementById("password").value = "";
             setTimeout(() => {
 
                 window.location.href =
@@ -466,10 +457,7 @@ window.onload = function(){
         "rememberedEmail"
     );
 
-    const savedPassword =
-    localStorage.getItem(
-        "rememberedPassword"
-    );
+    
 
     if(savedEmail){
 
@@ -480,14 +468,6 @@ window.onload = function(){
         document.getElementById(
             "rememberMe"
         ).checked = true;
-
-    }
-
-    if(savedPassword){
-
-        document.getElementById(
-            "password"
-        ).value = savedPassword;
 
     }
 

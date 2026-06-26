@@ -1,3 +1,12 @@
+
+:root{
+    --bg:#0d0d0d;
+    --surface:#111111;
+    --surface2:#1f1f1f;
+    --text:#ffffff;
+    --border:#333333;
+    --muted:#888888;
+}
 *{
     margin:0;
     padding:0;
@@ -5,9 +14,9 @@
 }
 
 body{
-    background:#0d0d0d;
-    color:white;
-    font-family:Arial, sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    font-family:Arial,sans-serif;
     overflow-x:hidden;
 }
 
@@ -18,7 +27,7 @@ body{
     justify-content:space-between;
     align-items:center;
     padding:20px 40px;
-    background:black;
+    background:var(--surface);
 }
 
 .logo{
@@ -29,7 +38,7 @@ body{
 
 .nav-links a{
     text-decoration:none;
-    color:white;
+color:var(--text);
     margin:0 15px;
     transition:0.3s;
 }
@@ -65,7 +74,7 @@ body{
 
 .book-card:hover{
     transform:translateY(-5px);
-    box-shadow:0 0 15px rgba(255,255,255,0.1);
+   box-shadow:0 0 15px rgba(0,0,0,0.15);
 }
 
 /* REMOVE BUTTON */
@@ -83,7 +92,7 @@ body{
 
     background:rgba(255,255,255,0.08);
 
-    color:white;
+   color:var(--text);
 
     font-size:18px;
     font-weight:bold;
@@ -126,7 +135,7 @@ body{
 /* TEXT */
 .book-card{
 
-    background:#181818;
+    background:var(--surface2);
 
     padding:20px;
 
@@ -166,7 +175,7 @@ body{
 }
 .book-card p{
 
-    color:#9a9a9a;
+    color:var(--muted);
 
     margin-top:0;
 

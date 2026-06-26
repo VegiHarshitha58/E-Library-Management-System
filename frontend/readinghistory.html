@@ -5,20 +5,46 @@
 
 <style>
 
+
+
+
+
+   
+:root{
+    --bg:#0d0d0d;
+    --surface:#111111;
+    --surface2:#1f1f1f;
+    --text:#ffffff;
+    --border:#333333;
+    --muted:#d1d5db;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
 body{
-    background:#111;
-    color:white;
-    font-family:Arial;
+    background:var(--bg);
+    color:var(--text);
+    font-family:Arial,sans-serif;
     padding:30px;
 }
+
+h1{
+    margin-bottom:20px;
+    color:var(--text);
+}
+
 .date{
     color:orange;
 }
+
 .history-left{
-
     flex-shrink:0;
-
 }
+
 .card{
 
     display:flex;
@@ -27,7 +53,7 @@ body{
 
     align-items:flex-start;
 
-    background:#222;
+    background:var(--surface2);
 
     padding:22px;
 
@@ -35,9 +61,9 @@ body{
 
     border-radius:12px;
 
-    border:1px solid #303030;
+    border:1px solid var(--border);
 
-    transition:0.25s;
+    transition:.25s;
 
 }
 
@@ -55,7 +81,7 @@ body{
 
     height:90px;
 
-    background:#2a2a2a;
+    background:var(--border);
 
     border-radius:8px;
 
@@ -74,11 +100,14 @@ body{
     flex:1;
 
 }
+
 .history-right h3{
 
     margin-bottom:12px;
 
     font-size:22px;
+
+    color:var(--text);
 
 }
 
@@ -86,18 +115,19 @@ body{
 
     margin:10px 0;
 
-    color:#ddd;
+    color:var(--muted);
 
     line-height:1.6;
 
 }
+
 .progress-bg{
 
     width:100%;
 
     height:8px;
 
-    background:#333;
+    background:var(--border);
 
     border-radius:10px;
 
@@ -116,9 +146,14 @@ body{
     );
 
 }
+
 .resume-btn{
 
-    background:linear-gradient(135deg,#7a1f3d,#9b274d);
+    background:linear-gradient(
+        135deg,
+        #7a1f3d,
+        #9b274d
+    );
 
     color:white;
 
@@ -134,7 +169,7 @@ body{
 
     cursor:pointer;
 
-    transition:0.2s;
+    transition:.2s;
 
 }
 
@@ -145,13 +180,14 @@ body{
     box-shadow:0 6px 18px rgba(122,31,61,.35);
 
 }
+
 .back-btn{
 
     background:none;
 
     border:none;
 
-    color:#d1d5db;
+    color:var(--muted);
 
     font-size:16px;
 
@@ -165,7 +201,7 @@ body{
 
 .back-btn:hover{
 
-    color:white;
+    color:var(--text);
 
 }
 
@@ -204,6 +240,8 @@ async function loadHistory() {
 
         rememberLastPageEnabled =
         settings.remember_last_page == 1;
+        const showProgressBar =
+settings.reading_progress_bar == 1;
 
         // Load history
         const historyRes =
@@ -291,30 +329,33 @@ data.forEach(item => {
         <p>
             📖 Page ${item.last_page} of ${item.total_pages}
         </p>
+${showProgressBar ? `
 
-        <div style="margin:12px 0;">
+<div style="margin:12px 0;">
 
-            <div style="
-                display:flex;
-                justify-content:space-between;
-                margin-bottom:6px;
-                font-size:14px;
-            ">
-                <span>📊 Progress</span>
-                <span>${item.progress}%</span>
-            </div>
+    <div style="
+        display:flex;
+        justify-content:space-between;
+        margin-bottom:6px;
+        font-size:14px;
+    ">
+        <span>📊 Progress</span>
+        <span>${item.progress}%</span>
+    </div>
 
-            <div class="progress-bg">
+    <div class="progress-bg">
 
-                <div
-                    class="progress-fill"
-                    style="width:${item.progress}%;">
-                </div>
-
-            </div>
-
+        <div
+            class="progress-fill"
+            style="width:${item.progress}%;">
         </div>
 
+    </div>
+
+</div>
+
+` : ""}
+        
         <p class="date">
             📅 Last Read:
             ${new Date(item.last_read).toLocaleDateString(

@@ -16,7 +16,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
     --surface3: #252525;
     --accent: #e50914;
     --accent2: #f5a623;
-    --text: #fffffff;
+    --text: #ffffff;
     --text2: #aaaaaa;
     --text3: #666666;
     --sidebar-w: 240px;
@@ -671,22 +671,13 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
 .view-all-notifications:hover{
     background:#222;
 }
-.dark-mode{
-    background:#0d0d0d;
-    color:white;
-}
-
-.light-mode{
-    background:white;
-    color:black;
-}
 .welcome-message h2{
     font-size: 24px;
     margin-bottom: 6px;
 }
 
 .welcome-message p{
-    color: #888;
+  color:var(--text2);
     font-size: 14px;
 }
 .fav-btn{
@@ -792,6 +783,19 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
 }
 .fav-btn{
     z-index:20;
+}
+body.light-mode{
+
+    --bg:#f5f5f5;
+    --surface:#ffffff;
+    --surface2:#f3f4f6;
+    --surface3:#ececec;
+
+    --text:#111827;
+    --text2:#6b7280;
+    --text3:#9ca3af;
+
+    --border:#d1d5db;
 }
 </style>
 </head>
@@ -1148,6 +1152,7 @@ new Set();
 function makeCard(book, type) {
   const card = document.createElement('div');
   card.className = 'book-card card-wide';
+  card.dataset.id = book.id;
   const ph = document.createElement('div');
   ph.className = 'book-placeholder';
   ph.style.background = `linear-gradient(145deg, ${book.color[0]}, ${book.color[1]})`;
@@ -2055,6 +2060,34 @@ async function addToFavorites(book){
     }
 
 }
+function refreshFavoriteIcons(pdfId){
+
+    document.querySelectorAll(".fav-btn").forEach(btn=>{
+
+        const card = btn.closest(".book-card");
+
+        if(Number(card.dataset.id) === Number(pdfId)){
+
+            const icon = btn.querySelector("i");
+
+            if(favoriteIds.includes(Number(pdfId))){
+
+                icon.classList.remove("fa-regular");
+                icon.classList.add("fa-solid");
+
+            }else{
+
+                icon.classList.remove("fa-solid");
+                icon.classList.add("fa-regular");
+
+            }
+
+        }
+
+    });
+
+}
+refreshFavoriteIcons(book.id);
 async function loadFavoriteIds(){
 
     const userId =
@@ -2238,6 +2271,7 @@ viewAll.onclick = () => {
 
 panel.appendChild(viewAll);
 }
+loadNotifications();
 function toggleNotifications() {
 
     const panel = document.getElementById("notificationPanel");

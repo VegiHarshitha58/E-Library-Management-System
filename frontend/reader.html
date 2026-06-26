@@ -13,17 +13,30 @@ body {
     color: white;
 }
 
-.topbar {
-    height: 55px;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    padding: 0 15px;
-    justify-content: space-between;
-    
-}
 
+.topbar {
+
+    position: sticky;
+
+    top: 0;
+
+    z-index: 1000;
+
+    height: 55px;
+
+    background: var(--surface);
+
+    border-bottom: 1px solid var(--border);
+
+    display: flex;
+
+    align-items: center;
+
+    padding: 0 15px;
+
+    justify-content: space-between;
+
+}
 .back-btn {
     background: #e50914;
     border: none;
@@ -38,12 +51,81 @@ iframe {
     height: calc(100vh - 55px);
     border: none;
 }
+.bookmark-item{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    padding:8px;
+
+    margin-bottom:8px;
+
+    background:#374151;
+
+    border-radius:6px;
+
+}
+
+.bookmark-page{
+
+    cursor:pointer;
+
+    flex:1;
+
+}
+
+.delete-bookmark{
+
+    border:none;
+
+    background:#ef4444;
+
+    color:white;
+
+    border-radius:4px;
+
+    padding:4px 8px;
+
+    cursor:pointer;
+
+}
 </style>
 </head>
 
 <body>
 
 <div class="topbar">
+    <div
+id="bookmarkPanel"
+style="
+display:none;
+position:fixed;
+top:65px;
+right:20px;
+width:220px;
+max-height:300px;
+overflow-y:auto;
+background:#1f2937;
+border-radius:8px;
+padding:10px;
+box-shadow:0 6px 15px rgba(0,0,0,.4);
+z-index:2000;
+">
+
+<h3 style="margin-top:0;">
+Bookmarks
+</h3>
+
+<div id="bookmarkList">
+
+No bookmarks yet.
+
+</div>
+
+</div>
     <button class="back-btn" onclick="goBack()">← Back</button>
     <div id="title">PDF Reader</div>
 
@@ -77,6 +159,22 @@ iframe {
         ">
         ⭐ Bookmark
     </button>
+    <button
+id="bookmarksBtn"
+onclick="toggleBookmarks()"
+style="
+background:#4f46e5;
+border:none;
+padding:6px 10px;
+border-radius:4px;
+color:white;
+cursor:pointer;
+font-weight:bold;
+">
+
+📑 Bookmarks
+
+</button>
     <button
 id="autoBtn"
 onclick="toggleAutoScroll()"
@@ -325,7 +423,22 @@ function goBack() {
     history.back();
 
 }
+function toggleBookmarks(){
 
+    const panel =
+    document.getElementById("bookmarkPanel");
+
+    if(panel.style.display === "block"){
+
+        panel.style.display = "none";
+
+    }else{
+
+        panel.style.display = "block";
+
+    }
+
+}
 function saveBookmark() {
 
     if (!enableBookmark) {
@@ -342,15 +455,115 @@ document.elementFromPoint(
     120
 )?.dataset?.page || currentPage;
 
+let bookmarks =
+JSON.parse(
+localStorage.getItem(
+"bookmark_pdf_" + pdfId
+)) || [];
+
+if(!bookmarks.includes(Number(visiblePage))){
+
+    bookmarks.push(Number(visiblePage));
+
+    bookmarks.sort((a,b)=>a-b);
+
+}
+
 localStorage.setItem(
-    "bookmark_pdf_" + pdfId,
-    visiblePage
+
+"bookmark_pdf_" + pdfId,
+
+JSON.stringify(bookmarks)
+
 );
+
+loadBookmarks();
 
     document.getElementById("progress").innerText =
 "⭐ Bookmarked Page " + visiblePage + " (Saved)";
 
 showToast("⭐ Bookmark saved at Page " + visiblePage);
+}
+function loadBookmarks(){
+
+    const list =
+    document.getElementById("bookmarkList");
+
+    let bookmarks =
+    JSON.parse(
+        localStorage.getItem(
+            "bookmark_pdf_" + pdfId
+        )
+    ) || [];
+
+    if(bookmarks.length === 0){
+
+        list.innerHTML =
+        "<p>No bookmarks yet.</p>";
+
+        return;
+
+    }
+
+    list.innerHTML = "";
+
+    bookmarks.forEach((page,index)=>{
+
+        const item =
+        document.createElement("div");
+
+        item.className = "bookmark-item";
+
+        item.innerHTML = `
+            <span class="bookmark-page">
+                ⭐ Page ${page}
+            </span>
+
+            <button
+                class="delete-bookmark">
+                ✖
+            </button>
+        `;
+
+        item.querySelector(".bookmark-page").onclick = () => {
+
+            scrollToPage(page);
+
+        };
+
+        item.querySelector(".delete-bookmark").onclick = (e) => {
+
+            e.stopPropagation();
+
+            deleteBookmark(index);
+
+        };
+
+        list.appendChild(item);
+
+    });
+
+}
+function deleteBookmark(index){
+
+    let bookmarks =
+    JSON.parse(
+        localStorage.getItem(
+            "bookmark_pdf_" + pdfId
+        )
+    ) || [];
+
+    bookmarks.splice(index,1);
+
+    localStorage.setItem(
+        "bookmark_pdf_" + pdfId,
+        JSON.stringify(bookmarks)
+    );
+
+    loadBookmarks();
+
+    showToast("Bookmark Removed 🗑️");
+
 }
 let pdfDoc = null;
 let totalPages = 0;
@@ -432,6 +645,7 @@ settings.reading_progress_bar == 1
 
   
 await renderAllPages();
+loadBookmarks();
 if(settings.continuous_scrolling == 1){
 
     speedControl.style.display = "flex";

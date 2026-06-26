@@ -1,3 +1,12 @@
+:root{
+    --bg:#141414;
+    --surface:#111111;
+    --surface2:#222222;
+    --card-hover:#2c2c2c;
+    --text:#ffffff;
+    --text-secondary:#aaaaaa;
+    --border:#333333;
+}
 *{
     margin:0;
     padding:0;
@@ -6,8 +15,9 @@
 }
 
 body{
-    background:#141414;
-    color:white;
+    background:var(--bg);
+    color:var(--text);
+    transition:.3s;
 }
 
 header{
@@ -15,7 +25,10 @@ header{
     justify-content:space-between;
     align-items:center;
     padding:20px 40px;
-    background:black;
+    background:var(--surface);
+    position:sticky;
+    top:0;
+    z-index:100;
 }
 
 .logo{
@@ -25,7 +38,7 @@ header{
 }
 
 nav a{
-    color:white;
+    color:var(--text);
     text-decoration:none;
     margin:0 15px;
 }
@@ -147,7 +160,7 @@ nav a:hover{
 
     height:240px;
 
-    background:#222;
+    background:var(--card);
 
     padding:20px;
 
@@ -160,18 +173,18 @@ nav a:hover{
     flex-direction:column;
 
     justify-content:space-between;
-        position:relative;
+
+    position:relative;
 
     cursor:pointer;
-
-
 }
 
 .pdf-card:hover{
 
     transform:translateY(-5px);
 
-    background:#2c2c2c;
+    background:var(--card-hover);
+box-shadow:0 8px 25px rgba(0,0,0,.35);
 
     box-shadow:0 8px 25px rgba(0,0,0,.35);
 }
@@ -205,6 +218,10 @@ nav a:hover{
     position:relative;
     overflow:hidden;
 }
+.pdf-card p{
+    color:var(--text-secondary);
+    margin-top:8px;
+}
 
 .arrow{
 
@@ -233,11 +250,11 @@ nav a:hover{
 
     font-weight:300;
 
-    color:white;
+    color:var(--text);
 
     background:linear-gradient(
         90deg,
-        #141414 0%,
+        var(--bg) 0%,
         transparent 100%
     );
 }
@@ -252,7 +269,7 @@ nav a:hover{
 
     background:linear-gradient(
         270deg,
-        #141414 0%,
+        var(--bg) 0%,
         transparent 100%
     );
 }
@@ -263,12 +280,6 @@ nav a:hover{
 
 .arrow:hover{
     color:#00c8ff;
-}
-/* CARD POSITIONING */
-
-.pdf-card{
-    position:relative;
-    cursor:pointer;
 }
 
 /* NEW BADGE */
@@ -295,7 +306,6 @@ nav a:hover{
     z-index:2;
 }
 
-
 .fav-btn{
 
     position:absolute;
@@ -319,26 +329,21 @@ nav a:hover{
     cursor:pointer;
 
     transition:.2s;
-
 }
+
 .fav-btn i{
 
     font-size:16px;
 
     transition:.2s;
-
 }
 
 .fav-btn .fa-regular{
-
-    color:white;
-
+    color:var(--text);
 }
 
 .fav-btn .fa-solid{
-
     color:#ff3b5c;
-
 }
 
 .fav-btn:hover{
@@ -346,8 +351,8 @@ nav a:hover{
     background:rgba(255,255,255,0.18);
 
     transform:scale(1.08);
-
 }
+
 /* READING LIST BUTTON */
 
 .list-btn{
@@ -373,25 +378,18 @@ nav a:hover{
     cursor:pointer;
 
     transition:.2s;
-
 }
 
 .list-btn i{
-
     font-size:16px;
-
 }
 
 .list-btn .fa-regular{
-
-    color:white;
-
+    color:var(--text);
 }
 
 .list-btn .fa-solid{
-
     color:#ffd54f;
-
 }
 
 .list-btn:hover{
@@ -399,9 +397,7 @@ nav a:hover{
     background:rgba(255,255,255,0.18);
 
     transform:scale(1.08);
-
 }
-
 
 /* TITLE */
 
@@ -422,14 +418,102 @@ nav a:hover{
     overflow:hidden;
 
     min-height:50px;
-
 }
 
 /* CONTRIBUTOR */
 
 .pdf-card p{
 
-    color:#aaa;
+    color:var(--text-secondary);
 
     margin-top:8px;
+}
+
+/* ---------- LIGHT MODE ---------- */
+/* ---------- LIGHT MODE ---------- */
+
+/* ---------- LIGHT MODE ---------- */
+
+body.light-mode{
+
+    --bg:#f5f5f5;
+    --surface:#ffffff;
+    --surface2:#ffffff;
+    --card-hover:#f3f4f6;
+
+    --text:#111827;
+    --text-secondary:#6b7280;
+
+    --border:#d1d5db;
+}
+
+/* Header */
+
+body.light-mode header{
+    border-bottom:1px solid var(--border);
+}
+
+/* Hero */
+
+body.light-mode .hero{
+
+    background-image:
+    linear-gradient(
+        to right,
+        rgba(255,255,255,.72),
+        rgba(255,255,255,.35)
+    ),
+    url("./images/lotus-banner.jpeg");
+
+}
+
+/* Cards */
+
+body.light-mode .pdf-card{
+    border:1px solid var(--border);
+}
+
+body.light-mode .pdf-card:hover{
+    box-shadow:0 10px 25px rgba(0,0,0,.12);
+}
+
+/* Buttons */
+
+body.light-mode .download-btn{
+    background:#111827;
+    color:white;
+}
+
+body.light-mode .read-btn{
+    color:white;
+}
+
+/* Favourite Button */
+
+body.light-mode .fav-btn{
+    background:#ececec;
+}
+
+body.light-mode .fav-btn:hover{
+    background:#dcdcdc;
+}
+
+/* Reading List Button */
+
+body.light-mode .list-btn{
+    background:#ececec;
+}
+
+body.light-mode .list-btn:hover{
+    background:#dcdcdc;
+}
+
+/* Arrows */
+
+body.light-mode .arrow{
+    color:#111827;
+}
+
+body.light-mode .arrow:hover{
+    color:#00c8ff;
 }
