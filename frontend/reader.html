@@ -77,31 +77,49 @@ iframe {
         ">
         ⭐ Bookmark
     </button>
+    <button
+id="autoBtn"
+onclick="toggleAutoScroll()"
+style="
+background:#10b981;
+border:none;
+padding:6px 10px;
+border-radius:4px;
+color:white;
+cursor:pointer;
+font-weight:bold;
+">
+▶ Auto
+</button>
+ <div id="speedControl" style="display:none; align-items:center; gap:8px;">
 
+    <label style="font-size:14px;">Speed</label>
+
+    <input
+        type="range"
+        id="speedSlider"
+        min="1"
+        max="10"
+        value="3"
+    >
+
+    <span id="speedValue">3x</span>
+
+</div>
 </div>
 </button>
     <div id="progress">Page 1</div>
 </div>
-
-<div style="text-align:center; margin-top:10px;">
-    <button onclick="prevPage()">⬅ Prev</button>
-
-    <span id="pageInfo">
-        Page 1 / 1
-    </span>
-
-    <button onclick="nextPage()">Next ➡</button>
-</div>
-
-<canvas
-    id="pdfCanvas"
+<div
+    id="pdfContainer"
     style="
-        display:block;
-        margin:auto;
-        background:white;
-        margin-top:10px;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        gap:20px;
+        margin-top:15px;
     ">
-</canvas>
+</div>
 
 <script>
 
@@ -136,10 +154,8 @@ fetch("http://localhost:5000/reading-history", {
     let enableBookmark = true;
 
 
-    
+   
     // ⭐ IMPORTANT: after settings load, load bookmark/resume
-    loadSavedPage();
-
 /* -----------------------------
    LOAD SETTINGS (resume mode)
 ------------------------------*/
@@ -164,7 +180,45 @@ enableBookmark = data.enable_bookmarks == 1;
 });
             
 
-        
+      let toastTimer;
+
+function showToast(message, color = "#22c55e") {
+
+    let toast = document.getElementById("toast");
+
+    if (!toast) {
+
+        toast = document.createElement("div");
+
+        toast.id = "toast";
+
+        toast.style.position = "fixed";
+        toast.style.bottom = "20px";
+        toast.style.right = "20px";
+        toast.style.background = color;
+        toast.style.color = "white";
+        toast.style.padding = "12px 18px";
+        toast.style.borderRadius = "10px";
+        toast.style.fontWeight = "600";
+        toast.style.zIndex = "9999";
+        toast.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
+
+        document.body.appendChild(toast);
+    }
+
+    toast.style.background = color;
+    toast.innerText = message;
+    toast.style.display = "block";
+
+    clearTimeout(toastTimer);
+
+    toastTimer = setTimeout(() => {
+
+        toast.style.display = "none";
+
+    },2500);
+
+}  
 
 /* -----------------------------
    SAVE PROGRESS (REAL)
@@ -209,65 +263,50 @@ async function saveProgress() {
 
 }
 
-function loadSavedPage() {
+ async function loadSavedPage(){
 
-    fetch(
+    const settingsRes =
+    await fetch(
         `http://localhost:5000/get-settings/${userId}`
-    )
-    .then(res => res.json())
-    .then(settings => {
+    );
 
-        // If bookmarks enabled check bookmark first
-        if(settings.enable_bookmarks == 1){
+    const settings =
+    await settingsRes.json();
 
-            let savedBookmark =
-            localStorage.getItem(
-                "bookmark_pdf_" + pdfId
-            );
+    if(settings.enable_bookmarks == 1){
 
-            if(savedBookmark){
+        const savedBookmark =
+        localStorage.getItem(
+            "bookmark_pdf_" + pdfId
+        );
 
-                currentPage =
-                parseInt(savedBookmark);
+        if(savedBookmark){
 
-                document.getElementById("progress").innerText =
-                "⭐ Bookmark Page " + currentPage;
+            currentPage =
+            parseInt(savedBookmark);
 
-                return;
-            }
-
+            return;
         }
 
-        // If remember last page enabled
-        if(settings.remember_last_page == 1){
+    }
 
-            fetch(
-                `http://localhost:5000/api/progress/${userId}/${pdfId}`
-            )
-            .then(res => res.json())
-            .then(data => {
+    if(settings.remember_last_page == 1){
 
-                if(data.last_page){
+        const res =
+        await fetch(
+            `http://localhost:5000/api/progress/${userId}/${pdfId}`
+        );
 
-                    currentPage =
-                    data.last_page;
+        const data =
+        await res.json();
 
-                    document.getElementById("progress").innerText =
-                    "📌 Resumed Page " + currentPage;
+        if(data.last_page){
 
-                }
-
-            });
+            currentPage =
+            data.last_page;
 
         }
-        else{
-
-            currentPage = 1;
-
-        }
-
-    })
-    .catch(err => console.log(err));
+    }
 
 }
 function goBack() {
@@ -290,28 +329,57 @@ function goBack() {
 function saveBookmark() {
 
     if (!enableBookmark) {
-        alert("Bookmarks are disabled in Settings");
+      showToast(
+    "Bookmarks are disabled in Settings",
+    "#ef4444"
+);  
         return;
     }
 
-    localStorage.setItem(
-        "bookmark_pdf_" + pdfId,
-        currentPage
-    );
+const visiblePage =
+document.elementFromPoint(
+    window.innerWidth/2,
+    120
+)?.dataset?.page || currentPage;
+
+localStorage.setItem(
+    "bookmark_pdf_" + pdfId,
+    visiblePage
+);
 
     document.getElementById("progress").innerText =
-        "⭐ Bookmarked Page " + currentPage + " (Saved)";
+"⭐ Bookmarked Page " + visiblePage + " (Saved)";
 
-    alert("Bookmark saved at page " + currentPage);
+showToast("⭐ Bookmark saved at Page " + visiblePage);
 }
 let pdfDoc = null;
 let totalPages = 0;
+let isRestoringPage = true;
+let autoScrolling = false;
+let autoScrollFrame = null;
+let lastScrollTimestamp = null;
+let scrollRemainder = 0;
+let scrollSpeed = 3;
+const speedSlider =
+document.getElementById("speedSlider");
 
-const canvas =
-document.getElementById("pdfCanvas");
+const speedValue =
+document.getElementById("speedValue");
 
-const ctx =
-canvas.getContext("2d");
+const speedControl =
+document.getElementById("speedControl");
+
+speedSlider.addEventListener("input", () => {
+
+    scrollSpeed =
+    parseInt(speedSlider.value);
+
+    speedValue.innerText =
+    scrollSpeed + "x";
+
+});
+const container =
+document.getElementById("pdfContainer");
 async function downloadPDF() {
 
     try {
@@ -346,61 +414,219 @@ async function loadPDF() {
     totalPages =
     pdfDoc.numPages;
 
-    renderPage(currentPage);
+    const settingsRes =
+    await fetch(`http://localhost:5000/get-settings/${userId}`);
+
+    const settings =
+    await settingsRes.json();
+    await loadSavedPage();
+    document.getElementById("autoBtn").style.display =
+settings.continuous_scrolling == 1
+? "inline-block"
+: "none";
+
+    document.getElementById("progress").style.display =
+settings.reading_progress_bar == 1
+? "block"
+: "none";
+
+  
+await renderAllPages();
+if(settings.continuous_scrolling == 1){
+
+    speedControl.style.display = "flex";
+
+    startAutoScroll();
+
+}else{
+
+    speedControl.style.display = "none";
+
+}
+}
+async function renderAllPages() {
+
+    container.innerHTML = "";
+for (let i = 1; i <= totalPages; i++) {
+
+    const pdfPage = await pdfDoc.getPage(i);
+
+    const viewport = pdfPage.getViewport({ scale: 1.5 });
+
+    const canvas = document.createElement("canvas");
+    canvas.dataset.page = i;
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+
+    container.appendChild(canvas);
+
+    await pdfPage.render({
+        canvasContext: canvas.getContext("2d"),
+        viewport
+    }).promise;
+
+    // Jump immediately when the saved page is rendered
+    if (i === currentPage) {
+        canvas.scrollIntoView({
+            block: "start"
+        });
+
+        isRestoringPage = false;
+    }
+
+
+    }
+
+const pageInfo = document.getElementById("pageInfo");
+
+if(pageInfo){
+    pageInfo.innerText = `Pages 1 - ${totalPages}`;
+}
+
+    document.getElementById("progress").innerText =
+    `Continuous Scrolling Enabled`;
+}
+function scrollToPage(pageNumber){
+
+    const page =
+    document.querySelector(
+        `canvas[data-page="${pageNumber}"]`
+    );
+
+    if(page){
+
+        page.scrollIntoView({
+    behavior: "instant",
+    block: "start"
+
+
+        });
+
+    }
+
+}
+function scrollStep(timestamp){
+
+    if(!autoScrolling) return;
+
+    if(lastScrollTimestamp !== null){
+
+        const elapsed =
+        timestamp - lastScrollTimestamp;
+
+        const exactPixels =
+        (scrollSpeed / 100) * elapsed + scrollRemainder;
+
+        const wholePixels =
+        Math.floor(exactPixels);
+
+        scrollRemainder =
+        exactPixels - wholePixels;
+
+        if(wholePixels > 0){
+
+            window.scrollBy(0, wholePixels);
+
+        }
+
+    }
+
+    lastScrollTimestamp = timestamp;
+
+    autoScrollFrame =
+    requestAnimationFrame(scrollStep);
 
 }
 
-async function renderPage(pageNum) {
+function startAutoScroll(){
 
-    const page =
-    await pdfDoc.getPage(pageNum);
+    stopAutoScroll();
 
-    const viewport =
-    page.getViewport({ scale: 1.5 });
+    autoScrolling = true;
 
-    canvas.width =
-    viewport.width;
+    lastScrollTimestamp = null;
 
-    canvas.height =
-    viewport.height;
+    scrollRemainder = 0;
 
-    await page.render({
-        canvasContext: ctx,
-        viewport: viewport
-    }).promise;
+    autoScrollFrame =
+    requestAnimationFrame(scrollStep);
 
-    document.getElementById("pageInfo")
-    .innerText =
-    `Page ${pageNum} / ${totalPages}`;
+}
 
-    document.getElementById("progress")
-    .innerText =
-    `${Math.round((pageNum / totalPages) * 100)}%`;
+function stopAutoScroll(){
+
+    autoScrolling = false;
+
+    if(autoScrollFrame){
+
+        cancelAnimationFrame(autoScrollFrame);
+
+        autoScrollFrame = null;
+
+    }
+
+}
+function toggleAutoScroll(){
+
+    const btn =
+    document.getElementById("autoBtn");
+
+    if(autoScrolling){
+
+        stopAutoScroll();
+
+        btn.innerText =
+        "▶ Auto";
+
+    }else{
+
+        startAutoScroll();
+
+        btn.innerText =
+        "⏸ Pause";
+
+    }
+
+}
+function updateCurrentPage(){
+    if(isRestoringPage){
+    return;
+}
+
+    const pages =
+    document.querySelectorAll(
+        "#pdfContainer canvas"
+    );
+
+    let visible = 1;
+
+    pages.forEach(page=>{
+
+        const rect =
+        page.getBoundingClientRect();
+
+        if(rect.top <= 120 && rect.bottom >= 120){
+
+            visible =
+            Number(page.dataset.page);
+
+        }
+
+    });
+
+    currentPage = visible;
+
+    document.getElementById("progress").innerText =
+    `Page ${visible} of ${totalPages}
+    (${Math.round(visible*100/totalPages)}%)`;
 
     saveProgress();
 
 }
-function nextPage(){
-
-    if(currentPage >= totalPages)
-        return;
-
-    currentPage++;
-
-    renderPage(currentPage);
-
-}
-function prevPage(){
-
-    if(currentPage <= 1)
-        return;
-
-    currentPage--;
-
-    renderPage(currentPage);
-
-}
-
+window.addEventListener(
+    "scroll",
+    updateCurrentPage
+);
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
