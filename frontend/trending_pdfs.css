@@ -1,10 +1,3 @@
-:root{
-    --bg:#0d0d0d;
-    --surface:#111111;
-    --surface2:#1f1f1f;
-    --text:#ffffff;
-    --border:#333333;
-}
 *{
 margin:0;
 padding:0;
@@ -13,8 +6,8 @@ font-family:Arial,sans-serif;
 }
 
 body{
-background:var(--bg);
-color:var(--text);
+background:#141414;
+color:white;
 }
 
 header{
@@ -22,7 +15,7 @@ display:flex;
 justify-content:space-between;
 align-items:center;
 padding:20px 40px;
-background:var(--surface);
+background:black;
 position:sticky;
 top:0;
 z-index:100;
@@ -36,7 +29,7 @@ color:#00c8ff;
 
 nav a{
 text-decoration:none;
-color:var(--text);
+color:white;
 margin:0 15px;
 }
 
@@ -58,7 +51,7 @@ border-radius:5px;
 position:absolute;
 right:10px;
 top:10px;
-color:var(--bg);
+color:black;
 }
 .hero{
 min-height:320px;
@@ -152,7 +145,7 @@ display:none;
 .pdf-card{
 min-width:250px;
 height:240px;
-background:var(--surface2);
+background:#222;
 padding:20px;
 border-radius:12px;
 transition:0.3s;
@@ -160,7 +153,7 @@ transition:0.3s;
 
 .pdf-card:hover{
 transform:scale(1.05);
-background:var(--border);
+background:#333;
 cursor:pointer;
 }
 
@@ -230,10 +223,10 @@ transition:0.3s;
     color:white;
 
     background:linear-gradient(
-90deg,
-var(--bg) 0%,
-transparent 100%
-);
+        90deg,
+        #141414 0%,
+        transparent 100%
+    );
 }
 
 .arrow.right{
@@ -241,10 +234,10 @@ transparent 100%
     right:0;
 
     background:linear-gradient(
-90deg,
-var(--bg) 0%,
-transparent 100%
-);
+        270deg,
+        #141414 0%,
+        transparent 100%
+    );
 }
 
 .arrow.left{
@@ -285,7 +278,7 @@ transparent 100%
 
 .fav-btn .fa-regular{
 
-    color:var(--text);
+    color:white;
 
 }
 

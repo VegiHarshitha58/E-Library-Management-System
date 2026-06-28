@@ -34,20 +34,30 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
   }
 
   /* ─── NAVBAR ─── */
-  nav {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    height: var(--nav-h);
-    background: linear-gradient(180deg, rgba(13,13,13,0.98) 0%, rgba(13,13,13,0.7) 100%);
-    backdrop-filter: blur(10px);
-    display: flex;
-    align-items: center;
-    padding: 0 1.5rem 0 calc(var(--sidebar-w) + 1.5rem);
-    z-index: 100;
-    border-bottom: 1px solid var(--border);
-    gap: 1.5rem;
-  }
+nav{
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    height:var(--nav-h);
 
+    background:var(--surface);
+
+    backdrop-filter:blur(10px);
+
+    display:flex;
+    align-items:center;
+
+    padding:0 1.5rem 0 calc(var(--sidebar-w) + 1.5rem);
+
+    z-index:100;
+
+    border-bottom:1px solid var(--border);
+
+    gap:1.5rem;
+
+    transition:.3s;
+}
   .nav-logo {
     font-family: 'Playfair Display', serif;
     font-size: 1.5rem;
@@ -614,8 +624,30 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
     margin: 20px 0;
     padding-left: 10px;
 }
+
 .notification-wrapper{
-  position: relative;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.notification-badge{
+    position: absolute;
+    top: -6px;
+    right: -6px;
+
+    width: 18px;
+    height: 18px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+    background: #e50914;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
 }
 
 .notification-panel{
@@ -641,7 +673,13 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
 }
 
 .notification-item:hover{
-  background: rgba(255,255,255,0.05);
+
+background:rgba(255,255,255,.08);
+
+transform:translateX(3px);
+
+transition:.2s;
+
 }
 
 .notification-item h4{
@@ -797,6 +835,17 @@ body.light-mode{
 
     --border:#d1d5db;
 }
+body.light-mode nav{
+    background:#ffffff;
+}
+.notification-item:last-child{
+border-bottom:none;
+}
+.notification-panel{
+
+max-width:90vw;
+
+}
 </style>
 </head>
 <body>
@@ -893,26 +942,37 @@ class="sidebar-badge">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input type="text" placeholder="Search titles, authors, ISBN…" id="searchInput"/>
     </div>
-    <button class="nav-icon-btn"
-title="Notifications"
-onclick="toggleNotifications()">
 
-    <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.8">
+    <div class="notification-wrapper">
 
-        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+    <button
+        id="notificationBell"
+        class="nav-icon-btn"
+        title="Notifications"
+        onclick="toggleNotifications()">
 
-    </svg>
+        <svg width="20" height="20"
+             viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="1.8">
 
-</button>
-<!-- 🔔 DROPDOWN PANEL -->
-  <div id="notificationPanel" class="notification-panel"></div>
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+
+        </svg>
+
+    </button>
+
+    <span id="notificationBadge"
+          class="notification-badge"
+          style="display:none;">
+        0
+    </span>
+
+    <div id="notificationPanel"
+         class="notification-panel"></div>
+
   </div>
     <div class="avatar" id="userAvatar"></div>
   </div>
@@ -1723,7 +1783,7 @@ async function addHeroToReadingList(){
 
 }
 function updateHeroListButton(){
-
+if(!heroPdf) return;
     const btn =
     document.getElementById("heroListBtn");
 
@@ -1961,25 +2021,56 @@ function createReadingListButton(pdfId){
     return listBtn;
 
 }
+async function loadUnreadCount() {
 
+    const userId = localStorage.getItem("userId");
+
+    if (!userId) return;
+
+    try {
+
+        const res = await fetch(
+            `${API}/notifications/unread-count/${userId}`
+        );
+
+        const data = await res.json();
+
+        const badge = document.getElementById("notificationBadge");
+
+        if (!badge) return;
+
+        if (data.unread > 0) {
+
+            badge.style.display = "flex";
+            badge.textContent = data.unread > 99 ? "99+" : data.unread;
+
+        } else {
+
+            badge.style.display = "none";
+
+        }
+
+    } catch (err) {
+
+        console.log(err);
+
+    }
+
+}
 async function initializeHome(){
 const userId =
 localStorage.getItem("userId");
+await fetch(
+`${API}/notifications/generate-reading-list-reminders/${userId}`,
+{
+    method:"POST"
+});
 
-fetch(
-    "http://localhost:5000/user-activity",
-    {
-        method:"POST",
-
-        headers:{
-            "Content-Type":"application/json"
-        },
-
-        body:JSON.stringify({
-            userId:userId
-        })
-    }
-);
+await fetch(
+`${API}/notifications/generate-reading-reminders/${userId}`,
+{
+    method:"POST"
+});
     await loadFavoriteIds();
 await loadProgressBarSetting();
 await loadReadingListIds();
@@ -1989,10 +2080,10 @@ await loadReadingListIds();
     loadAcademicPDFs();
     loadTopPicks();
     loadRecommended();
-  
+  loadNotifications();
     loadContinueReading();
     loadReadingCount();
-    loadNotifications();
+    loadUnreadCount();
     
 }
 
@@ -2087,7 +2178,7 @@ function refreshFavoriteIcons(pdfId){
     });
 
 }
-refreshFavoriteIcons(book.id);
+
 async function loadFavoriteIds(){
 
     const userId =
@@ -2214,34 +2305,74 @@ const res = await fetch(
     `http://localhost:5000/notifications/recent/${userId}`
 );
     notificationsData = await res.json();
+    
 
     const panel = document.getElementById("notificationPanel");
     panel.innerHTML = "";
 
-    notificationsData.forEach(n => {
+
+    if(notificationsData.length === 0){
+
+    panel.innerHTML = `
+    <div style="padding:20px;text-align:center;color:#888;">
+        🔕 No notifications
+    </div>`;
+
+}
+else{
+   notificationsData
+.slice(0,5)
+.forEach(n =>  {
 
     const div = document.createElement("div");
     div.className = "notification-item";
 
-    let title = "🔔 Notification";
+  let title = "🔔 Notification";
 
-    if(n.type === "new_pdf"){
-        title = "📄 New PDF";
-    }
-    else if(n.type === "welcome"){
+switch(n.type){
+
+    case "welcome":
         title = "🎉 Welcome";
-    }
-    else if(n.type === "welcome_back"){
-        title = "🌷 Welcome Back";
-    }
-    else if(n.type === "reading_reminder"){
-        title = "📚 Continue Reading";
-    }
+        break;
 
-    div.innerHTML = `
-        <h4>${title}</h4>
-        <p>${n.message}</p>
-    `;
+    case "welcome_back":
+        title = "🌷 Welcome Back";
+        break;
+
+    case "reading_reminder":
+        title = "📖 Continue Reading";
+        break;
+
+    case "reading_list_reminder":
+        title = "📚 Reading List Reminder";
+        break;
+
+    case "completed_pdf":
+        title = "🏆 Reading Completed";
+        break;
+
+}
+div.innerHTML = `
+<div style="display:flex;justify-content:space-between;align-items:flex-start;">
+
+<div>
+    <h4>${title}</h4>
+    <p>${n.message}</p>
+</div>
+
+${n.is_read == 0
+? `<span style="
+width:10px;
+height:10px;
+background:#00c8ff;
+border-radius:50%;
+margin-top:6px;
+flex-shrink:0;
+"></span>`
+: ""}
+
+</div>
+`;
 
     div.onclick = () => {
         openNotification(n);
@@ -2252,7 +2383,7 @@ const res = await fetch(
 });
 
 
-
+}
 
 const viewAll = document.createElement("div");
 
@@ -2262,48 +2393,82 @@ viewAll.className =
 viewAll.innerHTML =
 "View All Notifications →";
 
-viewAll.onclick = () => {
+viewAll.onclick=()=>{
 
-    window.location.href =
-    "notifications.html";
+document.getElementById(
+"notificationPanel"
+).style.display="none";
 
-};
+window.location.href="notifications.html";
+
+}
 
 panel.appendChild(viewAll);
 }
-loadNotifications();
+ loadUnreadCount();
 function toggleNotifications() {
 
     const panel = document.getElementById("notificationPanel");
 
     if(panel.style.display === "block"){
+
         panel.style.display = "none";
-    } else {
+
+    }else{
+
         panel.style.display = "block";
+
         loadNotifications();
+
     }
+
 }
 
 async function openNotification(n){
-  await fetch(
-`http://localhost:5000/notifications/read/${n.id}`,
-{
-method:"POST"
+
+    await fetch(
+        `${API}/notifications/read/${n.id}`,
+        {
+            method:"POST"
+        }
+    );
+
+    await loadUnreadCount();
+    await loadNotifications();
+document.getElementById("notificationPanel").style.display = "none";
+    // Welcome & Welcome Back
+    if(n.type === "welcome" || n.type === "welcome_back"){
+        window.location.href = "home.html";
+        return;
+    }
+
+    // Reading reminders & Completed PDF
+    if(n.pdf_id && n.pdf_link){
+
+        window.location.href =
+        `reader.html?pdf_id=${n.pdf_id}&file=${encodeURIComponent(n.pdf_link)}&page=1`;
+
+        return;
+    }
+
+    // Default
+    window.location.href = "notifications.html";
 }
-  );
+document.addEventListener("click",(e)=>{
 
-    if(!n.pdf_id || !n.pdf_link){
+    const panel =
+    document.getElementById("notificationPanel");
 
-    window.location.href = "home.html";
-    return;
+    const wrapper =
+    document.querySelector(".notification-wrapper");
 
-}
+    if(!wrapper.contains(e.target)){
 
-    window.location.href =
-    `reader.html?pdf_id=${n.pdf_id}&file=${encodeURIComponent(n.pdf_link)}&page=1`;
+        panel.style.display = "none";
 
-}
+    }
 
+});
 </script>
 <script>
   const avatar =

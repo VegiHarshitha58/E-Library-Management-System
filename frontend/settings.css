@@ -242,10 +242,12 @@ input:checked + .slider:before{
 
     min-height:25px;
 
-    color:var(--accent);
+    margin-top:12px;
+
+    font-size:15px;
 
     font-weight:600;
 
-    margin-top:10px;
+    color:#4ade80;   /* Green */
 
 }

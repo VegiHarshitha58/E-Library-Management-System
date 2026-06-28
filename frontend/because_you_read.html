@@ -6,7 +6,7 @@
 
 <title>Recommended For You - E-Library</title>
 
-<link rel="stylesheet" href="trending_pdfs.css">
+<link rel="stylesheet" href="academic_collection.css">
 
 <link rel="stylesheet"
 href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -66,69 +66,89 @@ Perfect for exploring new resources and study materials.
 <section class="pdf-section">
 
 <h2>📚 Recommended For You</h2>
+<div class="row-wrapper">
 
-<div class="pdf-row" id="recommendedContainer">
+    <button class="arrow left" id="recommendedLeft">
+        ❮
+    </button>
+
+    <div class="pdf-row" id="recommendedContainer"></div>
+
+    <button class="arrow right" id="recommendedRight">
+        ❯
+    </button>
+
+</div>
 </div>
 
 </section>
-
+<script src="pdf-card.js"></script>
 <script>
+const API = "http://127.0.0.1:5000";
 
+const userId = localStorage.getItem("userId");
+
+const favoriteIds = new Set();
+
+const readingListIds = new Set();
+
+
+    
 async function loadRecommended() {
 
-
-const userId =
-localStorage.getItem("userId");
-
-const response =
-await fetch(
-    `http://localhost:5000/recommended-all/${userId}`
-);
+    const response =
+    await fetch(`${API}/recommended-all/${userId}`);
 
     const data =
     await response.json();
 
     const container =
-    document.getElementById(
-        "recommendedContainer"
-    );
+    document.getElementById("recommendedContainer");
 
     container.innerHTML = "";
 
     data.forEach(pdf => {
 
-        const card =
-        document.createElement("div");
-
-        card.className = "pdf-card";
-
-        card.innerHTML = `
-            <div class="pdf-icon">PDF</div>
-            <h3>${pdf.title}</h3>
-            <p>Recently Added</p>
-        `;
-
-        card.onclick = () => {
-
-            window.location.href =
-            "reader.html?file=" +
-            pdf.pdf_link +
-            "&pdf_id=" +
-            pdf.id;
-
-        };
-
-        container.appendChild(card);
+        container.appendChild(
+            makeCard(pdf)
+        );
 
     });
 
 }
+(async()=>{
 
-loadRecommended();
+    await loadFavoriteIds();
 
+    await loadReadingListIds();
+
+    await loadRecommended();
+
+})();
+document.getElementById("recommendedLeft")
+.addEventListener("click", () => {
+
+    document.getElementById("recommendedContainer")
+    .scrollBy({
+        left: -500,
+        behavior: "smooth"
+    });
+
+});
+
+document.getElementById("recommendedRight")
+.addEventListener("click", () => {
+
+    document.getElementById("recommendedContainer")
+    .scrollBy({
+        left: 500,
+        behavior: "smooth"
+    });
+
+});
 </script>
 
-<script src="search.js"></script>
+<script src="search-pages.js"></script>
 <script src="theme.js"></script>
 <script src="notifications-popup.js"></script>
 </body>

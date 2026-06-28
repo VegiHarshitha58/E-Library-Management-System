@@ -21,10 +21,7 @@ const db = mysql.createConnection({
     user: "root",
     password: "Harshitha@1435",
     database: "elibrary"
-});
-
-
-
+});  
 db.connect((err) => {
 
     if(err){
@@ -220,20 +217,22 @@ app.post("/register", async (req,res)=>{
 app.post("/login", (req, res) => {
 
     const { username, password } = req.body;
-if (!username || !password) {
 
-    return res.json({
-        message: "All fields are required"
-    });
+    if (!username || !password) {
 
-}
+        return res.json({
+            message: "All fields are required"
+        });
+
+    }
+
     db.query(
 
         "SELECT * FROM users WHERE email = ?",
 
         [username],
-async (err, result) => {
 
+        async (err, result) => {
 
             if (err) {
 
@@ -247,21 +246,81 @@ async (err, result) => {
 
             if (result.length === 0) {
 
-    return res.json({
-        message: "Incorrect email or password"
-    });
+                return res.json({
+                    message: "Incorrect email or password"
+                });
 
-}
+            }
 
             const user = result[0];
+            const previousLogin = user.last_login;
 
-           const match =
-await bcrypt.compare(
-    password,
-    user.password
-);
+            const match = await bcrypt.compare(
+                password,
+                user.password
+            );
 
-if(match) {
+            if (match) {
+
+                if (
+                    previousLogin &&
+                    new Date(previousLogin) <=
+                    new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+                ) {
+
+                    db.query(
+
+                        `
+                        INSERT INTO notifications
+                        (
+                            user_id,
+                            message,
+                            type
+                        )
+                        VALUES
+                        (
+                            ?,
+                            ?,
+                            'welcome_back'
+                        )
+                        `,
+
+                        [
+                            user.id,
+                            "🌷 Welcome back! We've missed you. Continue your reading journey."
+                        ],
+
+                        (err) => {
+
+                            if (err) {
+                                console.log("Welcome Back Notification Error:", err);
+                            }
+
+                        }
+
+                    );
+
+                }
+
+                db.query(
+
+                    `
+                    UPDATE users
+                    SET last_login = CURRENT_TIMESTAMP
+                    WHERE id = ?
+                    `,
+
+                    [user.id],
+
+                    (err) => {
+
+                        if (err) {
+                            console.log("Last Login Update Error:", err);
+                        }
+
+                    }
+
+                );
 
                 return res.json({
 
@@ -273,14 +332,16 @@ if(match) {
 
                     email: user.email,
 
-                   avatar:user.avatar
+                    avatar: user.avatar
+
                 });
 
             }
 
             return res.json({
-    message: "Incorrect email or password"
-});
+                message: "Incorrect email or password"
+            });
+
         }
 
     );
@@ -463,7 +524,7 @@ app.get("/api/progress/continue/:userId", (req, res) => {
     );
 
 });
-app.get("/notifications/:userId",(req,res)=>{
+app.get("/notifications/:userId", (req, res) => {
 
     const userId = req.params.userId;
 
@@ -475,14 +536,22 @@ app.get("/notifications/:userId",(req,res)=>{
             p.pdf_link
         FROM notifications n
         LEFT JOIN pdfs p
-            ON n.pdf_id = p.id
+            ON p.id = n.pdf_id
         WHERE n.user_id = ?
+        AND n.type IN
+        (
+            'welcome',
+            'welcome_back',
+            'reading_reminder',
+            'reading_list_reminder',
+            'completed_pdf'
+        )
         ORDER BY n.created_at DESC
         `,
 
         [userId],
 
-        (err,result)=>{
+        (err, result) => {
 
             if(err){
                 return res.status(500).json(err);
@@ -508,7 +577,15 @@ app.get("/notifications/recent/:userId",(req,res)=>{
         FROM notifications n
         LEFT JOIN pdfs p
             ON n.pdf_id = p.id
-        WHERE n.user_id = ?
+       WHERE n.user_id = ?
+AND n.type IN
+(
+    'welcome',
+    'welcome_back',
+    'reading_reminder',
+    'reading_list_reminder',
+    'completed_pdf'
+)
         ORDER BY n.created_at DESC
         LIMIT 5
         `,
@@ -886,6 +963,96 @@ app.get("/reading-history/:userId", (req, res) => {
     );
 
 });
+app.post("/notifications/read-all/:userId", (req, res) => {
+
+    const userId = req.params.userId;
+
+    db.query(
+
+        `
+        UPDATE notifications
+SET is_read = 1
+WHERE user_id = ?
+AND type IN
+(
+    'welcome',
+    'welcome_back',
+    'reading_reminder',
+    'reading_list_reminder',
+    'completed_pdf'
+)
+        `,
+
+        [userId],
+
+        (err) => {
+
+            if(err){
+                console.log(err);
+                return res.status(500).send("Database Error");
+            }
+
+            res.send("All Notifications Marked as Read");
+
+        }
+
+    );
+
+});
+app.delete("/notifications/:id", (req, res) => {
+
+    const id = req.params.id;
+
+    db.query(
+
+        `
+        DELETE FROM notifications
+        WHERE id = ?
+        `,
+
+        [id],
+
+        (err) => {
+
+            if(err){
+                console.log(err);
+                return res.status(500).send("Database Error");
+            }
+
+            res.send("Notification Deleted");
+
+        }
+
+    );
+
+});
+app.delete("/notifications/clear/:userId",(req,res)=>{
+
+    const userId = req.params.userId;
+
+    db.query(
+
+        `
+        DELETE FROM notifications
+        WHERE user_id = ?
+        `,
+
+        [userId],
+
+        (err)=>{
+
+            if(err){
+                console.log(err);
+                return res.status(500).send("Database Error");
+            }
+
+            res.send("All Notifications Deleted");
+
+        }
+
+    );
+
+});
 app.post("/api/progress/update", (req, res) => {
 
     const {
@@ -920,107 +1087,90 @@ app.post("/api/progress/update", (req, res) => {
                 return res.status(500).send("Database Error");
             }
 
-            const saveNotificationLogic = () => {
+              const saveNotificationLogic = () => {
 
-                // Create Continue Reading notification
-                if(progress > 0 && progress < 100){
+    if (progress < 100) return;
 
-                    db.query(
-                        `
-                        SELECT title
-                        FROM pdfs
-                        WHERE id = ?
-                        `,
-                        [pdf_id],
-                        (errTitle, titleResult)=>{
+    // Remove old reminder notifications
+    db.query(
+        `
+        DELETE FROM notifications
+        WHERE user_id = ?
+        AND pdf_id = ?
+        AND type IN
+        (
+            'reading_reminder',
+            'reading_list_reminder'
+        )
+        `,
+        [user_id, pdf_id],
+        (err) => {
+            if (err) console.log(err);
+        }
+    );
 
-                            if(!errTitle && titleResult.length > 0){
+    // Insert completed notification only if it doesn't already exist
+    db.query(
 
-                                const title =
-                                titleResult[0].title;
+        `
+        INSERT INTO notifications
+        (
+            user_id,
+            message,
+            type,
+            pdf_id,
+            is_read
+        )
+        SELECT
+            ?,
+            CONCAT('🎉 Congratulations! You completed "', p.title, '".'),
+            'completed_pdf',
+            p.id,
+            0
+        FROM pdfs p
+        WHERE p.id = ?
+        AND NOT EXISTS
+        (
+            SELECT 1
+            FROM notifications n
+            WHERE n.user_id = ?
+            AND n.pdf_id = ?
+            AND n.type = 'completed_pdf'
+        )
+        `,
 
-                                db.query(
-                                    `
-                                    SELECT id
-                                    FROM notifications
-                                    WHERE user_id = ?
-                                    AND pdf_id = ?
-                                    AND type = 'reading_reminder'
-                                    AND is_read = 0
-                                    `,
-                                    [user_id,pdf_id],
-                                    (errCheck, existing)=>{
+        [
+            user_id,
+            pdf_id,
+            user_id,
+            pdf_id
+        ],
 
-                                        if(existing.length === 0){
+        (err) => {
 
-                                            db.query(
-                                                `
-                                                INSERT INTO notifications
-                                                (
-                                                    user_id,
-                                                    message,
-                                                    type,
-                                                    pdf_id,
-                                                    is_read
-                                                )
-                                                VALUES
-                                                (
-                                                    ?,
-                                                    ?,
-                                                    'reading_reminder',
-                                                    ?,
-                                                    0
-                                                )
-                                                `,
-                                                [
-                                                    user_id,
-                                                    `Continue reading "${title}" 📖 You stopped at page ${last_page} (${progress}% completed).`,
-                                                    pdf_id
-                                                ]
-                                            );
+            if (err) {
+                console.log(err);
+            }
 
-                                        }
+        }
 
-                                    }
-                                );
+    );
 
-                            }
-
-                        }
-                    );
-
-                }
-
-                // If completed, mark reminder as read
-                if(progress >= 100){
-
-                    db.query(
-                        `
-                        UPDATE notifications
-                        SET is_read = 1
-                        WHERE user_id = ?
-                        AND pdf_id = ?
-                        AND type = 'reading_reminder'
-                        `,
-                        [user_id, pdf_id]
-                    );
-
-                }
-
-            };
-
+};
             if(result.length > 0){
 
                 db.query(
 
-                    `UPDATE reading_history
-                     SET
+                    `
+                    UPDATE reading_history
+                    SET
                         last_page = ?,
                         total_pages = ?,
                         progress = ?,
                         last_read = CURRENT_TIMESTAMP
-                     WHERE user_id = ?
-                     AND pdf_id = ?`,
+                    WHERE user_id = ?
+                    AND pdf_id = ?
+                    `,
 
                     [
                         last_page,
@@ -1030,7 +1180,7 @@ app.post("/api/progress/update", (req, res) => {
                         pdf_id
                     ],
 
-                    (err2) => {
+                    (err2)=>{
 
                         if(err2){
                             console.log(err2);
@@ -1045,12 +1195,12 @@ app.post("/api/progress/update", (req, res) => {
 
                 );
 
-            }
-            else{
+            }else{
 
                 db.query(
 
-                    `INSERT INTO reading_history
+                    `
+                    INSERT INTO reading_history
                     (
                         user_id,
                         pdf_id,
@@ -1058,7 +1208,8 @@ app.post("/api/progress/update", (req, res) => {
                         total_pages,
                         progress
                     )
-                    VALUES(?,?,?,?,?)`,
+                    VALUES (?,?,?,?,?)
+                    `,
 
                     [
                         user_id,
@@ -1068,7 +1219,7 @@ app.post("/api/progress/update", (req, res) => {
                         progress
                     ],
 
-                    (err3) => {
+                    (err3)=>{
 
                         if(err3){
                             console.log(err3);
@@ -1580,77 +1731,23 @@ app.post("/readinglist", (req, res) => {
                 VALUES (?, ?)
                 `,
                 [user_id, pdf_id],
-                (err2, result2) => {
+                (err2) => {
 
                     if(err2){
                         return res.status(500).json(err2);
                     }
 
-                    // Get PDF title
-                    db.query(
-                        `
-                        SELECT title
-                        FROM pdfs
-                        WHERE id = ?
-                        `,
-                        [pdf_id],
-                        (err3, pdfResult) => {
-
-                            if(!err3 && pdfResult.length > 0){
-
-                                const title =
-                                pdfResult[0].title;
-
-                                db.query(
-                                    `
-                                    INSERT INTO notifications
-                                    (
-                                        user_id,
-                                        message,
-                                        type,
-                                        pdf_id,
-                                        is_read
-                                    )
-                                    VALUES
-                                    (
-                                        ?,
-                                        ?,
-                                        'reading_list',
-                                        ?,
-                                        0
-                                    )
-                                    `,
-                                    [
-                                        user_id,
-                                        `Added "${title}" to your Reading List 📚`,
-                                        pdf_id
-                                    ],
-                                    (err4) => {
-
-                                        if(err4){
-                                            console.log(
-                                                "Notification Error:",
-                                                err4
-                                            );
-                                        }
-
-                                    }
-                                );
-
-                            }
-
-                            res.json({
-                                success: true,
-                                message: "Added to Reading List"
-                            });
-
-                        }
-                    );
+                    res.json({
+                        success: true,
+                        message: "Added to Reading List"
+                    });
 
                 }
+
             );
 
         }
+
     );
 
 });
@@ -2194,12 +2291,18 @@ AND rl.created_at <= NOW() - INTERVAL 3 DAY
                     `,
 
                     [userId,item.pdf_id],
-
                     (err2, existing)=>{
 
-                        if(!err2 && existing.length === 0){
+    if(err2){
 
-                            db.query(
+        console.log(err2);
+        return;
+
+    }
+
+    if(existing.length === 0){
+
+        db.query(
 
                                 `
                                 INSERT INTO notifications
@@ -2222,7 +2325,7 @@ AND rl.created_at <= NOW() - INTERVAL 3 DAY
 
                                 [
                                     userId,
-                                    `Your Reading List is Waiting! Start reading "${item.title}" 📚`,
+                                    `"${item.title}" is waiting in your Reading List. Start reading 📚`,
                                     item.pdf_id
                                 ]
 
@@ -2237,6 +2340,135 @@ AND rl.created_at <= NOW() - INTERVAL 3 DAY
             });
 
             res.send("Reading List Reminders Checked");
+
+        }
+
+    );
+
+});
+app.post("/notifications/generate-reading-reminders/:userId", (req, res) => {
+
+    const userId = req.params.userId;
+
+    db.query(
+
+        `
+        SELECT
+            rh.pdf_id,
+            rh.last_page,
+            rh.progress,
+            p.title
+        FROM reading_history rh
+        JOIN pdfs p
+            ON rh.pdf_id = p.id
+        WHERE rh.user_id = ?
+        AND rh.progress > 0
+        AND rh.progress < 100
+AND rh.last_read <= NOW() - INTERVAL 3 DAY
+        `,
+
+        [userId],
+
+        (err, result) => {
+
+            if(err){
+                console.log(err);
+                return res.status(500).send("Error");
+            }
+
+            result.forEach(item=>{
+
+                db.query(
+
+                    `
+                    SELECT id
+                    FROM notifications
+                    WHERE user_id = ?
+                    AND pdf_id = ?
+                    AND type = 'reading_reminder'
+                    AND is_read = 0
+                    `,
+
+                    [userId,item.pdf_id],
+
+                    (err2, existing)=>{
+
+                       if(err2){
+    console.log(err2);
+    return;
+}
+
+if(existing.length === 0){
+
+                            db.query(
+
+                                `
+                                INSERT INTO notifications
+                                (
+                                    user_id,
+                                    message,
+                                    type,
+                                    pdf_id,
+                                    is_read
+                                )
+                                VALUES
+                                (
+                                    ?,
+                                    ?,
+                                    'reading_reminder',
+                                    ?,
+                                    0
+                                )
+                                `,
+
+                                [
+                                    userId,
+                                    `Continue reading "${item.title}" 📖 You stopped at page ${item.last_page} (${item.progress}% completed).`,
+                                    item.pdf_id
+                                ]
+
+                            );
+
+                        }
+
+                    }
+
+                );
+
+            });
+
+            res.send("Reading reminders checked");
+
+        }
+
+    );
+
+});
+app.get("/notifications/unread-count/:userId", (req, res) => {
+
+    const userId = req.params.userId;
+
+    db.query(
+
+        `
+        SELECT COUNT(*) AS unread
+        FROM notifications
+        WHERE user_id = ?
+        AND is_read = 0
+        `,
+
+        [userId],
+
+        (err, result) => {
+
+            if (err) {
+                console.log(err);
+                return res.status(500).send("Database Error");
+            }
+
+            res.json({
+                unread: result[0].unread
+            });
 
         }
 

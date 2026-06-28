@@ -1,4 +1,3 @@
-// ─── SHARED NOTIFICATIONS POPUP — works on every page ────────────────────────
 window.API = window.API || "http://127.0.0.1:5000";
 
 // ─── STYLES ───────────────────────────────────────────────────────────────────
@@ -62,6 +61,7 @@ document.body.appendChild(popup);
 let popupTimer;
 let popupQueue = [];
 let isShowingPopup = false;
+let currentPopupNotifId = null;
 let currentPopupPdfId = null;
 
 // ─── MARK NOTIFICATION AS SEEN ────────────────────────────────────────────────
@@ -107,15 +107,23 @@ async function markNotifSeen(id) {
 }
 
 // ─── SHOW POPUP ───────────────────────────────────────────────────────────────
-function npShowPopup(emoji, title, msg, pdfId) {
+function npShowPopup(emoji, title, msg, pdfId, notifId){
+  
   if (localStorage.getItem('notifMuted') === 'true') return;
   if (isShowingPopup) {
-    popupQueue.push({ emoji, title, msg, pdfId });
+   popupQueue.push({
+    emoji,
+    title,
+    msg,
+    pdfId,
+    notifId
+});
     return;
   }
 
   isShowingPopup = true;
   currentPopupPdfId = pdfId;
+  currentPopupNotifId = notifId;
 
   popup.innerHTML = `
     <div class="np-popup-emoji">${emoji}</div>
@@ -146,14 +154,26 @@ function npHidePopup() {
     isShowingPopup = false;
     if (popupQueue.length > 0) {
       const next = popupQueue.shift();
-      npShowPopup(next.emoji, next.title, next.msg, next.pdfId);
+      npShowPopup(
+    next.emoji,
+    next.title,
+    next.msg,
+    next.pdfId,
+    next.notifId
+);
     }
   }, 600);
 }
 
 async function npPopupClick() {
+ 
 
   npHidePopup();
+  if(currentPopupNotifId){
+
+    await markNotifSeen(currentPopupNotifId);
+
+}
 
   if (!currentPopupPdfId) {
     window.location.href = "home.html";
@@ -213,38 +233,35 @@ function npUpdateBadge(count) {
   });
 }
 
-// ─── MOTIVATIONAL MESSAGES ────────────────────────────────────────────────────
-const npMotivational = [
-  { emoji: '☕', title: 'Coffee + Book = Perfect!', msg: 'Grab a cup and dive into something amazing! 📖✨' },
-  { emoji: '🥺', title: 'Did you forget me, sweetie?', msg: 'Your library misses you! Come read something lovely 💕' },
-  { emoji: '💌', title: 'A little note for you...', msg: 'Hey darling, your favourite PDF is waiting patiently 🌸📖' },
-  { emoji: '🌷', title: 'Missing you already!', msg: 'The library feels empty without you! Come read something cozy 🤗' },
-  { emoji: '🍪', title: 'Cookie for your thoughts?', msg: 'How about a sweet reading session right now? 📚🍪' },
-  { emoji: '🌙', title: 'Psst... still awake?', msg: 'Perfect time for a late night reading adventure! 🌟📖' },
-  { emoji: '🦋', title: 'Hey you! Yes, you!', msg: 'You\'re one page away from something amazing! 💫' },
-  { emoji: '💝', title: 'Just checking in, love!', msg: 'Your reading list is missing you dearly! 💕📚' },
-  { emoji: '🚀', title: 'Level Up Today!', msg: 'The most successful people read every day. Let\'s go! 🔥📖' },
-  { emoji: '🌟', title: 'Stay Curious!', msg: 'Feed your curiosity with something amazing from your library! 🧠⚡' },
-];
-
 // ─── MAIN INIT ────────────────────────────────────────────────────────────────
 async function npInit() {
   if (localStorage.getItem('notifMuted') === 'true') return;
 
   try {
-    const [notifRes, readingRes] = await Promise.all([
-      fetch(`${window.API}/notifications`),
-      fetch(`${window.API}/readinglist`)
-    ]);
+const userId = localStorage.getItem("userId");
 
-    const notifications = await notifRes.json();
-    const readingList   = await readingRes.json();
+await Promise.all([
+
+    fetch(`${window.API}/notifications/generate-reading-list-reminders/${userId}`,{
+        method:"POST"
+    }),
+
+    fetch(`${window.API}/notifications/generate-reading-reminders/${userId}`,{
+        method:"POST"
+    })
+
+]);
+const notifRes =
+await fetch(`${window.API}/notifications/${userId}`);
+
+const notifications =
+await notifRes.json();
 
     // Get seen IDs
     const seenIds   = JSON.parse(localStorage.getItem('seenNotifIds') || '[]');
 
     // Filter unseen notifications
-    const newNotifs = notifications.filter(n => !seenIds.includes(String(n.id)));
+   const newNotifs = notifications;
 
     // Update bell badge
     npUpdateBadge(newNotifs.length);
@@ -253,56 +270,40 @@ async function npInit() {
     const now       = Date.now();
     const oneHour   = 60 * 60 * 1000;
 
-    if (newNotifs.length > 0) {
-      // ── Always show popup for NEW notifications immediately ──────────────
-      // Only throttle motivational/reading list ones to 1 hour
-      const newPdfNotifs = newNotifs.filter(n => n.type === 'new_pdf');
+    if (newNotifs.length > 0)
+    {
       const otherNotifs  = newNotifs.filter(n => n.type !== 'new_pdf');
 
-      if (newPdfNotifs.length > 0) {
-        // Show new PDF notification immediately — always
-        setTimeout(() => {
-          const notif = newPdfNotifs[0];
-          npShowPopup('📄', '🎉 New PDF Added!', notif.message, notif.pdf_id || null);
-          // Mark only this one as seen
-          markNotifSeen(String(notif.id));
-          localStorage.setItem('lastNotifShown', now.toString());
-        }, 1500);
-
-      } else if (otherNotifs.length > 0 && (now - lastShown >= oneHour || lastShown === 0)) {
+       if (otherNotifs.length > 0 && (now - lastShown >= oneHour || lastShown === 0)) {
         // Show other notifications once per hour
         setTimeout(() => {
           const notif = otherNotifs[0];
-          npShowPopup('🔔', 'Notification', notif.message, notif.pdf_id || null);
-          markNotifSeen(String(notif.id));
+         const popupTitles = {
+    welcome: ["🎉", "Welcome"],
+    welcome_back: ["🌷", "Welcome Back"],
+    reading_reminder: ["📖", "Continue Reading"],
+    reading_list_reminder: ["📚", "Reading List Reminder"],
+    completed_pdf: ["🎉", "Completed PDF"]
+};
+
+const [emoji, title] =
+    popupTitles[notif.type] || ["🔔", "Notification"];
+
+npShowPopup(
+    emoji,
+    title,
+    notif.message,
+    notif.pdf_id || null,
+    notif.id
+);
+markNotifSeen(notif.id);
+
+  
           localStorage.setItem('lastNotifShown', now.toString());
         }, 1500);
       }
 
-    } else if (readingList.length > 0 && (now - lastShown >= oneHour || lastShown === 0)) {
-      // No new notifications — show reading list reminder once per hour
-      const item = readingList[Math.floor(Math.random() * readingList.length)];
-      const msgs = [
-        `Did you forget about "${item.title}", sweetie? 🥺`,
-        `"${item.title}" misses you! When will you start reading? 💕`,
-        `Hey! "${item.title}" is waiting for you 😢`,
-      ];
-      setTimeout(() => {
-        npShowPopup('📚', 'Reading List Reminder! 💕',
-          msgs[Math.floor(Math.random() * msgs.length)],
-          item.pdf_id || item.id
-        );
-        localStorage.setItem('lastNotifShown', now.toString());
-      }, 1500);
-
-    } else if (newNotifs.length === 0 && readingList.length === 0 && now - lastShown >= oneHour) {
-      // No unseen notifs and no reading list — show motivational once per hour
-      const m = npMotivational[Math.floor(Math.random() * npMotivational.length)];
-      setTimeout(() => {
-        npShowPopup(m.emoji, m.title, m.msg, null);
-        localStorage.setItem('lastNotifShown', now.toString());
-      }, 1500);
-    }
+    } 
 
   } catch(err) {
     console.warn('notifications-popup.js error:', err);

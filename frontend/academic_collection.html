@@ -6,7 +6,7 @@
 
 <title>Academic Collection - E-Library</title>
 
-<link rel="stylesheet" href="trending_pdfs.css">
+<link rel="stylesheet" href="academic_collection.css">
 
 <link rel="stylesheet"
 href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -78,32 +78,35 @@ Java, Python and more.
 
 <h2>📚 Academic Collection</h2>
 
-<div class="slider-wrapper">
+<div class="row-wrapper">
 
-<button class="scroll-btn left" id="academicLeft">
-❮
-</button>
+    <button class="arrow left" id="academicLeft">
+        ❮
+    </button>
 
-<div class="pdf-row" id="academicContainer">
-</div>
+    <div class="pdf-row" id="academicContainer"></div>
 
-<button class="scroll-btn right" id="academicRight">
-❯
-</button>
+    <button class="arrow right" id="academicRight">
+        ❯
+    </button>
 
 </div>
 
 </section>
-
+<script src="pdf-card.js"></script>
 <script>
+    const API = "http://127.0.0.1:5000";
+
+const userId = localStorage.getItem("userId");
+
+const favoriteIds = new Set();
+
+const readingListIds = new Set();
 
 async function loadAcademicPage() {
 
     const response =
-    await fetch(
-        "http://localhost:5000/pdfs"
-    );
-
+await fetch(`${API}/pdfs`);
     const data =
     await response.json();
 
@@ -116,45 +119,22 @@ async function loadAcademicPage() {
 
     data.forEach(pdf => {
 
-        const card =
-        document.createElement("div");
-
-        card.className =
-        "pdf-card";
-
-        card.innerHTML = `
-
-        <div class="pdf-icon">
-        PDF
-        </div>
-
-        <h3>
-        ${pdf.title}
-        </h3>
-
-        <p>
-        ${pdf.author || "Academic PDF"}
-        </p>
-
-        `;
-
-        card.onclick = () => {
-
-            window.location.href =
-            "reader.html?file=" +
-            pdf.pdf_link +
-            "&pdf_id=" +
-            pdf.id;
-
-        };
-
-        container.appendChild(card);
+        container.appendChild(
+    makeCard(pdf)
+);
 
     });
 
 }
+(async () => {
 
-loadAcademicPage();
+    await loadFavoriteIds();
+
+    await loadReadingListIds();
+
+    await loadAcademicPage();
+
+})();
 document.getElementById("academicLeft")
 .addEventListener("click", () => {
 
@@ -177,8 +157,9 @@ document.getElementById("academicRight")
 
 });
 </script>
-<script src="search.js"></script>
-<script src="notifications-popup.js"></script>
 <script src="theme.js"></script>
+<script src="search-pages.js"></script>
+<script src="notifications-popup.js"></script>
+
 </body>
 </html>

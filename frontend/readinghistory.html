@@ -404,9 +404,9 @@ function resume(pdf_id, file, last_page){
     : 1;
 
     localStorage.setItem(
-        "returnPage",
-        window.location.href
-    );
+    "returnPage",
+    "reading_history.html"
+);
 
     window.location.href =
     `reader.html?pdf_id=${pdf_id}&file=${encodeURIComponent(file)}&page=${pageToOpen}`;

@@ -257,14 +257,42 @@ favBtn.className = "fav-btn";
 
 });
 
-  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+ if (!document.getElementById("academicContainer")) {
+    section.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+}
 }
 
 // ─── RUN SEARCH ───────────────────────────────────────────────────────────────
 async function runSearch(q, dropdown, section) {
+  // Academic Collection page
   try {
     const res = await fetch(`${window.API}/search?keyword=${encodeURIComponent(q)}`);
     const pdfs = await res.json();
+    const academicContainer =
+document.getElementById("academicContainer");
+
+const recommendedContainer =
+document.getElementById("recommendedContainer");
+
+if (academicContainer || recommendedContainer) {
+
+    const container =
+        academicContainer || recommendedContainer;
+
+    container.innerHTML = "";
+
+    pdfs.forEach(pdf => {
+
+        container.appendChild(
+            makeCard(pdf)
+        );
+
+    });
+
+}
 
     dropdown.innerHTML = '';
 
@@ -361,10 +389,19 @@ function setupSearch() {
     clearTimeout(timer);
     const q = this.value.trim();
     if (q.length < 2) {
-      dropdown.classList.remove('open');
-      section.classList.remove('open');
-      return;
-    }
+
+    dropdown.classList.remove('open');
+    section.classList.remove('open');
+
+    if (typeof loadAcademicPage === "function")
+        loadAcademicPage();
+
+    if (typeof loadRecommended === "function")
+        loadRecommended();
+
+    return;
+
+}
     timer = setTimeout(() => runSearch(q, dropdown, section), 350);
   });
 
