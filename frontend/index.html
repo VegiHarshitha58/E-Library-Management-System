@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>E-Library</title>
+</head>
+<body>
+
+<script>
+const userId = localStorage.getItem("userId");
+
+if (userId) {
+    window.location.href = "home.html";
+} else {
+    window.location.href = "login.html";
+}
+</script>
+
+</body>
+</html>

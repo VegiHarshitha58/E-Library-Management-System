@@ -1190,7 +1190,11 @@ Explore All →
 <div class="toast" id="toast"></div>
 
 <script>
-  
+  const userId = localStorage.getItem("userId");
+
+if (!userId) {
+    window.location.href = "login.html";
+}
 
 const bookData = {
   picks: [],
@@ -1204,8 +1208,7 @@ let favoriteIds = [];
 let bookmarksEnabled = false;
 const API = "https://e-library-backend-43db.onrender.com";
 let heroPdf= null;
-const userId =
-localStorage.getItem("userId");
+
 
 const readingListIds =
 new Set();
@@ -2506,12 +2509,13 @@ avatar.title = userName || "";
     if(!confirmLogout){
         return;
     }
+localStorage.removeItem("userId");
+localStorage.removeItem("userName");
+localStorage.removeItem("email");
+localStorage.removeItem("userAvatar");
 
-    localStorage.removeItem("userName");
-    localStorage.removeItem("userAvatar");
-
-    window.location.href = "login.html";
-}
+window.location.href = "login.html";
+  }
 </script>
 
 
