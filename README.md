@@ -143,7 +143,7 @@ E-Library-Management-System/
 ## Clone Repository
 
 ```bash
-git clone https://github.com/YOUR_GITHUB_USERNAME/E-Library-Management-System.git
+git clone https://github.com/VegiHarshitha58/E-Library-Management-System.git
 ```
 
 ## Backend Setup
@@ -229,7 +229,7 @@ B.Tech Computer Science Engineering
 
 Andhra University College of Engineering for Women
 
-GitHub: https://github.com/YOUR_GITHUB_USERNAME
+GitHub: https://github.com/VegiHarshitha58
 
 ---
 
