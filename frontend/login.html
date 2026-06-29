@@ -343,7 +343,7 @@ document.getElementById("loginForm")
     try{
 
         const response = await fetch(
-            "http://localhost:5000/login",
+    "https://e-library-backend-43db.onrender.com/login",
             {
                 method:"POST",
 
@@ -386,9 +386,9 @@ document.getElementById("loginForm")
         if(data.avatar){
 
     localStorage.setItem(
-        "userAvatar",
-        `http://127.0.0.1:5000/${data.avatar}`
-    );
+    "userAvatar",
+    `https://e-library-backend-43db.onrender.com/${data.avatar}`
+);
 
 }
             /* REMEMBER ME */

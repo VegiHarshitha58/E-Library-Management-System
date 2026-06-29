@@ -1,3 +1,4 @@
+const API = "https://e-library-backend-43db.onrender.com";
 // Restore saved values
 window.addEventListener("load", () => {
 
@@ -219,7 +220,7 @@ if (!validDomain) {
     try{
 
         const response = await fetch(
-            "http://localhost:5000/register",
+           `${API}/register`,
             {
                 method:"POST",
 

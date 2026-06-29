@@ -1202,7 +1202,7 @@ const bookData = {
 let progressBarEnabled = true;
 let favoriteIds = [];
 let bookmarksEnabled = false;
-const API = "http://127.0.0.1:5000";
+const API = "https://e-library-backend-43db.onrender.com";
 let heroPdf= null;
 const userId =
 localStorage.getItem("userId");
@@ -1320,7 +1320,7 @@ Object.entries(bookData).forEach(([key, books]) => {
 async function loadAcademicPDFs() {
 
     const response =
-    await fetch("http://localhost:5000/home-academic");
+    await fetch(`${API}/home-academic`);
 
     const data =
     await response.json();
@@ -1350,8 +1350,7 @@ card.appendChild(
 localStorage.getItem("userId");
 
     await fetch(
-
-    `http://localhost:5000/pdfs/${pdf.id}/view`,
+fetch(`${API}/pdfs/${pdf.id}/view`),
 
     {
         method: "POST",
@@ -1386,9 +1385,8 @@ async function loadProgressBarSetting(){
     localStorage.getItem("userId");
 
     const response =
-    await fetch(
-`http://localhost:5000/get-settings/${userId}`
-    );
+    await
+fetch(`${API}/get-settings/${userId}`);
 
     const settings =
     await response.json();
@@ -1403,9 +1401,8 @@ async function loadBookmarkSetting(){
     localStorage.getItem("userId");
 
     const response =
-    await fetch(
-`http://localhost:5000/settings/bookmarks/${userId}`
-    );
+    await 
+fetch(`${API}/settings/bookmarks/${userId}`);
 
     const data =
     await response.json();
@@ -1420,9 +1417,7 @@ const userId =
 localStorage.getItem("userId");
 
 const response =
-await fetch(
-    `http://localhost:5000/top-picks/${userId}`
-);
+await fetch(`${API}/top-picks/${userId}`);
     
 
     const data =
@@ -1448,9 +1443,7 @@ const card = makeCard({
           const userId =
 localStorage.getItem("userId");
 
-    await fetch(
-
-    `http://localhost:5000/pdfs/${pdf.id}/view`,
+    await fetch(`${API}/pdfs/${pdf.id}/view`,
 
     {
         method: "POST",
@@ -1483,9 +1476,7 @@ async function loadRecommended() {
     localStorage.getItem("userId");
 
     const response =
-    await fetch(
-        `http://localhost:5000/recommended/${userId}`
-    );
+    await fetch(`${API}/recommended/${userId}`);
 
     const data =
     await response.json();
@@ -1512,9 +1503,7 @@ card.appendChild(
           const userId =
 localStorage.getItem("userId");
 
-    await fetch(
-
-    `http://localhost:5000/pdfs/${pdf.id}/view`,
+    await fetch(`${API}/pdfs/${pdf.id}/view`,
 
     {
         method: "POST",
@@ -1545,8 +1534,7 @@ localStorage.getItem("userId");
 async function loadTrendingPDFs() {
 
     const response =
-    await fetch("http://localhost:5000/home-trending");
-
+    await fetch(`${API}/home-trending`);
     const data =
     await response.json();
 
@@ -1593,8 +1581,7 @@ async function loadTrendingPDFs() {
 async function loadNewReleases() {
 
     const response =
-    await fetch("http://localhost:5000/home-new-releases");
-
+    await fetch(`${API}/home-new-releases`);
     const data =
     await response.json();
 
@@ -1632,7 +1619,7 @@ card.appendChild(
 
             await fetch(
 
-                `http://localhost:5000/pdfs/${pdf.id}/view`,
+              fetch(`${API}/pdfs/${pdf.id}/view`),
 
                 {
                     method: "POST",
@@ -1666,9 +1653,8 @@ async function loadHeroPdf(){
     try{
 
         const res =
-        await fetch(
-            "http://localhost:5000/hero-pdf"
-        );
+        await fetch(`${API}/hero-pdf`);
+        
 
         const pdf =
         await res.json();
@@ -1820,9 +1806,7 @@ async function loadReadingCount(){
     try{
 
         const response =
-        await fetch(
-        `http://localhost:5000/reading-list/${userId}`
-        );
+        await fetch(`${API}/reading-list/${userId}`);
 
         const data =
         await response.json();
@@ -1849,10 +1833,7 @@ function loadContinueReading() {
     const userId =
     localStorage.getItem("userId") || 1;
 
-    fetch(
-        `http://localhost:5000/api/progress/continue/${userId}`
-    )
-
+   fetch(`${API}/api/progress/continue/${userId}`)
     .then(res => res.json())
 
     .then(data => {
@@ -2118,8 +2099,8 @@ async function addToFavorites(book){
     try{
 
         const response =
-        await fetch(
-            "http://localhost:5000/favorites",
+        await
+            fetch(`${API}/favorites`,
             {
                 method:"POST",
 
@@ -2185,9 +2166,8 @@ async function loadFavoriteIds(){
     localStorage.getItem("userId");
 
     const response =
-    await fetch(
-        `http://localhost:5000/favorites/${userId}`
-    );
+    await 
+        fetch(`${API}/favorites/${userId}`);
 
     const data =
     await response.json();
@@ -2301,9 +2281,8 @@ async function loadNotifications() {
     const userId =
 localStorage.getItem("userId");
 
-const res = await fetch(
-    `http://localhost:5000/notifications/recent/${userId}`
-);
+const res = await fetch(`${API}/notifications/recent/${userId}`);
+
     notificationsData = await res.json();
     
 

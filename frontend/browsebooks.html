@@ -135,7 +135,7 @@ Search
 <script>
 
 
-
+const API = "https://e-library-backend-43db.onrender.com";
 
 async function searchBooks(){
 
@@ -166,10 +166,9 @@ btn.innerText = "Searching...";
     try{
 
         const response =
-        await fetch(
-            `http://localhost:5000/browse-books?keyword=${encodeURIComponent(keyword)}`
-        );
-
+       await fetch(
+    `${API}/browse-books?keyword=${encodeURIComponent(keyword)}`
+);
         if(!response.ok){
             throw new Error("Server Error");
         }

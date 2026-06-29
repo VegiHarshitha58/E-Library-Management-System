@@ -44,7 +44,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
 </div>
 
 <script>
-
+const API = "https://e-library-backend-43db.onrender.com";
 const userId =
 localStorage.getItem("userId");
 
@@ -126,7 +126,7 @@ async function loadReadingList(){
 
         const response =
         await fetch(
-        `http://localhost:5000/reading-list/${userId}`
+            `${API}/reading-list/${userId}`
         );
 
         const data =
@@ -231,7 +231,7 @@ async function removeFromReadingList(pdfId){
 
         const response =
         await fetch(
-        `http://localhost:5000/reading-list/${userId}/${pdfId}`,
+        `${API}/reading-list/${userId}/${pdfId}`,
         {
             method:"DELETE"
         });

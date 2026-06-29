@@ -299,7 +299,7 @@ body.light-mode{
 
 </div>
 <script>
-
+const API = "https://e-library-backend-43db.onrender.com";
 const userId =
 localStorage.getItem("userId");
 
@@ -368,8 +368,8 @@ async function loadFavorites(){
     try{
 
         const response =
-        await fetch(
-`http://localhost:5000/favorites/${userId}`
+      await fetch(
+`${API}/favorites/${userId}`
 );
 
         const data =
@@ -474,14 +474,11 @@ async function removeFavorite(id){
     try{
 
         await fetch(
-
-        `http://localhost:5000/favorites/${id}`,
-
-        {
-            method:"DELETE"
-        }
-
-        );
+`${API}/favorites/${id}`,
+{
+    method:"DELETE"
+}
+);
 
        showToast(
     "Favorite Removed ❤️"

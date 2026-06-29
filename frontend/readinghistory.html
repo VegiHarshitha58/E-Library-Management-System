@@ -220,6 +220,7 @@ h1{
 <div id="historyContainer"></div>
 
 <script>
+    const API = "https://e-library-backend-43db.onrender.com";
 
 const userId = localStorage.getItem("userId");
 
@@ -232,7 +233,7 @@ async function loadHistory() {
         // Load settings first
         const settingsRes =
         await fetch(
-            `http://localhost:5000/get-settings/${userId}`
+          `${API}/get-settings/${userId}`
         );
 
         const settings =
@@ -246,7 +247,7 @@ settings.reading_progress_bar == 1;
         // Load history
         const historyRes =
         await fetch(
-            `http://localhost:5000/reading-history/${userId}`
+              `${API}/reading-history/${userId}`
         );
 
         const data =

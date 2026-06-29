@@ -1,4 +1,4 @@
-window.API = window.API || "http://127.0.0.1:5000";
+window.API = window.API || "https://e-library-backend-43db.onrender.com";
 
 // ─── STYLES ───────────────────────────────────────────────────────────────────
 const npStyle = document.createElement("style");

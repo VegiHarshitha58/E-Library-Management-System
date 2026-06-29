@@ -220,7 +220,7 @@ font-weight:bold;
 </div>
 
 <script>
-
+const API = "https://e-library-backend-43db.onrender.com";
 const params = new URLSearchParams(window.location.search);
 
 let pdfFile = params.get("file");
@@ -228,8 +228,8 @@ let pdfId = Number(params.get("pdf_id"));
 let page = parseInt(params.get("page")) || 1;
 
 let userId = localStorage.getItem("userId") || 1;
-console.log("Saving History", userId, pdfId);
-fetch("http://localhost:5000/reading-history", {
+
+fetch(`${API}/reading-history`, {
 
     method: "POST",
 
@@ -258,7 +258,7 @@ fetch("http://localhost:5000/reading-history", {
    LOAD SETTINGS (resume mode)
 ------------------------------*/
 
-fetch("http://localhost:5000/get-settings/" + userId)
+fetch(`${API}/get-settings/${userId}`)
 .then(res => res.json())
 .then(data => {
 enableBookmark = data.enable_bookmarks == 1;
@@ -327,9 +327,9 @@ let currentPage = page;
 async function saveProgress() {
 
     const settingsRes =
-    await fetch(
-        `http://localhost:5000/get-settings/${userId}`
-    );
+    await
+        fetch(`${API}/get-settings/${userId}`);
+
 
     const settings =
     await settingsRes.json();
@@ -338,8 +338,7 @@ async function saveProgress() {
         return;
     }
 
-    fetch(
-        "http://localhost:5000/api/progress/update",
+        fetch(`${API}/api/progress/update`,
         {
             method:"POST",
 
@@ -364,8 +363,8 @@ async function saveProgress() {
  async function loadSavedPage(){
 
     const settingsRes =
-    await fetch(
-        `http://localhost:5000/get-settings/${userId}`
+    await 
+        fetch(`${API}/get-settings/${userId}`
     );
 
     const settings =
@@ -391,9 +390,8 @@ async function saveProgress() {
     if(settings.remember_last_page == 1){
 
         const res =
-        await fetch(
-            `http://localhost:5000/api/progress/${userId}/${pdfId}`
-        );
+        await 
+           fetch(`${API}/api/progress/${userId}/${pdfId}`);
 
         const data =
         await res.json();
@@ -597,8 +595,7 @@ async function downloadPDF() {
 
     try {
 
-        await fetch(
-            `http://localhost:5000/pdfs/${pdfId}/download`,
+        await fetch(`${API}/pdfs/${pdfId}/download`,
             {
                 method: "POST"
             }
@@ -610,16 +607,15 @@ async function downloadPDF() {
 
     }
 
-    window.location.href =
-        `http://localhost:5000/download/${encodeURI(pdfFile)}`;
+   window.location.href =
+`${API}/download/${encodeURI(pdfFile)}`;
 
 }
 
 async function loadPDF() {
 
     const pdfUrl =
-    "http://localhost:5000/pdf_library/" +
-    pdfFile;
+`${API}/pdf_library/${pdfFile}`;
 
     pdfDoc =
     await pdfjsLib.getDocument(pdfUrl).promise;
@@ -628,7 +624,7 @@ async function loadPDF() {
     pdfDoc.numPages;
 
     const settingsRes =
-    await fetch(`http://localhost:5000/get-settings/${userId}`);
+    await fetch(`${API}/get-settings/${userId}`);
 
     const settings =
     await settingsRes.json();

@@ -89,7 +89,7 @@
     </div>
 
 <script>
-
+const API = "https://e-library-backend-43db.onrender.com";
 function saveSettings() {
 
     const button =
@@ -124,7 +124,7 @@ function saveSettings() {
     };
     
 
-    fetch("http://localhost:5000/save-settings", {
+    fetch(`${API}/save-settings`, {
 
         method: "POST",
 
@@ -192,7 +192,7 @@ window.onload = function() {
 
     const userId = localStorage.getItem("userId");
 
-fetch(`http://localhost:5000/get-settings/${userId}`)
+fetch(`${API}/get-settings/${userId}`)
 
     .then(response => response.json())
 
