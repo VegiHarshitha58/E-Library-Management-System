@@ -172,25 +172,6 @@ DB_PASSWORD=your_database_password
 DB_NAME=your_database_name
 PORT=5000
 ```
-
----
-
-# 📸 Screenshots
-
-Add screenshots of the following pages:
-
-- Login
-- Registration
-- Home
-- Academic Collection
-- Categories
-- PDF Reader
-- Favorites
-- Reading List
-- Reading History
-- Notifications
-- Profile
-
 ---
 
 # 🌟 Key Highlights
