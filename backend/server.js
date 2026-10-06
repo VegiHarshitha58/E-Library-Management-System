@@ -17,22 +17,34 @@ app.use(
     "/avatars",
     express.static("avatars")
 );
-const db = mysql.createConnection({
+
+const db = mysql.createPool({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
-    port: process.env.DB_PORT
-}); 
-db.connect((err) => {
+    port: process.env.DB_PORT,
 
-    if(err){
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0,
 
-        console.log(err);
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 10000
+});
 
-    }else{
+db.getConnection((err, connection) => {
+
+    if (err) {
+
+        console.log("MySQL Connection Error:", err);
+
+    } else {
 
         console.log("MySQL Connected");
+
+        connection.release();
+
     }
 
 });
